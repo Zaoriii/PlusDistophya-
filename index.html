@@ -65,12 +65,10 @@
 <body>
 <div id="root"></div>
 
-<!-- Scripts do Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <script>
-// Configuração do Firebase fornecida
 const firebaseConfig = {
   apiKey: "AIzaSyBerZufocp6T2_7qUQiNqsxhtGjHDidSsg",
   authDomain: "plusdistophya.firebaseapp.com",
@@ -80,20 +78,11 @@ const firebaseConfig = {
   messagingSenderId: "329881170074",
   appId: "1:329881170074:web:28e5bd77587250cfd5ef23"
 };
-
-// Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
-// Teste de conexão: escreve um nó "teste" no banco
-db.ref("teste").set({
-  status: "funcionando",
-  timestamp: Date.now()
-})
-.then(() => console.log("✅ Firebase conectado e teste escrito com sucesso!"))
-.catch((error) => console.error("❌ Erro ao escrever no Firebase:", error));
-
-// Atualiza a constante usada nas funções fbGet/fbSet para o novo projeto
+db.ref("teste").set({ status: "funcionando", timestamp: Date.now() })
+  .then(() => console.log("✅ Firebase conectado!"))
+  .catch((error) => console.error("❌ Erro Firebase:", error));
 window.FIREBASE_URL = "https://plusdistophya-default-rtdb.firebaseio.com";
 </script>
 
@@ -137,6 +126,7 @@ window.DESVANTAGENS = {"Ambiente":{c:"-1",d:"Role 1D: com 1, seu ambiente não e
 window.LISTA_DESV = Object.keys(window.DESVANTAGENS).sort();
 window.OPCOES = {"Ajudante":["Curandeiro","Especialista","Familiar","Lutador","Montaria"],"Ataque Especial":["Área","Choque","Distante","Espiritual","Múltiplo","Penetrante","Perigoso","Potente","Preciso","Titânico"],"Defesa Especial":["Blindada","Bloqueio","Esquiva","Proteção","Provocação","Reflexão","Tenaz","Titânica"],"Imune":["Abiótico","Anfíbio","Doenças","Resiliente","Sem Mente"],"Inimigo":["Humanos","Humanoides","Construtos","Espíritos","Monstros"],"Arena":["Água","Céu","Cidades","Ermos","Subterrâneo"],"Sentido":["Aguçado","Infravisão","Intuição","Radar","Raio X"],"Maestria":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Mentor":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Código":["Asimov 1ª","Asimov 2ª","Caçador","Combate","Derrota","Gratidão","Heróis","Honestidade","Redenção"],"Transtorno":["Cleptomania","Compulsão","Distração","Fantasia","Fobia","Megalomania","Mitomania","Paranoia"],"Inapto":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"]};
 </script>
+
 <script type="text/babel">
 const {useState,useEffect,useRef,useMemo,useLayoutEffect,useCallback} = React;
 const PERICIAS = window.PERICIAS;
@@ -150,10 +140,8 @@ const DESVANTAGENS = window.DESVANTAGENS;
 const LISTA_DESV = window.LISTA_DESV;
 const OPCOES = window.OPCOES;
 
-// URL do Firebase (agora usando a variável definida globalmente)
 const FIREBASE = window.FIREBASE_URL || "https://plusdistophya-default-rtdb.firebaseio.com";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).substring(2, 9);
 const gerarCodCamp = () => 'CAMP-' + Math.random().toString(36).substring(2,6).toUpperCase();
 
@@ -165,9 +153,7 @@ async function fbGet(path) {
 }
 async function fbSet(path, data) {
   const r = await fetch(`${FIREBASE}/${path}.json`, {
-    method: 'PUT',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(data)
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
   });
   if (r.status === 401) throw new Error('REGRAS_FIREBASE');
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -175,9 +161,7 @@ async function fbSet(path, data) {
 }
 async function fbPush(path, data) {
   const r = await fetch(`${FIREBASE}/${path}.json`, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(data)
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
   });
   if (r.status === 401) throw new Error('REGRAS_FIREBASE');
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -192,16 +176,18 @@ const MSG_REGRAS = `🔒 Banco de dados bloqueado (erro 401).\n\nPara usar a cam
 
 const EMPTY = {
   id:null,nome:'',arquetipo:'',arquetipoCusto:0,experiencia:0,
-  escala:'Ningen',marco:'Iniciante',foto:null,
+  // ── MUDANÇA: Marco → Pontos (máximo livre) ──
+  pontosMax: 10,
+  escala:'Ningen',foto:null,
   atributos:{poder:0,habilidade:0,resistencia:0},
   recursos:{pa:0,pm:5,pv:5},
   pericias:[],vantagens:[],desvantagens:[],kits:[],tecnicas:[],
-  nivelInv:0,trocas:{ci:0,ir:0,rl:0},
-  inventario:{comuns:[],incomuns:[],raros:[],lendarios:[]},
+  // ── MUDANÇA: Inventário simplificado ──
+  inventario:{ itens:[], dinheiro:'' },
   anotacoes:'',historia:''
 };
 
-// ── Small UI Components ───────────────────────────────────────────────────────
+// ── Small UI Components ────────────────────────────────────────────────────
 const Icon = ({n,s='16'}) => {
   const ref = useRef(null);
   useLayoutEffect(() => {
@@ -296,53 +282,7 @@ const ListSection = ({title,color,items,suggestions,onAdd,onUpdate,onRemove}) =>
   );
 };
 
-const InvCol = ({title,color,items,limit,onAdd,onUpdate,onRemove}) => {
-  const colors = {slate:'#94a3b8',blue:'#00e5ff',yellow:'#ffd600',purple:'#a855f7'};
-  const c = colors[color]||'#00e5ff';
-  const pct = limit>0 ? Math.min(100,(items.length/limit)*100) : 0;
-  return (
-    <div style={{background:'rgba(0,0,0,0.35)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:8,padding:12}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-        <div>
-          <div style={{fontFamily:'Orbitron',fontSize:11,color:c,textTransform:'uppercase',letterSpacing:1}}>{title}</div>
-          {limit>0 ? (
-            <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
-              <div style={{width:56,height:4,background:'rgba(0,0,0,0.6)',borderRadius:2,overflow:'hidden'}}>
-                <div style={{height:'100%',width:pct+'%',background:c,transition:'width 0.3s'}} />
-              </div>
-              <span style={{fontSize:10,color:'rgba(0,229,255,0.4)'}}>{items.length}/{limit}</span>
-            </div>
-          ) : <span style={{fontSize:10,color:'rgba(0,229,255,0.25)'}}>Indisponível</span>}
-        </div>
-        <button onClick={onAdd} disabled={limit===0}
-          style={{background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.2)',color:'#00e5ff',borderRadius:4,padding:'2px 8px',cursor:'pointer',opacity:limit===0?0.3:1}}>+</button>
-      </div>
-      <div style={{display:'flex',flexDirection:'column',gap:6}}>
-        {items.map(item => (
-          <div key={item.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.1)',borderRadius:4,padding:6,position:'relative'}}>
-            <div style={{display:'flex',gap:4,marginBottom:3}}>
-              <input placeholder="Item" value={item.nome} onChange={e=>onUpdate(item.id,'nome',e.target.value)}
-                style={{flex:1,fontSize:11,fontWeight:700,padding:'2px 4px'}} />
-              <input placeholder="Qtd" value={item.qtd} onChange={e=>onUpdate(item.id,'qtd',e.target.value)}
-                style={{width:32,textAlign:'center',fontSize:10,padding:'2px 2px'}} />
-            </div>
-            <input placeholder="Efeito" value={item.desc} onChange={e=>onUpdate(item.id,'desc',e.target.value)}
-              style={{width:'100%',fontSize:10,padding:'2px 4px',color:'rgba(0,229,255,0.6)'}} />
-            <button onClick={()=>onRemove(item.id)} className="no-print"
-              style={{position:'absolute',top:3,right:3,background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:12}}>×</button>
-          </div>
-        ))}
-        {limit>0 && Array.from({length:Math.max(0,limit-items.length)}).map((_,i)=>(
-          <div key={'e'+i} style={{border:'1px dashed rgba(0,229,255,0.1)',borderRadius:4,padding:8,textAlign:'center'}}>
-            <span style={{fontSize:9,color:'rgba(0,229,255,0.2)',textTransform:'uppercase'}}>Vazio</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ── Dice Modal ────────────────────────────────────────────────────────────────
+// ── Dice Modal ───────────────────────────────────────────────────────────────
 const DiceModal = ({onClose,attrs,onRoll}) => {
   const [attr,setAttr] = useState('poder');
   const [skill,setSkill] = useState(false);
@@ -467,16 +407,15 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
   );
 };
 
-// ── Campaign Panel ────────────────────────────────────────────────────────────
-// Recebe a lista de fichas salvas (sheets) como prop
+// ── Campaign Panel ──────────────────────────────────────────────────────────
 const CampaignPanel = ({char, sheets, onClose}) => {
-  const [mode, setMode] = useState('menu'); // menu | criar | entrar | sala
+  const [mode, setMode] = useState('menu');
   const [campNome, setCampNome] = useState('');
   const [campCode, setCampCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
-  const [campData, setCampData] = useState(null); // dados da campanha atual
+  const [campData, setCampData] = useState(null);
   const [fichas, setFichas] = useState({});
   const [rolls, setRolls] = useState([]);
   const [iniciativas, setIniciativas] = useState([]);
@@ -484,39 +423,32 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const [npcNome, setNpcNome] = useState('');
   const [npcHabil, setNpcHabil] = useState(0);
   const [diceOpen, setDiceOpen] = useState(false);
-  const [tab, setTab] = useState('fichas'); // fichas | rolagens | iniciativa
+  const [tab, setTab] = useState('fichas');
   const pollingRef = useRef(null);
   const myPlayerId = useRef(char.id ? 'j-'+char.id : 'j-'+uid());
-
   const [fbErro, setFbErro] = useState(false);
-  // Estado para controlar o seletor de fichas da biblioteca
   const [showSheetSelector, setShowSheetSelector] = useState(false);
 
-  // Carrega campanha do localStorage ao montar
+  // ── NOVO: estado de edição inline dos recursos na ficha da campanha ──
+  const [editingFicha, setEditingFicha] = useState(null); // { fichaId, campo, valor }
+
   useEffect(() => {
     try {
       const s = localStorage.getItem('3det_camp');
       if(s) {
         const d = JSON.parse(s);
-        setCampData(d);
-        setCampCode(d.code);
-        setMode('sala');
+        setCampData(d); setCampCode(d.code); setMode('sala');
         iniciarPolling(d.code);
       }
     } catch(e) {}
     return () => pararPolling();
   }, []);
 
-  const pararPolling = () => {
-    if(pollingRef.current) clearInterval(pollingRef.current);
-  };
-
+  const pararPolling = () => { if(pollingRef.current) clearInterval(pollingRef.current); };
   const iniciarPolling = (code) => {
-    pararPolling();
-    buscarTudo(code);
+    pararPolling(); buscarTudo(code);
     pollingRef.current = setInterval(() => buscarTudo(code), 4000);
   };
-
   const buscarTudo = async (code) => {
     try {
       const [fichasData, rollsData, initData] = await Promise.all([
@@ -527,16 +459,11 @@ const CampaignPanel = ({char, sheets, onClose}) => {
       setFbErro(false);
       if(fichasData) setFichas(fichasData);
       if(rollsData) {
-        const arr = Object.entries(rollsData)
-          .map(([k,v])=>({...v,_fbKey:k}))
-          .sort((a,b)=>b.ts-a.ts)
-          .slice(0,30);
+        const arr = Object.entries(rollsData).map(([k,v])=>({...v,_fbKey:k})).sort((a,b)=>b.ts-a.ts).slice(0,30);
         setRolls(arr);
       } else setRolls([]);
       if(initData) {
-        const arr = Object.entries(initData)
-          .map(([k,v])=>({...v,_fbKey:k}))
-          .sort((a,b)=>b.total-a.total);
+        const arr = Object.entries(initData).map(([k,v])=>({...v,_fbKey:k})).sort((a,b)=>b.total-a.total);
         setIniciativas(arr);
       } else setIniciativas([]);
     } catch(e) {}
@@ -547,7 +474,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     setLoading(true); setErro('');
     try {
       const code = gerarCodCamp();
-      const data = {code, nome:campNome.trim(), mestre:char.nome||'Mestre', criadoEm:Date.now()};
+      const data = {code,nome:campNome.trim(),mestre:char.nome||'Mestre',criadoEm:Date.now()};
       await fbSet(`campanhas/${code}/info`, data);
       localStorage.setItem('3det_camp', JSON.stringify(data));
       setCampData(data); setCampCode(code); setMode('sala');
@@ -555,8 +482,8 @@ const CampaignPanel = ({char, sheets, onClose}) => {
       navigator.clipboard.writeText(code).catch(()=>{});
       alert('✅ Campanha criada!\nCódigo: '+code+'\n(Já copiado para a área de transferência)');
     } catch(e){
-      if(e.message==='REGRAS_FIREBASE') { alert(MSG_REGRAS); setErro('🔒 Banco bloqueado — veja as instruções acima.'); }
-      else setErro('Erro ao criar campanha: '+e.message);
+      if(e.message==='REGRAS_FIREBASE'){alert(MSG_REGRAS);setErro('🔒 Banco bloqueado.');}
+      else setErro('Erro ao criar: '+e.message);
     }
     setLoading(false);
   };
@@ -567,86 +494,75 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     setLoading(true); setErro('');
     try {
       const data = await fbGet(`campanhas/${code}/info`);
-      if(!data || !data.code){setErro('❌ Campanha não encontrada. Verifique o código.');setLoading(false);return;}
+      if(!data||!data.code){setErro('❌ Campanha não encontrada.');setLoading(false);return;}
       localStorage.setItem('3det_camp', JSON.stringify(data));
       setCampData(data); setCampCode(code); setMode('sala');
       iniciarPolling(code);
     } catch(e){
-      if(e.message==='REGRAS_FIREBASE') { alert(MSG_REGRAS); setErro('🔒 Banco bloqueado — veja as instruções acima.'); }
-      else setErro('❌ Erro ao buscar campanha. Código correto?');
+      if(e.message==='REGRAS_FIREBASE'){alert(MSG_REGRAS);setErro('🔒 Banco bloqueado.');}
+      else setErro('❌ Erro ao buscar campanha.');
     }
     setLoading(false);
   };
+
+  // ── MUDANÇA: Registrar ficha usa char.nome sempre (não "Jogador") ──
+  const buildPayload = (sheet, playerId) => ({
+    id: playerId,
+    nome: sheet.nome || 'Sem nome',
+    arquetipo: sheet.arquetipo,
+    atributos: sheet.atributos,
+    recursos: sheet.recursos,
+    kits: (sheet.kits||[]).map(k=>k.nome),
+    pericias: (sheet.pericias||[]).slice(0,30),
+    vantagens: (sheet.vantagens||[]).slice(0,30),
+    desvantagens: (sheet.desvantagens||[]).slice(0,30),
+    tecnicas: (sheet.tecnicas||[]).slice(0,20),
+    inventario: sheet.inventario,
+    anotacoes: sheet.anotacoes,
+    historia: sheet.historia,
+    atualizadoEm: Date.now()
+  });
 
   const registrarFicha = async () => {
     if(!char.nome){alert('Sua ficha precisa ter um nome primeiro.');return;}
     setLoading(true);
     try {
-      const payload = {
-        id: myPlayerId.current,
-        nome: char.nome,
-        arquetipo: char.arquetipo,
-        atributos: char.atributos,
-        recursos: char.recursos,
-        kits: (char.kits||[]).map(k=>k.nome),
-        pericias: char.pericias.slice(0,30),
-        vantagens: char.vantagens.slice(0,30),
-        desvantagens: char.desvantagens.slice(0,30),
-        tecnicas: char.tecnicas.slice(0,20),
-        inventario: char.inventario,
-        anotacoes: char.anotacoes,
-        historia: char.historia,
-        atualizadoEm: Date.now()
-      };
+      const payload = buildPayload(char, myPlayerId.current);
       await fbSet(`campanhas/${campCode}/fichas/${myPlayerId.current}`, payload);
       await buscarTudo(campCode);
       alert('✅ Ficha de "'+char.nome+'" registrada!');
     } catch(e){
       if(e.message==='REGRAS_FIREBASE') alert(MSG_REGRAS);
-      else alert('Erro ao registrar ficha: '+e.message);
+      else alert('Erro ao registrar: '+e.message);
     }
     setLoading(false);
   };
 
-  // Função para registrar uma ficha da biblioteca
   const registrarFichaFromSheet = async (sheet) => {
-    if(!sheet.nome){ alert('A ficha selecionada não tem nome.'); return; }
+    if(!sheet.nome){alert('A ficha selecionada não tem nome.');return;}
     setLoading(true);
     try {
-      const payload = {
-        id: 'j-'+sheet.id, // Usa o ID da ficha local para garantir unicidade
-        nome: sheet.nome,
-        arquetipo: sheet.arquetipo,
-        atributos: sheet.atributos,
-        recursos: sheet.recursos,
-        kits: (sheet.kits||[]).map(k=>k.nome),
-        pericias: sheet.pericias.slice(0,30),
-        vantagens: sheet.vantagens.slice(0,30),
-        desvantagens: sheet.desvantagens.slice(0,30),
-        tecnicas: sheet.tecnicas.slice(0,20),
-        inventario: sheet.inventario,
-        anotacoes: sheet.anotacoes,
-        historia: sheet.historia,
-        atualizadoEm: Date.now()
-      };
-      await fbSet(`campanhas/${campCode}/fichas/${'j-'+sheet.id}`, payload);
+      const pid = 'j-'+sheet.id;
+      const payload = buildPayload(sheet, pid);
+      await fbSet(`campanhas/${campCode}/fichas/${pid}`, payload);
       await buscarTudo(campCode);
       alert('✅ Ficha de "'+sheet.nome+'" registrada!');
     } catch(e){
       if(e.message==='REGRAS_FIREBASE') alert(MSG_REGRAS);
-      else alert('Erro ao registrar ficha: '+e.message);
+      else alert('Erro: '+e.message);
     }
     setLoading(false);
     setShowSheetSelector(false);
   };
 
+  // ── MUDANÇA: publicarRolagem usa o nome real do personagem ──
   const publicarRolagem = async (rollObj, nomeJogador) => {
     if(!campCode) return;
     try {
       await fbPush(`campanhas/${campCode}/rolls`, {
-        player: nomeJogador || char.nome || 'Jogador',
-        roll: rollObj,
-        ts: Date.now(),
+        // Garante que o nome é sempre o do personagem ativo, nunca "Jogador"
+        player: nomeJogador && nomeJogador.trim() ? nomeJogador.trim() : (char.nome || 'Desconhecido'),
+        roll: rollObj, ts: Date.now(),
         time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
       });
       buscarTudo(campCode);
@@ -660,14 +576,13 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     const total = res.reduce((a,b)=>a+b,0)+h;
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${myPlayerId.current}`, {
-        id: myPlayerId.current,
-        nome: char.nome||'Jogador',
-        total, res, habil:h, ts:Date.now(), isNpc:false
+        id:myPlayerId.current, nome:char.nome||'Jogador', total, res, habil:h, ts:Date.now(), isNpc:false
       });
       buscarTudo(campCode);
     } catch(e){}
   };
 
+  // ── MUDANÇA: NPC — qualquer pessoa pode adicionar se ehMestre (conforme decisão) ──
   const rolarIniciativaNpc = async () => {
     if(!npcNome.trim()) return;
     const h = parseInt(npcHabil)||0;
@@ -677,34 +592,33 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     const npcId = 'npc-'+uid();
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${npcId}`, {
-        id: npcId,
-        nome: '[NPC] '+npcNome.trim(),
-        total, res, habil:h, ts:Date.now(), isNpc:true
+        id:npcId, nome:'[NPC] '+npcNome.trim(), total, res, habil:h, ts:Date.now(), isNpc:true
       });
       setNpcNome(''); buscarTudo(campCode);
     } catch(e){}
   };
 
   const removerIniciativa = async (id) => {
-    try {
-      await fbDelete(`campanhas/${campCode}/iniciativas/${id}`);
-      buscarTudo(campCode);
-    } catch(e){}
+    try { await fbDelete(`campanhas/${campCode}/iniciativas/${id}`); buscarTudo(campCode); } catch(e){}
   };
-
   const limparIniciativas = async () => {
-    try {
-      await fbDelete(`campanhas/${campCode}/iniciativas`);
-      setIniciativas([]);
-    } catch(e){}
+    try { await fbDelete(`campanhas/${campCode}/iniciativas`); setIniciativas([]); } catch(e){}
   };
-
   const removerFicha = async (fichaId) => {
     if(!window.confirm('Remover esta ficha da campanha?')) return;
+    try { await fbDelete(`campanhas/${campCode}/fichas/${fichaId}`); buscarTudo(campCode); } catch(e){}
+  };
+
+  // ── NOVO: Editar recurso inline (PV, PM, PA) na ficha da campanha ──
+  const salvarRecursoFicha = async (fichaId, campo, valor) => {
     try {
-      await fbDelete(`campanhas/${campCode}/fichas/${fichaId}`);
+      const fichaAtual = fichas[fichaId];
+      if(!fichaAtual) return;
+      const novosRecursos = {...(fichaAtual.recursos||{}), [campo]: parseInt(valor)||0};
+      await fbSet(`campanhas/${campCode}/fichas/${fichaId}/recursos`, novosRecursos);
       buscarTudo(campCode);
     } catch(e){}
+    setEditingFicha(null);
   };
 
   const sairCampanha = () => {
@@ -714,11 +628,10 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     setIniciativas([]); setMode('menu'); setFichaAberta(null);
   };
 
-  // ── Render: Tela de menu ──
-  if(mode === 'menu') return (
+  if(mode==='menu') return (
     <div style={{display:'flex',flexDirection:'column',gap:12,padding:16}}>
       <p style={{color:'rgba(0,229,255,0.5)',fontSize:12,lineHeight:1.6,margin:0}}>
-        Crie ou entre em uma campanha. Ao entrar, a <strong style={{color:'#00e5ff'}}>sala de rolagens</strong> e a <strong style={{color:'#00e5ff'}}>iniciativa</strong> ficam disponíveis para todos automaticamente.
+        Crie ou entre em uma campanha para compartilhar fichas, rolagens e iniciativa em tempo real.
       </p>
       <button onClick={()=>setMode('criar')} style={{padding:'12px 16px',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.35)',color:'#ffd600',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:11,textTransform:'uppercase',letterSpacing:1}}>
         👑 Criar Nova Campanha (Mestre)
@@ -729,60 +642,52 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     </div>
   );
 
-  if(mode === 'criar') return (
+  if(mode==='criar') return (
     <div style={{display:'flex',flexDirection:'column',gap:10,padding:16}}>
       <button onClick={()=>{setMode('menu');setErro('');}} style={{background:'none',border:'none',color:'rgba(0,229,255,0.5)',cursor:'pointer',fontSize:11,fontFamily:'Orbitron',textAlign:'left',padding:0,marginBottom:4}}>← Voltar</button>
       <div style={{fontFamily:'Orbitron',fontSize:12,color:'#ffd600',marginBottom:4}}>👑 CRIAR CAMPANHA</div>
       <input value={campNome} onChange={e=>setCampNome(e.target.value)} placeholder="Nome da campanha..."
-        style={{fontSize:14,padding:'8px 10px'}}
-        onKeyDown={e=>e.key==='Enter'&&criarCampanha()} />
-      {erro && <div style={{color:'#ff5252',fontSize:11,fontFamily:'Share Tech Mono'}}>{erro}</div>}
+        style={{fontSize:14,padding:'8px 10px'}} onKeyDown={e=>e.key==='Enter'&&criarCampanha()} />
+      {erro && <div style={{color:'#ff5252',fontSize:11}}>{erro}</div>}
       <button onClick={criarCampanha} disabled={loading} style={{padding:'10px',background:'rgba(255,214,0,0.12)',border:'1px solid #ffd600',color:'#ffd600',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:11,textTransform:'uppercase',opacity:loading?0.6:1}}>
         {loading?'Criando...':'✦ Criar'}
       </button>
     </div>
   );
 
-  if(mode === 'entrar') return (
+  if(mode==='entrar') return (
     <div style={{display:'flex',flexDirection:'column',gap:10,padding:16}}>
       <button onClick={()=>{setMode('menu');setErro('');}} style={{background:'none',border:'none',color:'rgba(0,229,255,0.5)',cursor:'pointer',fontSize:11,fontFamily:'Orbitron',textAlign:'left',padding:0,marginBottom:4}}>← Voltar</button>
       <div style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',marginBottom:4}}>⚡ ENTRAR NA CAMPANHA</div>
-      <input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
-        placeholder="Código: CAMP-XXXX"
-        style={{fontSize:14,padding:'8px 10px',fontFamily:'Share Tech Mono'}}
-        onKeyDown={e=>e.key==='Enter'&&entrarCampanha()} />
-      {erro && <div style={{color:'#ff5252',fontSize:11,fontFamily:'Share Tech Mono',padding:'4px 0'}}>{erro}</div>}
+      <input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())} placeholder="Código: CAMP-XXXX"
+        style={{fontSize:14,padding:'8px 10px',fontFamily:'Share Tech Mono'}} onKeyDown={e=>e.key==='Enter'&&entrarCampanha()} />
+      {erro && <div style={{color:'#ff5252',fontSize:11,padding:'4px 0'}}>{erro}</div>}
       <button onClick={entrarCampanha} disabled={loading} style={{padding:'10px',background:'rgba(0,229,255,0.1)',border:'1px solid #00e5ff',color:'#00e5ff',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:11,textTransform:'uppercase',opacity:loading?0.6:1}}>
         {loading?'Buscando...':'⚡ Entrar'}
       </button>
     </div>
   );
 
-  // ── Render: Sala (modo principal) ──
+  // ── Sala ──
   const fichasArr = Object.values(fichas);
   const ehMestre = campData && (campData.mestre === char.nome);
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
-      {/* Banner de erro de regras */}
       {fbErro && (
         <div style={{background:'rgba(255,23,68,0.12)',border:'1px solid rgba(255,23,68,0.4)',margin:'8px 12px',borderRadius:8,padding:'10px 12px',flexShrink:0}}>
-          <div style={{fontFamily:'Orbitron',fontSize:10,color:'#ff5252',marginBottom:4}}>🔒 BANCO DE DADOS BLOQUEADO (401)</div>
-          <div style={{fontSize:10,color:'rgba(255,82,82,0.8)',lineHeight:1.5,marginBottom:6}}>
-            As regras do Firebase estão bloqueando o acesso. Para corrigir:
-          </div>
+          <div style={{fontFamily:'Orbitron',fontSize:10,color:'#ff5252',marginBottom:4}}>🔒 BANCO BLOQUEADO (401)</div>
           <ol style={{fontSize:10,color:'rgba(255,82,82,0.7)',lineHeight:1.7,paddingLeft:16,margin:0}}>
             <li>Abra <strong style={{color:'#ff5252'}}>console.firebase.google.com</strong></li>
             <li>Projeto <strong style={{color:'#ff5252'}}>plusdistophya</strong> → Realtime Database → Regras</li>
-            <li>Substitua o conteúdo por: <code style={{background:'rgba(0,0,0,0.4)',padding:'1px 5px',borderRadius:3,color:'#ffd600',fontSize:9}}>{"{ \"rules\": { \".read\": true, \".write\": true } }"}</code></li>
+            <li>Cole: <code style={{background:'rgba(0,0,0,0.4)',padding:'1px 5px',borderRadius:3,color:'#ffd600',fontSize:9}}>{"{ \"rules\": { \".read\": true, \".write\": true } }"}</code></li>
             <li>Clique em <strong style={{color:'#ff5252'}}>Publicar</strong></li>
           </ol>
-          <button onClick={()=>buscarTudo(campCode)} style={{marginTop:8,padding:'4px 10px',background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.4)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
-            🔄 Tentar novamente
-          </button>
+          <button onClick={()=>buscarTudo(campCode)} style={{marginTop:8,padding:'4px 10px',background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.4)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>🔄 Tentar novamente</button>
         </div>
       )}
-      {/* Cabeçalho da campanha */}
+
+      {/* Cabeçalho campanha */}
       <div style={{padding:'10px 14px',background:'rgba(0,0,0,0.5)',borderBottom:'1px solid rgba(0,229,255,0.15)',flexShrink:0}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
           <div>
@@ -798,7 +703,6 @@ const CampaignPanel = ({char, sheets, onClose}) => {
           <button onClick={registrarFicha} disabled={loading} style={{flex:1,padding:'5px 6px',background:'rgba(0,229,255,0.06)',border:'1px solid rgba(0,229,255,0.25)',color:'#00e5ff',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase',opacity:loading?0.6:1}}>
             {loading?'..':'📤 Registrar Minha Ficha'}
           </button>
-          {/* Novo botão para registrar ficha da biblioteca */}
           <button onClick={()=>setShowSheetSelector(true)} style={{flex:1,padding:'5px 6px',background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.25)',color:'#a855f7',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
             📚 Registrar da Biblioteca
           </button>
@@ -809,55 +713,74 @@ const CampaignPanel = ({char, sheets, onClose}) => {
 
       {/* Tabs */}
       <div style={{display:'flex',borderBottom:'1px solid rgba(0,229,255,0.15)',flexShrink:0}}>
-        {[
-          {id:'fichas',label:'👥 Fichas',count:fichasArr.length},
-          {id:'rolagens',label:'🎲 Rolagens',count:rolls.length},
-          {id:'iniciativa',label:'⚔ Turno',count:iniciativas.length},
-        ].map(t=>(
+        {[{id:'fichas',label:'👥 Fichas',count:fichasArr.length},{id:'rolagens',label:'🎲 Rolagens',count:rolls.length},{id:'iniciativa',label:'⚔ Turno',count:iniciativas.length}].map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             flex:1,padding:'8px 4px',background:tab===t.id?'rgba(0,229,255,0.08)':'transparent',
             border:'none',borderBottom:tab===t.id?'2px solid #00e5ff':'2px solid transparent',
             color:tab===t.id?'#00e5ff':'rgba(0,229,255,0.4)',
-            cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase',
-            transition:'all 0.2s'
+            cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase',transition:'all 0.2s'
           }}>
             {t.label}{t.count>0?` (${t.count})`:''}
           </button>
         ))}
       </div>
 
-      {/* Conteúdo das tabs */}
+      {/* Conteúdo */}
       <div style={{flex:1,overflowY:'auto',padding:12}}>
 
-        {/* ── TAB: FICHAS ── */}
+        {/* ── TAB FICHAS ── */}
         {tab==='fichas' && (
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {fichasArr.length===0
-              ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:16}}>
-                  Nenhuma ficha registrada ainda.<br/>Clique em "Registrar Minha Ficha" acima.
-                </p>
+              ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:16}}>Nenhuma ficha registrada ainda.</p>
               : fichasArr.map(f=>(
                 <div key={f.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.18)',borderRadius:8,overflow:'hidden'}}>
-                  {/* Header da ficha */}
                   <div style={{padding:'8px 12px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}
                     onClick={()=>setFichaAberta(fichaAberta===f.id?null:f.id)}>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontFamily:'Orbitron',fontSize:11,color:'#e8f4f8',fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.nome||'Sem nome'}</div>
-                      <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                        {f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}
-                      </div>
+                      <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1}}>{f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}</div>
                     </div>
-                    <div style={{display:'flex',gap:4,fontSize:9,fontFamily:'Share Tech Mono',flexShrink:0}}>
-                      <span style={{color:'#ff5252',background:'rgba(255,23,68,0.1)',padding:'1px 4px',borderRadius:3}}>♥{f.recursos?.pv??'?'}</span>
-                      <span style={{color:'#00e5ff',background:'rgba(0,229,255,0.08)',padding:'1px 4px',borderRadius:3}}>⚡{f.recursos?.pm??'?'}</span>
+                    {/* ── MUDANÇA: PV/PM/PA maiores e editáveis ── */}
+                    <div style={{display:'flex',gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                      {[
+                        {campo:'pv', label:'♥', color:'#ff5252', bg:'rgba(255,23,68,0.12)', border:'rgba(255,23,68,0.3)'},
+                        {campo:'pm', label:'⚡', color:'#00e5ff', bg:'rgba(0,229,255,0.08)', border:'rgba(0,229,255,0.25)'},
+                        {campo:'pa', label:'★', color:'#ffd600', bg:'rgba(255,214,0,0.08)', border:'rgba(255,214,0,0.3)'},
+                      ].map(({campo,label,color,bg,border})=>{
+                        const isEditing = editingFicha && editingFicha.fichaId===f.id && editingFicha.campo===campo;
+                        const val = f.recursos?.[campo]??0;
+                        return (
+                          <div key={campo} style={{background:bg,border:'1px solid '+border,borderRadius:6,padding:'4px 8px',minWidth:52,textAlign:'center',cursor:'pointer'}}
+                            title={'Clique para editar '+campo.toUpperCase()}>
+                            <div style={{fontSize:9,color:color,fontFamily:'Orbitron',marginBottom:2}}>{label} {campo.toUpperCase()}</div>
+                            {isEditing ? (
+                              <input
+                                autoFocus
+                                type="number"
+                                defaultValue={val}
+                                style={{width:40,textAlign:'center',fontSize:18,fontWeight:900,fontFamily:'Orbitron',color,background:'transparent',border:'none',borderBottom:'1px solid '+color,outline:'none',padding:0}}
+                                onBlur={e=>salvarRecursoFicha(f.id,campo,e.target.value)}
+                                onKeyDown={e=>{
+                                  if(e.key==='Enter') salvarRecursoFicha(f.id,campo,e.target.value);
+                                  if(e.key==='Escape') setEditingFicha(null);
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{fontSize:18,fontWeight:900,fontFamily:'Orbitron',color,lineHeight:1}}
+                                onClick={()=>setEditingFicha({fichaId:f.id,campo,valor:val})}
+                              >{val}</div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     <span style={{color:'rgba(0,229,255,0.3)',fontSize:10}}>{fichaAberta===f.id?'▲':'▼'}</span>
                   </div>
 
-                  {/* Ficha expandida */}
                   {fichaAberta===f.id && (
                     <div style={{padding:'0 12px 12px',borderTop:'1px solid rgba(0,229,255,0.1)',fontSize:11,display:'flex',flexDirection:'column',gap:8,paddingTop:10}}>
-                      {/* Atributos */}
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5}}>
                         {[['POD',f.atributos?.poder,'#ff5252'],['HAB',f.atributos?.habilidade,'#00e5ff'],['RES',f.atributos?.resistencia,'#00e676']].map(([n,v,c])=>(
                           <div key={n} style={{background:'rgba(0,0,0,0.4)',border:'1px solid '+c+'33',borderRadius:5,padding:'4px 6px',textAlign:'center'}}>
@@ -866,22 +789,6 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                           </div>
                         ))}
                       </div>
-                      {/* Barras */}
-                      {[
-                        {l:'PV',cur:f.recursos?.pv,max:(f.atributos?.resistencia||0)*5||1,c:'#ff5252'},
-                        {l:'PM',cur:f.recursos?.pm,max:(f.atributos?.habilidade||0)*5||1,c:'#00e5ff'},
-                      ].map(r=>(
-                        <div key={r.l}>
-                          <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
-                            <span style={{fontFamily:'Orbitron',fontSize:8,color:r.c}}>{r.l}</span>
-                            <span style={{fontSize:8,color:'rgba(0,229,255,0.4)',fontFamily:'Share Tech Mono'}}>{r.cur??'?'}/{r.max}</span>
-                          </div>
-                          <div style={{height:4,background:'rgba(0,0,0,0.6)',borderRadius:2,overflow:'hidden'}}>
-                            <div style={{height:'100%',width:(r.max>0?Math.min(100,((r.cur||0)/r.max)*100):0)+'%',background:r.c}} />
-                          </div>
-                        </div>
-                      ))}
-                      {/* Perícias */}
                       {f.pericias?.length>0 && (
                         <div>
                           <div style={{fontFamily:'Orbitron',fontSize:8,color:'rgba(0,229,255,0.4)',marginBottom:3,textTransform:'uppercase'}}>Perícias</div>
@@ -890,7 +797,6 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                           </div>
                         </div>
                       )}
-                      {/* Vantagens */}
                       {f.vantagens?.length>0 && (
                         <div>
                           <div style={{fontFamily:'Orbitron',fontSize:8,color:'#00e676',marginBottom:3,textTransform:'uppercase'}}>Vantagens</div>
@@ -904,15 +810,13 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                           </div>
                         </div>
                       )}
-                      {/* Anotações */}
                       {f.anotacoes && (
                         <div>
                           <div style={{fontFamily:'Orbitron',fontSize:8,color:'rgba(0,229,255,0.4)',marginBottom:3,textTransform:'uppercase'}}>Anotações</div>
                           <div style={{fontSize:9,color:'rgba(0,229,255,0.5)',background:'rgba(0,0,0,0.3)',borderRadius:4,padding:'5px 7px',lineHeight:1.5}}>{f.anotacoes}</div>
                         </div>
                       )}
-                      {/* Remover (mestre) */}
-                      {ehMestre && f.id !== myPlayerId.current && (
+                      {ehMestre && f.id!==myPlayerId.current && (
                         <button onClick={()=>removerFicha(f.id)} style={{padding:'4px 0',background:'rgba(255,23,68,0.05)',border:'1px solid rgba(255,23,68,0.18)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
                           × Remover da campanha
                         </button>
@@ -925,28 +829,24 @@ const CampaignPanel = ({char, sheets, onClose}) => {
           </div>
         )}
 
-        {/* ── TAB: ROLAGENS ── */}
+        {/* ── TAB ROLAGENS ── */}
         {tab==='rolagens' && (
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            {/* Botão rolar dado */}
             <button onClick={()=>setDiceOpen(true)} style={{
               width:'100%',padding:'10px',background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.35)',
               color:'#00e5ff',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,
               textTransform:'uppercase',letterSpacing:1,marginBottom:4
             }}>🎲 Abrir Dados — Resultado vai para a sala</button>
-
             {diceOpen && (
               <DiceModal
                 onClose={()=>setDiceOpen(false)}
                 attrs={char.atributos}
-                onRoll={(r)=>{publicarRolagem(r,char.nome);setDiceOpen(false);}}
+                // ── MUDANÇA: passa char.nome para garantir nome correto ──
+                onRoll={(r)=>{publicarRolagem(r, char.nome);setDiceOpen(false);}}
               />
             )}
-
             {rolls.length===0
-              ? <p style={{color:'rgba(0,229,255,0.2)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>
-                  Nenhuma rolagem ainda. Role os dados!
-                </p>
+              ? <p style={{color:'rgba(0,229,255,0.2)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>Nenhuma rolagem ainda.</p>
               : rolls.map((r,idx)=>(
                 <div key={r._fbKey||idx} className="fadeIn" style={{background:'rgba(0,0,0,0.45)',border:'1px solid rgba(0,229,255,0.13)',borderRadius:6,padding:'8px 10px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
@@ -975,32 +875,33 @@ const CampaignPanel = ({char, sheets, onClose}) => {
           </div>
         )}
 
-        {/* ── TAB: INICIATIVA ── */}
+        {/* ── TAB INICIATIVA ── */}
         {tab==='iniciativa' && (
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            {/* Meu botão de iniciativa */}
             <button onClick={rolarIniciativa} style={{
               width:'100%',padding:'10px',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.35)',
               color:'#ffd600',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,
               textTransform:'uppercase',letterSpacing:1
-            }}>🎲 Rolar Minha Iniciativa</button>
+            }}>🎲 Rolar Minha Iniciativa ({char.nome||'Meu Personagem'})</button>
 
-            {/* Adicionar NPC — só mestre */}
+            {/* ── MUDANÇA: NPC sempre visível para o mestre ── */}
             {ehMestre && (
               <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:6,padding:8}}>
-                <div style={{fontFamily:'Orbitron',fontSize:8,color:'#a855f7',marginBottom:5,textTransform:'uppercase'}}>+ NPC (Mestre)</div>
+                <div style={{fontFamily:'Orbitron',fontSize:8,color:'#a855f7',marginBottom:5,textTransform:'uppercase'}}>👾 Adicionar NPC (Mestre)</div>
                 <div style={{display:'flex',gap:5,marginBottom:5}}>
                   <input value={npcNome} onChange={e=>setNpcNome(e.target.value)} placeholder="Nome do NPC..."
-                    style={{flex:1,fontSize:11,padding:'4px 7px'}}
-                    onKeyDown={e=>e.key==='Enter'&&rolarIniciativaNpc()} />
-                  <input type="number" value={npcHabil} onChange={e=>setNpcHabil(e.target.value)} min={0} max={5}
-                    style={{width:36,textAlign:'center',fontSize:11,padding:'4px'}} title="Habilidade" />
+                    style={{flex:1,fontSize:11,padding:'4px 7px'}} onKeyDown={e=>e.key==='Enter'&&rolarIniciativaNpc()} />
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
+                    <label style={{fontSize:7,color:'rgba(168,85,247,0.6)',fontFamily:'Orbitron',textTransform:'uppercase'}}>HAB</label>
+                    <input type="number" value={npcHabil} onChange={e=>setNpcHabil(e.target.value)} min={0} max={5}
+                      style={{width:36,textAlign:'center',fontSize:14,fontWeight:700,padding:'4px'}} />
+                  </div>
                 </div>
                 <div style={{display:'flex',gap:5}}>
-                  <button onClick={rolarIniciativaNpc} style={{flex:1,background:'rgba(168,85,247,0.1)',border:'1px solid rgba(168,85,247,0.3)',color:'#a855f7',borderRadius:4,padding:'4px 0',cursor:'pointer',fontSize:8,fontFamily:'Orbitron',textTransform:'uppercase'}}>
+                  <button onClick={rolarIniciativaNpc} style={{flex:1,background:'rgba(168,85,247,0.1)',border:'1px solid rgba(168,85,247,0.3)',color:'#a855f7',borderRadius:4,padding:'5px 0',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>
                     🎲 Rolar NPC
                   </button>
-                  <button onClick={limparIniciativas} style={{flex:1,background:'rgba(255,23,68,0.06)',border:'1px solid rgba(255,23,68,0.2)',color:'#ff5252',borderRadius:4,padding:'4px 0',cursor:'pointer',fontSize:8,fontFamily:'Orbitron',textTransform:'uppercase'}}>
+                  <button onClick={limparIniciativas} style={{flex:1,background:'rgba(255,23,68,0.06)',border:'1px solid rgba(255,23,68,0.2)',color:'#ff5252',borderRadius:4,padding:'5px 0',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>
                     ✕ Limpar Tudo
                   </button>
                 </div>
@@ -1008,9 +909,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
             )}
 
             {iniciativas.length===0
-              ? <p style={{color:'rgba(255,214,0,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>
-                  Nenhuma iniciativa. Clique em "Rolar Minha Iniciativa".
-                </p>
+              ? <p style={{color:'rgba(255,214,0,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>Nenhuma iniciativa rolada ainda.</p>
               : iniciativas.map((ini,idx)=>(
                 <div key={ini.id||idx} className="fadeIn" style={{
                   display:'flex',alignItems:'center',gap:8,padding:'7px 10px',
@@ -1025,8 +924,8 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                     </div>
                     <div style={{fontSize:8,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>[{ini.res?.join(',')}] +H{ini.habil}</div>
                   </div>
-                  {(ehMestre || ini.id===myPlayerId.current) && (
-                    <button onClick={()=>removerIniciativa(ini.id)} style={{background:'none',border:'none',color:'rgba(255,23,68,0.5)',cursor:'pointer',fontSize:14,padding:'0 2px',lineHeight:1}} title="Remover">×</button>
+                  {(ehMestre||ini.id===myPlayerId.current) && (
+                    <button onClick={()=>removerIniciativa(ini.id)} style={{background:'none',border:'none',color:'rgba(255,23,68,0.5)',cursor:'pointer',fontSize:14,padding:'0 2px',lineHeight:1}}>×</button>
                   )}
                 </div>
               ))
@@ -1035,7 +934,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
         )}
       </div>
 
-      {/* Modal de seleção de fichas da biblioteca */}
+      {/* Modal biblioteca */}
       {showSheetSelector && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.95)',zIndex:400,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
           <div className="panel" style={{width:'100%',maxWidth:400,maxHeight:'80vh',overflowY:'auto',padding:20}}>
@@ -1043,16 +942,15 @@ const CampaignPanel = ({char, sheets, onClose}) => {
               <span style={{fontFamily:'Orbitron',color:'#a855f7',fontSize:14}}>📚 Selecionar Ficha</span>
               <button onClick={()=>setShowSheetSelector(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
             </div>
-            {sheets.length===0 ? (
-              <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center'}}>Nenhuma ficha salva na biblioteca.</p>
-            ) : (
-              sheets.map(s=>(
+            {sheets.length===0
+              ? <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center'}}>Nenhuma ficha salva na biblioteca.</p>
+              : sheets.map(s=>(
                 <div key={s.id} onClick={()=>registrarFichaFromSheet(s)} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(168,85,247,0.3)',borderRadius:6,padding:10,marginBottom:8,cursor:'pointer'}}>
                   <div style={{fontWeight:700,color:'#e8f4f8'}}>{s.nome||'Sem nome'}</div>
                   <div style={{fontSize:10,color:'rgba(168,85,247,0.6)'}}>{s.arquetipo||'—'}</div>
                 </div>
               ))
-            )}
+            }
           </div>
         </div>
       )}
@@ -1060,7 +958,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   );
 };
 
-// ── Main App ──────────────────────────────────────────────────────────────────
+// ── Main App ─────────────────────────────────────────────────────────────────
 const App = () => {
   const fileRef = useRef(null);
   const impRef = useRef(null);
@@ -1071,13 +969,9 @@ const App = () => {
   const [kitIn,setKitIn] = useState('');
   const [campPanel,setCampPanel] = useState(false);
   const [arqPreviewOpen,setArqPreviewOpen] = useState(false);
-  // Indicador se está na campanha (para badge no botão)
   const [emCampanha,setEmCampanha] = useState(false);
 
-  useEffect(()=>{
-    setEmCampanha(!!localStorage.getItem('3det_camp'));
-  },[campPanel]);
-
+  useEffect(()=>{ setEmCampanha(!!localStorage.getItem('3det_camp')); },[campPanel]);
   useEffect(()=>{
     const s = localStorage.getItem('3det_v2');
     if(s) try{setSheets(JSON.parse(s))}catch(e){}
@@ -1090,7 +984,7 @@ const App = () => {
       await fbSet(`fichas/${sid}`,{...char,syncId:sid});
       navigator.clipboard.writeText(sid).catch(()=>{});
       alert('☁️ Ficha salva!\nCódigo: '+sid+'\n(Já copiado!)');
-    } catch(e){alert('❌ Erro ao salvar: '+e.message);}
+    } catch(e){alert('❌ Erro: '+e.message);}
   };
 
   const importFromCloud = async () => {
@@ -1099,7 +993,7 @@ const App = () => {
     try {
       const data = await fbGet(`fichas/${code.trim().toUpperCase()}`);
       if(data&&data.id){
-        const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:{...EMPTY.inventario,...(data.inventario||{})}};
+        const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:data.inventario||{itens:[],dinheiro:''}};
         setSheets(p=>{const f=p.filter(x=>x.id!==s.id);return [...f,s];});
         alert('☁️ Ficha importada!');
       } else alert('❌ Nenhuma ficha encontrada.');
@@ -1117,6 +1011,7 @@ const App = () => {
     } catch(e){alert('Erro ao salvar. Tente remover a foto.');}
   };
 
+  // ── MUDANÇA: Pontos = soma total, pontosMax = máximo definido pelo jogador ──
   const pts = useMemo(()=>{
     const a = (char.atributos.poder||0)+(char.atributos.habilidade||0)+(char.atributos.resistencia||0);
     const v = char.vantagens.reduce((x,i)=>x+(parseInt(i.custo)||0),0);
@@ -1129,6 +1024,9 @@ const App = () => {
     return a+v+d+p+k+(parseInt(char.arquetipoCusto)||0);
   },[char.atributos,char.vantagens,char.desvantagens,char.pericias,char.kits,char.arquetipoCusto]);
 
+  const pontosMax = parseInt(char.pontosMax)||10;
+  const pontosExcedido = pts > pontosMax;
+
   const addKit = () => {
     if(!kitIn.trim()) return;
     const name = kitIn.trim();
@@ -1138,10 +1036,8 @@ const App = () => {
       id:Date.now()+i+Math.random(),nome:p.nome,detalhe:'(Kit: '+name+')',descricao:p.desc||'',custo:'0'
     }))];
     let newD = [...char.desvantagens];
-    if(kit.desv){
-      if(!newD.some(d=>d.nome===kit.desv.nome)){
-        newD.push({id:Date.now()+Math.random(),nome:kit.desv.nome,detalhe:'(Kit: '+name+')',descricao:kit.desv.desc||'',custo:kit.desv.custo||'-1'});
-      }
+    if(kit.desv&&!newD.some(d=>d.nome===kit.desv.nome)){
+      newD.push({id:Date.now()+Math.random(),nome:kit.desv.nome,detalhe:'(Kit: '+name+')',descricao:kit.desv.desc||'',custo:kit.desv.custo||'-1'});
     }
     setChar(c=>({...c,kits:[...(c.kits||[]),{id:Date.now(),nome:name}],vantagens:newV,desvantagens:newD}));
     setKitIn('');
@@ -1162,29 +1058,32 @@ const App = () => {
     return {...c,[list]:nl};
   });
   const remItem = (list,id) => setChar(c=>({...c,[list]:c[list].filter(i=>i.id!==id)}));
-  const addInv = cat => setChar(c=>({...c,inventario:{...c.inventario,[cat]:[...c.inventario[cat],{id:Date.now(),nome:'',qtd:1,desc:''}]}}));
-  const updInv = (cat,id,f,v) => setChar(c=>({...c,inventario:{...c.inventario,[cat]:c.inventario[cat].map(i=>i.id===id?{...i,[f]:v}:i)}}));
-  const remInv = (cat,id) => setChar(c=>({...c,inventario:{...c.inventario,[cat]:c.inventario[cat].filter(i=>i.id!==id)}}));
 
   const maxPA = char.atributos.poder||1;
   const maxPM = char.atributos.habilidade===0?1:char.atributos.habilidade*5;
   const maxPV = char.atributos.resistencia===0?1:char.atributos.resistencia*5;
 
-  const hasPatr = char.vantagens.some(v=>v.nome.toLowerCase().includes('patrono'));
-  const getLimits = (lvl,tr) => {
-    let l={comuns:2,incomuns:0,raros:0,lendarios:0};
-    if(lvl>=1){l.comuns=3;l.incomuns=1;}
-    if(lvl>=2){l.comuns=5;l.incomuns=2;}
-    if(lvl>=3){l.incomuns=4;l.raros=1;l.lendarios=1;}
-    if(hasPatr){if(l.comuns>0)l.comuns++;if(l.incomuns>0)l.incomuns++;if(l.raros>0)l.raros++;if(l.lendarios>0)l.lendarios++;}
-    l.comuns-=(tr.ci||0)*3;l.incomuns+=(tr.ci||0);l.incomuns-=(tr.ir||0)*3;l.raros+=(tr.ir||0);l.raros-=(tr.rl||0)*3;l.lendarios+=(tr.rl||0);
-    return l;
+  const exportJ = () => {
+    const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(char));
+    const a=document.createElement('a');a.href=d;a.download=(char.nome||'personagem')+'_3det.json';
+    document.body.appendChild(a);a.click();a.remove();
   };
-  const tr = char.trocas||{ci:0,ir:0,rl:0};
-  const lim = getLimits(char.nivelInv||0,tr);
+  const importJ = e => {
+    const f=e.target.files[0];
+    if(f){const r=new FileReader();r.onload=ev=>{try{
+      const l=JSON.parse(ev.target.result);
+      if(!l.inventario)l.inventario={itens:[],dinheiro:''};
+      if(!l.kits)l.kits=[];if(!l.id)l.id=Date.now();
+      setChar({...EMPTY,...l});alert('Ficha carregada!');
+    }catch(err){alert('Erro ao ler arquivo.');}e.target.value=null;};r.readAsText(f);}
+  };
 
-  const exportJ = () => {const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(char));const a=document.createElement('a');a.href=d;a.download=(char.nome||'personagem')+'_3det.json';document.body.appendChild(a);a.click();a.remove();};
-  const importJ = e => {const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{try{const l=JSON.parse(ev.target.result);if(!l.inventario)l.inventario=EMPTY.inventario;if(!l.kits)l.kits=[];if(!l.id)l.id=Date.now();setChar({...EMPTY,...l});alert('Ficha carregada!');}catch(err){alert('Erro ao ler arquivo.');}e.target.value=null;};r.readAsText(f);}};
+  // ── Inventário simplificado ──
+  const inv = char.inventario || {itens:[],dinheiro:''};
+  const addInvItem = () => setChar(c=>({...c,inventario:{...inv,itens:[...inv.itens,{id:Date.now(),nome:'',desc:''}]}}));
+  const updInvItem = (id,campo,val) => setChar(c=>({...c,inventario:{...inv,itens:inv.itens.map(i=>i.id===id?{...i,[campo]:val}:i)}}));
+  const remInvItem = (id) => setChar(c=>({...c,inventario:{...inv,itens:inv.itens.filter(i=>i.id!==id)}}));
+  const setDinheiro = (v) => setChar(c=>({...c,inventario:{...inv,dinheiro:v}}));
 
   return (
     <div style={{minHeight:'100vh',background:'var(--cb)',color:'var(--ct)',position:'relative',zIndex:1}}>
@@ -1199,14 +1098,13 @@ const App = () => {
         <div style={{display:'flex',gap:5,flexWrap:'wrap',justifyContent:'flex-end',flexShrink:0}}>
           <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>☁️ SYNC</button>
           <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>📥</button>
-          <button onClick={()=>{setCampPanel(!campPanel);}} style={{
+          <button onClick={()=>setCampPanel(!campPanel)} style={{
             background:emCampanha?'rgba(0,229,255,0.12)':'rgba(255,214,0,0.12)',
             border:'1px solid '+(emCampanha?'rgba(0,229,255,0.4)':'rgba(255,214,0,0.4)'),
             color:emCampanha?'#00e5ff':'#ffd600',
-            borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase',
-            position:'relative'
+            borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase',position:'relative'
           }}>
-            {emCampanha?'⚔ MESA':'⚔ MESA'}
+            ⚔ MESA
             {emCampanha && <span style={{position:'absolute',top:-3,right:-3,width:7,height:7,background:'#00e676',borderRadius:'50%',border:'1px solid var(--cb)'}}/>}
           </button>
           <Btn onClick={save} style={{padding:'5px 8px',fontSize:9}}>💾 SALVAR</Btn>
@@ -1214,16 +1112,14 @@ const App = () => {
       </div>
 
       {/* DICE FAB */}
-      <button className="no-print pulse" onClick={()=>setDice(true)} style={{position:'fixed',bottom:24,right:24,zIndex:150,width:52,height:52,borderRadius:'50%',background:'var(--cp)',border:'2px solid var(--ca)',color:'var(--ca)',fontSize:20,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}} title="Rolar Dados">🎲</button>
-
+      <button className="no-print pulse" onClick={()=>setDice(true)} style={{position:'fixed',bottom:24,right:24,zIndex:150,width:52,height:52,borderRadius:'50%',background:'var(--cp)',border:'2px solid var(--ca)',color:'var(--ca)',fontSize:20,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>🎲</button>
       {dice && <DiceModal onClose={()=>setDice(false)} attrs={char.atributos} onRoll={()=>{}} />}
 
-      {/* CAMPAIGN PANEL (slide-in) */}
+      {/* CAMPAIGN PANEL */}
       {campPanel && (
         <>
           <div onClick={()=>setCampPanel(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.6)',zIndex:200}} />
           <div style={{position:'fixed',top:0,left:0,bottom:0,width:'min(500px,100vw)',background:'var(--cp)',borderRight:'1px solid rgba(0,229,255,0.3)',boxShadow:'0 0 40px rgba(0,229,255,0.12)',zIndex:201,display:'flex',flexDirection:'column'}}>
-            {/* Header */}
             <div style={{padding:'14px 16px',borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.4)',flexShrink:0}}>
               <div>
                 <div style={{fontFamily:'Orbitron',color:'#ffd600',fontSize:13,letterSpacing:2}}>⚔ MESA DE CAMPANHA</div>
@@ -1232,7 +1128,6 @@ const App = () => {
               <button onClick={()=>setCampPanel(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:22,cursor:'pointer'}}>×</button>
             </div>
             <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
-              {/* Passamos a prop sheets para o CampaignPanel */}
               <CampaignPanel char={char} sheets={sheets} onClose={()=>setCampPanel(false)} />
             </div>
           </div>
@@ -1257,7 +1152,7 @@ const App = () => {
               {sheets.length===0
                 ? <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center',fontSize:12,marginTop:20}}>Nenhuma ficha salva.</p>
                 : sheets.map(sh=>(
-                  <div key={sh.id} onClick={()=>{setChar({...EMPTY,...sh,kits:sh.kits||[]});setSidebar(false);}}
+                  <div key={sh.id} onClick={()=>{setChar({...EMPTY,...sh,kits:sh.kits||[],inventario:sh.inventario||{itens:[],dinheiro:''}});setSidebar(false);}}
                     style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:10,cursor:'pointer',display:'flex',alignItems:'center',gap:10,position:'relative'}}>
                     {sh.foto && <img src={sh.foto} style={{width:36,height:36,borderRadius:4,objectFit:'cover'}} alt="" />}
                     <div style={{flex:1,minWidth:0}}>
@@ -1344,13 +1239,24 @@ const App = () => {
                     </div>
                   )}
                 </div>
-                {/* Marco */}
+
+                {/* ── MUDANÇA: Marco → Pontos com máximo editável ── */}
                 <div>
-                  <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Marco</label>
-                  <select value={char.marco} onChange={e=>setChar(c=>({...c,marco:e.target.value}))} style={{width:'100%',fontSize:14,fontWeight:700,padding:'6px 8px',appearance:'none'}}>
-                    {['Iniciante','Herói','Veterano','Lenda'].map(m=><option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Pontos Máximos</label>
+                  <input
+                    type="number"
+                    value={char.pontosMax||10}
+                    min={1}
+                    onChange={e=>setChar(c=>({...c,pontosMax:parseInt(e.target.value)||1}))}
+                    style={{width:'100%',fontSize:18,fontWeight:700,padding:'6px 10px',fontFamily:'Orbitron',textAlign:'center',
+                      color: pontosExcedido ? '#ff1744 !important' : undefined
+                    }}
+                  />
+                  <div style={{fontSize:9,color:'rgba(0,229,255,0.35)',marginTop:2,fontFamily:'Share Tech Mono',textAlign:'center'}}>
+                    máximo permitido de pontos
+                  </div>
                 </div>
+
                 {/* Escala */}
                 <div>
                   <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Escala</label>
@@ -1398,11 +1304,24 @@ const App = () => {
                 </div>
               </div>
 
-              {/* Pontos + XP */}
+              {/* ── MUDANÇA: Pontos Totais com vermelho se exceder ── */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:12,textAlign:'center'}}>
-                  <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',marginBottom:4,textTransform:'uppercase'}}>Pontos Totais</div>
-                  <div style={{fontFamily:'Orbitron',fontSize:28,fontWeight:900,color:'#00e5ff',textShadow:'0 0 15px var(--cg)'}}>{pts}</div>
+                <div style={{
+                  background:'rgba(0,0,0,0.4)',
+                  border:`1px solid ${pontosExcedido?'rgba(255,23,68,0.5)':'rgba(0,229,255,0.2)'}`,
+                  borderRadius:6,padding:12,textAlign:'center',
+                  boxShadow: pontosExcedido ? '0 0 15px rgba(255,23,68,0.2)' : 'none',
+                  transition:'all 0.3s'
+                }}>
+                  <div style={{fontFamily:'Orbitron',fontSize:9,color:pontosExcedido?'#ff5252':'rgba(0,229,255,0.5)',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>
+                    {pontosExcedido ? '⚠ PONTOS EXCEDIDOS' : 'Pontos Totais'}
+                  </div>
+                  <div style={{fontFamily:'Orbitron',fontSize:28,fontWeight:900,color:pontosExcedido?'#ff1744':'#00e5ff',textShadow:pontosExcedido?'0 0 15px rgba(255,23,68,0.6)':'0 0 15px var(--cg)',lineHeight:1}}>
+                    {pts}
+                  </div>
+                  <div style={{fontSize:10,color:pontosExcedido?'rgba(255,82,82,0.6)':'rgba(0,229,255,0.3)',marginTop:3,fontFamily:'Share Tech Mono'}}>
+                    / {pontosMax} máx
+                  </div>
                 </div>
                 <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:12,textAlign:'center'}}>
                   <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',marginBottom:4,textTransform:'uppercase'}}>XP</div>
@@ -1471,23 +1390,47 @@ const App = () => {
           </div>
         </div>
 
-        {/* INVENTÁRIO */}
+        {/* ── MUDANÇA: INVENTÁRIO SIMPLIFICADO ── */}
         <div className="panel" style={{padding:20,marginBottom:20}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16,flexWrap:'wrap',gap:8}}>
             <span style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',textTransform:'uppercase'}}>🎒 Inventário</span>
-            <select value={char.nivelInv||0} onChange={e=>setChar(c=>({...c,nivelInv:parseInt(e.target.value)}))} style={{fontSize:12,padding:'4px 8px',fontFamily:'Orbitron'}}>
-              <option value={0}>0pt (Padrão)</option>
-              <option value={1}>1pt (Pequeno)</option>
-              <option value={2}>2pt (Grande)</option>
-              <option value={3}>3pt (Supremo)</option>
-            </select>
+            {/* Campo de Dinheiro */}
+            <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,214,0,0.06)',border:'1px solid rgba(255,214,0,0.25)',borderRadius:8,padding:'6px 12px'}}>
+              <span style={{fontFamily:'Orbitron',fontSize:11,color:'#ffd600'}}>$</span>
+              <input
+                value={inv.dinheiro||''}
+                onChange={e=>setDinheiro(e.target.value)}
+                placeholder="0,00"
+                style={{width:100,fontSize:14,fontWeight:700,fontFamily:'Share Tech Mono',color:'#ffd600',background:'transparent',border:'none',textAlign:'right',outline:'none'}}
+              />
+            </div>
+            <Btn onClick={addInvItem} style={{fontSize:10,padding:'4px 12px'}}>+ Adicionar Item</Btn>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-            <InvCol title="Comuns" color="slate" items={char.inventario.comuns} limit={lim.comuns} onAdd={()=>addInv('comuns')} onUpdate={(id,f,v)=>updInv('comuns',id,f,v)} onRemove={id=>remInv('comuns',id)} />
-            <InvCol title="Incomuns" color="blue" items={char.inventario.incomuns} limit={lim.incomuns} onAdd={()=>addInv('incomuns')} onUpdate={(id,f,v)=>updInv('incomuns',id,f,v)} onRemove={id=>remInv('incomuns',id)} />
-            <InvCol title="Raros" color="yellow" items={char.inventario.raros} limit={lim.raros} onAdd={()=>addInv('raros')} onUpdate={(id,f,v)=>updInv('raros',id,f,v)} onRemove={id=>remInv('raros',id)} />
-            <InvCol title="Lendários" color="purple" items={char.inventario.lendarios} limit={lim.lendarios} onAdd={()=>addInv('lendarios')} onUpdate={(id,f,v)=>updInv('lendarios',id,f,v)} onRemove={id=>remInv('lendarios',id)} />
-          </div>
+          {inv.itens.length===0
+            ? <div style={{textAlign:'center',padding:'24px 0',color:'rgba(0,229,255,0.2)',fontSize:12,fontStyle:'italic'}}>Inventário vazio. Adicione itens acima.</div>
+            : <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:10}}>
+                {inv.itens.map(item=>(
+                  <div key={item.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.12)',borderRadius:6,padding:'10px 12px',position:'relative',display:'flex',gap:8,alignItems:'flex-start'}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <input
+                        placeholder="Nome do item"
+                        value={item.nome}
+                        onChange={e=>updInvItem(item.id,'nome',e.target.value)}
+                        style={{width:'100%',fontSize:13,fontWeight:700,padding:'2px 4px',marginBottom:4,background:'transparent',border:'none',borderBottom:'1px solid rgba(0,229,255,0.15)',color:'var(--ct)',outline:'none'}}
+                      />
+                      <input
+                        placeholder="Descrição / efeito..."
+                        value={item.desc||''}
+                        onChange={e=>updInvItem(item.id,'desc',e.target.value)}
+                        style={{width:'100%',fontSize:11,padding:'2px 4px',color:'rgba(0,229,255,0.5)'}}
+                      />
+                    </div>
+                    <button onClick={()=>remInvItem(item.id)} className="no-print"
+                      style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:14,flexShrink:0,paddingTop:2}}>×</button>
+                  </div>
+                ))}
+              </div>
+          }
         </div>
 
         {/* NOTAS */}
