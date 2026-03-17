@@ -950,6 +950,9 @@ const App = () => {
   const [joinId,setJoinId] = useState('');
   const [connected,setConnected] = useState(false);
   const [rolls,setRolls] = useState([]);
+  const [lobbyPlayers,setLobbyPlayers] = useState({});
+  const [iniciativas,setIniciativas] = useState([]);
+  const [arqPreviewOpen,setArqPreviewOpen] = useState(false);
   const peerRef = useRef(null);
   const connsRef = useRef([]);
   const clientRef = useRef(null);
@@ -980,12 +983,32 @@ const App = () => {
     } catch(e){alert('❌ Erro ao buscar da nuvem.');}
   };
 
+  const broadcastStatus = (charData) => {
+    const status = {nome:charData.nome||'Jogador',pv:charData.recursos.pv,pm:charData.recursos.pm,pa:charData.recursos.pa||0,maxPV:charData.atributos.resistencia===0?1:charData.atributos.resistencia*5,maxPM:charData.atributos.habilidade===0?1:charData.atributos.habilidade*5};
+    const msg = {type:'STATUS',payload:{peerId:lobbyId,status}};
+    setLobbyPlayers(p=>({...p,[lobbyId]:status}));
+    if(lobbyMode==='host') connsRef.current.forEach(c=>c.send(msg));
+    else if(lobbyMode==='client'&&clientRef.current) clientRef.current.send(msg);
+  };
+
+  const handleMsg = (d) => {
+    if(d.type==='ROLL'){setRolls(p=>[d.payload,...p].slice(0,50));}
+    if(d.type==='STATUS'){setLobbyPlayers(p=>({...p,[d.payload.peerId]:d.payload.status}));}
+    if(d.type==='INICIATIVA'){setIniciativas(d.payload);}
+  };
+
   const startHost = () => {
     const peer = new Peer();
     peer.on('open',id=>{setLobbyId(id);setLobbyMode('host');setConnected(true);});
     peer.on('connection',conn=>{
       connsRef.current.push(conn);
-      conn.on('data',d=>{if(d.type==='ROLL'){setRolls(p=>[d.payload,...p].slice(0,50));connsRef.current.forEach(c=>{if(c.peer!==conn.peer)c.send(d);});}});
+      conn.on('data',d=>{
+        handleMsg(d);
+        // relay to all other clients
+        if(d.type==='ROLL'||d.type==='STATUS'||d.type==='INICIATIVA'){
+          connsRef.current.forEach(c=>{if(c.peer!==conn.peer)c.send(d);});
+        }
+      });
       conn.on('close',()=>{connsRef.current=connsRef.current.filter(c=>c.peer!==conn.peer);});
     });
     peer.on('error',e=>{alert('Erro P2P: '+e.type);setConnected(false);});
@@ -998,7 +1021,7 @@ const App = () => {
     peer.on('open',()=>{
       const conn=peer.connect(joinId.trim());
       conn.on('open',()=>{setLobbyMode('client');setLobbyId(joinId.trim());setConnected(true);clientRef.current=conn;});
-      conn.on('data',d=>{if(d.type==='ROLL')setRolls(p=>[d.payload,...p].slice(0,50));});
+      conn.on('data',d=>handleMsg(d));
       conn.on('close',()=>{alert('Conexão perdida.');leaveLobby();});
     });
     peer.on('error',e=>{alert('Erro: '+e.type);});
@@ -1008,7 +1031,7 @@ const App = () => {
   const leaveLobby = () => {
     if(peerRef.current)peerRef.current.destroy();
     peerRef.current=null;connsRef.current=[];clientRef.current=null;
-    setLobbyMode(null);setLobbyId('');setConnected(false);setRolls([]);
+    setLobbyMode(null);setLobbyId('');setConnected(false);setRolls([]);setLobbyPlayers({});setIniciativas([]);
   };
 
   const broadcastRoll = (roll) => {
@@ -1017,6 +1040,19 @@ const App = () => {
     const msg={type:'ROLL',payload};
     if(lobbyMode==='host')connsRef.current.forEach(c=>c.send(msg));
     else if(lobbyMode==='client'&&clientRef.current)clientRef.current.send(msg);
+  };
+
+  const rolarIniciativa = () => {
+    const habil = char.atributos.habilidade||0;
+    const dados = Math.max(1,Math.min(3,1+habil));
+    const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
+    const total = res.reduce((a,b)=>a+b,0)+habil;
+    const entry = {peerId:lobbyId,nome:char.nome||'Jogador',total,res,habil,time:Date.now()};
+    const novas = [...iniciativas.filter(i=>i.peerId!==lobbyId),entry].sort((a,b)=>b.total-a.total);
+    setIniciativas(novas);
+    const msg = {type:'INICIATIVA',payload:novas};
+    if(lobbyMode==='host') connsRef.current.forEach(c=>c.send(msg));
+    else if(lobbyMode==='client'&&clientRef.current) clientRef.current.send(msg);
   };
 
   useEffect(()=>{
@@ -1142,15 +1178,58 @@ const App = () => {
 
       {/* LOBBY SIDEBAR */}
       {lobby && (
-        <div style={{position:'fixed',top:0,right:0,bottom:0,width:300,background:'var(--cp)',borderLeft:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
-          <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:12}}>SALA DE ROLAGENS</span>
+        <div style={{position:'fixed',top:0,right:0,bottom:0,width:320,background:'var(--cp)',borderLeft:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
+          {/* Header */}
+          <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.3)'}}>
+            <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:12,letterSpacing:2}}>⚔ SALA DE ROLAGENS</span>
             <button onClick={()=>setLobby(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
           </div>
-          <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
+
+          {/* My Status Bar — always visible when connected */}
+          {connected && (
+            <div style={{padding:'10px 16px',borderBottom:'1px solid rgba(0,229,255,0.15)',background:'rgba(0,0,0,0.4)'}}>
+              <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>
+                {char.nome||'Jogador'} — Status Atual
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+                {/* PV */}
+                <div style={{background:'rgba(255,23,68,0.08)',border:'1px solid rgba(255,23,68,0.25)',borderRadius:6,padding:'6px 8px',textAlign:'center'}}>
+                  <div style={{fontSize:9,color:'#ff5252',fontFamily:'Orbitron',marginBottom:2}}>♥ PV</div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>
+                    <button onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pv:Math.max(0,(c.recursos.pv||0)-1)}}))} style={{background:'none',border:'none',color:'#ff5252',cursor:'pointer',fontSize:14,lineHeight:1,padding:'0 2px'}}>−</button>
+                    <span style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:'#ff5252'}}>{char.recursos.pv||0}</span>
+                    <button onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pv:(c.recursos.pv||0)+1}}))} style={{background:'none',border:'none',color:'#ff5252',cursor:'pointer',fontSize:14,lineHeight:1,padding:'0 2px'}}>+</button>
+                  </div>
+                  <div style={{fontSize:8,color:'rgba(255,82,82,0.4)'}}>/ {char.atributos.resistencia===0?1:char.atributos.resistencia*5}</div>
+                </div>
+                {/* PM */}
+                <div style={{background:'rgba(0,229,255,0.05)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:'6px 8px',textAlign:'center'}}>
+                  <div style={{fontSize:9,color:'#00e5ff',fontFamily:'Orbitron',marginBottom:2}}>⚡ PM</div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>
+                    <button onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pm:Math.max(0,(c.recursos.pm||0)-1)}}))} style={{background:'none',border:'none',color:'#00e5ff',cursor:'pointer',fontSize:14,lineHeight:1,padding:'0 2px'}}>−</button>
+                    <span style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:'#00e5ff'}}>{char.recursos.pm||0}</span>
+                    <button onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pm:(c.recursos.pm||0)+1}}))} style={{background:'none',border:'none',color:'#00e5ff',cursor:'pointer',fontSize:14,lineHeight:1,padding:'0 2px'}}>+</button>
+                  </div>
+                  <div style={{fontSize:8,color:'rgba(0,229,255,0.3)'}}>/ {char.atributos.habilidade===0?1:char.atributos.habilidade*5}</div>
+                </div>
+                {/* PA */}
+                <div style={{background:'rgba(255,214,0,0.05)',border:'1px solid rgba(255,214,0,0.2)',borderRadius:6,padding:'6px 8px',textAlign:'center'}}>
+                  <div style={{fontSize:9,color:'#ffd600',fontFamily:'Orbitron',marginBottom:2}}>★ PA</div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>
+                    <button onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pa:Math.max(0,(c.recursos.pa||0)-1)}}))} style={{background:'none',border:'none',color:'#ffd600',cursor:'pointer',fontSize:14,lineHeight:1,padding:'0 2px'}}>−</button>
+                    <span style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:'#ffd600'}}>{char.recursos.pa||0}</span>
+                    <button onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pa:(c.recursos.pa||0)+1}}))} style={{background:'none',border:'none',color:'#ffd600',cursor:'pointer',fontSize:14,lineHeight:1,padding:'0 2px'}}>+</button>
+                  </div>
+                  <div style={{fontSize:8,color:'rgba(255,214,0,0.3)'}}>/ {char.atributos.poder||1}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{flex:1,overflowY:'auto',padding:12,display:'flex',flexDirection:'column',gap:10}}>
             {!connected ? (
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                <p style={{color:'rgba(0,229,255,0.5)',fontSize:12}}>Conecte-se com seus amigos para compartilhar rolagens em tempo real.</p>
+                <p style={{color:'rgba(0,229,255,0.5)',fontSize:12,textAlign:'center',padding:'8px 0'}}>Conecte-se com seus amigos para compartilhar rolagens em tempo real.</p>
                 <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:12,display:'flex',flexDirection:'column',gap:8}}>
                   <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>CRIAR SALA (MESTRE)</div>
                   <Btn onClick={startHost} style={{fontSize:10}}>👑 CRIAR NOVA SALA</Btn>
@@ -1163,33 +1242,99 @@ const App = () => {
                 </div>
               </div>
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                <div style={{background:'rgba(0,230,118,0.08)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:6,padding:10}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                    <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e676'}}>● {lobbyMode==='host'?'HOST':'CONECTADO'}</span>
-                    <button onClick={leaveLobby} style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:11,fontFamily:'Orbitron'}}>SAIR</button>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {/* Connection info */}
+                <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.25)',borderRadius:6,padding:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{fontFamily:'Orbitron',fontSize:9,color:'#00e676',letterSpacing:1}}>● {lobbyMode==='host'?'HOST':'CONECTADO'}</span>
+                    <button onClick={leaveLobby} style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:10,fontFamily:'Orbitron'}}>SAIR</button>
                   </div>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.4)',borderRadius:4,padding:'6px 8px'}}>
-                    <span style={{fontFamily:'Share Tech Mono',fontSize:11,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:8}}>{lobbyId}</span>
-                    <button onClick={()=>{navigator.clipboard.writeText(lobbyId);alert('ID copiado!');}} style={{background:'none',border:'1px solid rgba(0,229,255,0.3)',color:'#00e5ff',borderRadius:3,padding:'2px 6px',cursor:'pointer',fontSize:10}}>📋</button>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.4)',borderRadius:4,padding:'4px 8px'}}>
+                    <span style={{fontFamily:'Share Tech Mono',fontSize:10,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:6}}>{lobbyId}</span>
+                    <button onClick={()=>{navigator.clipboard.writeText(lobbyId);alert('ID copiado!');}} style={{background:'none',border:'1px solid rgba(0,229,255,0.3)',color:'#00e5ff',borderRadius:3,padding:'2px 6px',cursor:'pointer',fontSize:9,flexShrink:0}}>📋</button>
                   </div>
                 </div>
-                <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',textTransform:'uppercase',borderBottom:'1px solid rgba(0,229,255,0.1)',paddingBottom:4}}>Log de Rolagens</div>
-                {rolls.length===0
-                  ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic'}}>Faça uma rolagem para aparecer aqui.</p>
-                  : rolls.map(r=>(
-                    <div key={r.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:10}}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-                        <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>{r.player}</span>
-                        <span style={{fontSize:9,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono'}}>{r.time}</span>
+
+                {/* MEUS RECURSOS */}
+                <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:8}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:9,color:'#00e5ff',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>🎮 {char.nome||'Jogador'}</div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+                    {[
+                      {label:'PV',val:char.recursos.pv,max:maxPV,color:'#ff5252',bg:'rgba(255,23,68,0.12)'},
+                      {label:'PM',val:char.recursos.pm,max:maxPM,color:'#00e5ff',bg:'rgba(0,229,255,0.1)'},
+                      {label:'PA',val:char.recursos.pa||0,max:maxPA,color:'#ffd600',bg:'rgba(255,214,0,0.1)'},
+                    ].map(r=>(
+                      <div key={r.label} style={{background:r.bg,border:'1px solid '+r.color+'44',borderRadius:4,padding:'4px 6px',textAlign:'center'}}>
+                        <div style={{fontFamily:'Orbitron',fontSize:8,color:r.color,marginBottom:2}}>{r.label}</div>
+                        <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:r.color}}>{r.val}</div>
+                        <div style={{fontSize:8,color:r.color+'88',fontFamily:'Share Tech Mono'}}>/{r.max}</div>
+                        <div style={{height:3,background:'rgba(0,0,0,0.5)',borderRadius:2,marginTop:2,overflow:'hidden'}}>
+                          <div style={{height:'100%',width:(r.max>0?Math.min(100,(r.val/r.max)*100):0)+'%',background:r.color,transition:'width 0.3s'}} />
+                        </div>
                       </div>
-                      <div style={{display:'flex',alignItems:'center',gap:10}}>
-                        <span style={{fontFamily:'Orbitron',fontSize:22,fontWeight:900,color:r.roll.fail?'#ff1744':'#00e5ff'}}>{r.roll.fail?'FALHA':r.roll.total}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* STATUS DOS JOGADORES */}
+                {Object.keys(lobbyPlayers||{}).length > 0 && (
+                  <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:8}}>
+                    <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>👥 Jogadores</div>
+                    {Object.entries(lobbyPlayers).map(([id,p])=>(
+                      <div key={id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4,padding:'4px 6px',background:'rgba(0,0,0,0.3)',borderRadius:4}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontFamily:'Orbitron',fontSize:9,color:'#e8f4f8'}}>{p.nome||'Jogador'}</div>
+                        </div>
+                        <div style={{display:'flex',gap:4,fontSize:9,fontFamily:'Share Tech Mono'}}>
+                          <span style={{color:'#ff5252'}}>♥{p.pv??'?'}</span>
+                          <span style={{color:'#00e5ff'}}>⚡{p.pm??'?'}</span>
+                          <span style={{color:'#ffd600'}}>★{p.pa??'?'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* TRACKER DE INICIATIVA */}
+                <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,214,0,0.2)',borderRadius:6,padding:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <div style={{fontFamily:'Orbitron',fontSize:9,color:'#ffd600',textTransform:'uppercase',letterSpacing:1}}>⚔ Iniciativa</div>
+                    <div style={{display:'flex',gap:4}}>
+                      <button onClick={rolarIniciativa} style={{background:'rgba(255,214,0,0.1)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>ROLAR</button>
+                      {lobbyMode==='host' && <button onClick={()=>{setIniciativas([]);const msg={type:'INICIATIVA',payload:[]};connsRef.current.forEach(c=>c.send(msg));}} style={{background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.3)',color:'#ff5252',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>LIMPAR</button>}
+                    </div>
+                  </div>
+                  {iniciativas.length===0
+                    ? <p style={{color:'rgba(255,214,0,0.25)',fontSize:10,textAlign:'center',fontStyle:'italic',padding:'4px 0'}}>Nenhuma iniciativa rolada.</p>
+                    : iniciativas.map((ini,idx)=>(
+                      <div key={ini.peerId+ini.time} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4,padding:'5px 8px',background:idx===0?'rgba(255,214,0,0.08)':'rgba(0,0,0,0.3)',border:'1px solid '+(idx===0?'rgba(255,214,0,0.3)':'rgba(0,229,255,0.1)'),borderRadius:4}}>
+                        <span style={{fontFamily:'Orbitron',fontSize:11,fontWeight:900,color:idx===0?'#ffd600':'#00e5ff',minWidth:20,textAlign:'center'}}>{ini.total}</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontFamily:'Orbitron',fontSize:9,color:idx===0?'#ffd600':'#e8f4f8'}}>{idx===0?'👑 ':''}{ini.nome}</div>
+                          <div style={{fontSize:8,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>[{ini.res.join(',')}] +H{ini.habil}</div>
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+
+                {/* LOG DE ROLAGENS */}
+                <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',textTransform:'uppercase',letterSpacing:1,borderBottom:'1px solid rgba(0,229,255,0.1)',paddingBottom:4}}>📋 Log de Rolagens</div>
+                {rolls.length===0
+                  ? <p style={{color:'rgba(0,229,255,0.2)',fontSize:10,textAlign:'center',fontStyle:'italic',padding:'4px 0'}}>Faça uma rolagem para aparecer aqui.</p>
+                  : rolls.map(r=>(
+                    <div key={r.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.12)',borderRadius:6,padding:8}}>
+                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                        <span style={{fontFamily:'Orbitron',fontSize:9,color:'#00e5ff'}}>{r.player}</span>
+                        <span style={{fontSize:8,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono'}}>{r.time}</span>
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{fontFamily:'Orbitron',fontSize:20,fontWeight:900,color:r.roll.fail?'#ff1744':'#00e5ff'}}>{r.roll.fail?'FALHA':r.roll.total}</span>
                         <div>
-                          <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textTransform:'uppercase'}}>{r.roll.attr} ({r.roll.dice}D)</div>
-                          <div style={{display:'flex',gap:3,marginTop:2}}>
+                          <div style={{fontSize:8,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textTransform:'uppercase'}}>{r.roll.attr} ({r.roll.dice}D)</div>
+                          <div style={{display:'flex',gap:2,marginTop:2}}>
                             {r.roll.res.map((v,i)=>(
-                              <span key={i} style={{width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,borderRadius:2,background:v>=r.roll.crit?'rgba(255,214,0,0.2)':'rgba(0,229,255,0.08)',color:v>=r.roll.crit?'#ffd600':'#00e5ff',border:'1px solid rgba(0,229,255,0.15)'}}>{v}</span>
+                              <span key={i} style={{width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,borderRadius:2,background:v>=r.roll.crit?'rgba(255,214,0,0.2)':'rgba(0,229,255,0.08)',color:v>=r.roll.crit?'#ffd600':'#00e5ff',border:'1px solid rgba(0,229,255,0.15)'}}>{v}</span>
                             ))}
                           </div>
                         </div>
@@ -1268,8 +1413,7 @@ const App = () => {
                     <input list="arq-list" value={char.arquetipo} onChange={e=>{
                       const v=e.target.value;
                       const arq=ARQUETIPOS[v];
-                      if(!arq){setChar(c=>({...c,arquetipo:v}));return;}
-                      // Remove desvantagens do arquétipo anterior e adiciona as novas
+                      if(!arq){setChar(c=>({...c,arquetipo:v}));setArqPreviewOpen(false);return;}
                       let novasDesv = char.desvantagens.filter(d=>!d.detalhe||!d.detalhe.includes('(Arquétipo:'));
                       if(arq.desv && arq.desv.length>0){
                         arq.desv.forEach((d,i)=>{
@@ -1277,11 +1421,12 @@ const App = () => {
                         });
                       }
                       setChar(c=>({...c,arquetipo:v,arquetipoCusto:arq.custo,desvantagens:novasDesv}));
+                      setArqPreviewOpen(true);
                     }} placeholder="Arquétipo..." style={{flex:1,fontSize:14,fontWeight:700,padding:'6px 8px'}} />
                     <datalist id="arq-list">{LISTA_ARQ.map(a=><option key={a} value={a}>{a} ({ARQUETIPOS[a].custo}pt)</option>)}</datalist>
                     <input type="number" value={char.arquetipoCusto} onChange={e=>setChar(c=>({...c,arquetipoCusto:parseInt(e.target.value)||0}))} style={{width:44,textAlign:'center',fontSize:14,fontWeight:700,padding:'6px 4px'}} />
                   </div>
-                  {char.arquetipo && ARQUETIPOS[char.arquetipo] && (
+                  {char.arquetipo && ARQUETIPOS[char.arquetipo] && arqPreviewOpen && (
                     <div className="no-print" style={{background:'rgba(0,229,255,0.04)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:10,marginTop:6}}>
                       <div style={{fontSize:10,color:'rgba(255,214,0,0.7)',marginBottom:4,fontFamily:'Orbitron'}}>{char.arquetipo} — {ARQUETIPOS[char.arquetipo].custo}pt</div>
                       <div style={{fontSize:11,color:'rgba(0,229,255,0.6)',marginBottom:8,lineHeight:1.4}}>{ARQUETIPOS[char.arquetipo].desc}</div>
@@ -1306,6 +1451,7 @@ const App = () => {
                           ))}
                         </div>
                       )}
+                      <button onClick={()=>setArqPreviewOpen(false)} style={{marginTop:10,width:'100%',padding:'6px',background:'rgba(0,229,255,0.12)',border:'1px solid var(--ca)',color:'var(--ca)',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,textTransform:'uppercase',letterSpacing:1}}>✓ Confirmar Arquétipo</button>
                     </div>
                   )}
                 </div>
