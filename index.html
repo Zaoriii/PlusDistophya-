@@ -1,892 +1,830 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <title>Ficha 3DeT Victory - Gerenciável</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-    <style>
-      body { color-scheme: dark; }
-      @media print {
-        .no-print { display: none !important; }
-        body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; color-scheme: light; }
-        .bg-slate-900, .bg-slate-800, .bg-slate-950 { background: white !important; color: black !important; }
-        input, textarea, select { border: none !important; resize: none; overflow: hidden; appearance: none; }
-        .max-w-6xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-        .min-h-screen { min-height: auto; }
-        #sidebar { display: none; }
-        #dice-modal { display: none !important; }
-        textarea { height: auto !important; }
-        .custom-scrollbar { max-height: none !important; overflow: visible !important; }
-      }
-      input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #475569; }
-      @keyframes roll {
-        0% { transform: rotate(0deg); } 25% { transform: rotate(90deg); }
-        50% { transform: rotate(180deg); } 75% { transform: rotate(270deg); } 100% { transform: rotate(360deg); }
-      }
-      .rolling { animation: roll 0.5s linear infinite; }
-    </style>
-  </head>
-  <body class="bg-slate-900 text-slate-100 font-sans overflow-x-hidden">
-    <div id="root"></div>
-    <script type="text/babel">
-      const { useState, useEffect, useRef, useMemo, useLayoutEffect } = React;
-      const LISTA_PERICIAS = ["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"];
-      const DB_ARQUETIPOS = {
-        "Humano":{custo:0,desc:""},"Aberrante":{custo:1,desc:""},"Abissal":{custo:1,desc:""},"Alien":{custo:1,desc:""},
-        "Anfíbio":{custo:1,desc:""},"Celestial":{custo:1,desc:""},"Construto":{custo:1,desc:""},"Dahllan":{custo:1,desc:""},
-        "Elfo":{custo:1,desc:""},"Fada":{custo:1,desc:""},"Goblin":{custo:1,desc:""},"Hynne":{custo:1,desc:""},
-        "Kemono":{custo:1,desc:""},"Medusa":{custo:1,desc:""},"Minotauro":{custo:1,desc:""},"Ogro":{custo:1,desc:""},
-        "Vampiro":{custo:1,desc:""},"Centauro":{custo:2,desc:""},"Ciborgue":{custo:2,desc:""},"Fantasma":{custo:2,desc:""},
-        "Kallyanach":{custo:2,desc:""},"Osteon":{custo:2,desc:""},"Qareen":{custo:2,desc:""},"Sauroide":{custo:2,desc:""}
-      };
-      const LISTA_ARQUETIPOS = Object.keys(DB_ARQUETIPOS).sort();
-      const DB_KITS = {
-        "Abastado":{desc:"",poderes:[{nome:"Meritocracia",desc:"",custo:"1"},{nome:"Poder aquisitivo",desc:"",custo:"1"},{nome:"Tempo é dinheiro!",desc:"",custo:"1"}]},
-        "Agente Secreto":{desc:"",poderes:[{nome:"Identidade secreta",desc:"",custo:"1"},{nome:"Olho clínico",desc:"",custo:"1"},{nome:"Plano de ação",desc:"",custo:"1"}]},
-        "Alquimista":{desc:"",poderes:[{nome:"Diagrama",desc:"",custo:"1"},{nome:"Diagrama pessoal",desc:"",custo:"1"},{nome:"Troca equivalente",desc:"",custo:"1"}]},
-        "Artista Marcial":{desc:"",poderes:[{nome:"Kata",desc:"",custo:"1"},{nome:"Montagem de treino",desc:"",custo:"1"},{nome:"Lutarei para conseguir!",desc:"",custo:"1"}]},
-        "Bárbaro":{desc:"",poderes:[{nome:"Espírito livre",desc:"",custo:"1"},{nome:"Frenesi de combate",desc:"",custo:"1"},{nome:"Resistência superior",desc:"",custo:"1"}]},
-        "Guerreiro":{desc:"",poderes:[{nome:"Análise de combate",desc:"",custo:"1"},{nome:"Crítico aprimorado",desc:"",custo:"1"},{nome:"Mestre das armas",desc:"",custo:"1"},{nome:"Ataque Contínuo",desc:"",custo:"1"}]},
-        "Mago":{desc:"",poderes:[{nome:"Aptidão mágica",desc:"",custo:"1"},{nome:"Bateria de mana",desc:"",custo:"1"},{nome:"Preparar magias",desc:"",custo:"1"},{nome:"Magia Intensa",desc:"",custo:"1"},{nome:"Recuperação Arcana",desc:"",custo:"1"}]},
-        "Ladino":{desc:"",poderes:[{nome:"Ataque furtivo",desc:"",custo:"1"},{nome:"Especialista em fugas",desc:"",custo:"1"},{nome:"Sentido de tesouro",desc:"",custo:"1"}]},
-        "Clérigo":{desc:"",poderes:[{nome:"Devoto fervoroso",desc:"",custo:"1"},{nome:"Dom divino",desc:"",custo:"1"},{nome:"Poder concedido",desc:"",custo:"1"}]},
-        "Curandeiro":{desc:"",poderes:[{nome:"Paramédico",desc:"",custo:"1"},{nome:"Cura crítica",desc:"",custo:"1"},{nome:"Explosão de cura",desc:"",custo:"1"}]},
-        "Monge":{desc:"",poderes:[{nome:"Agilidade superior",desc:"",custo:"1"},{nome:"Alma de aço",desc:"",custo:"1"},{nome:"Controle dos chakras",desc:"",custo:"1"}]},
-        "Ninja":{desc:"",poderes:[{nome:"Mestre ninja",desc:"",custo:"1"},{nome:"Ninpo de combate",desc:"",custo:"1"},{nome:"Ougi",desc:"",custo:"1"}]},
-        "Paladino":{desc:"",poderes:[{nome:"Arma sagrada",desc:"",custo:"1"},{nome:"Dharma",desc:"",custo:"1"},{nome:"Sétimo sentido",desc:"",custo:"1"}]},
-        "Ranger":{desc:"",poderes:[{nome:"Explorador nato",desc:"",custo:"1"},{nome:"Rastreador",desc:"",custo:"1"},{nome:"Companheiro animal",desc:"",custo:"1"}]},
-        "Tanque":{desc:"",poderes:[{nome:"Hoje não!",desc:"",custo:"1"},{nome:"Defesa gratuita",desc:"",custo:"1"},{nome:"Último bastião",desc:"",custo:"1"}]},
-        "DPS":{desc:"",poderes:[{nome:"Estilo de combate",desc:"",custo:"1"},{nome:"Ataque gratuito",desc:"",custo:"1"},{nome:"Último recurso",desc:"",custo:"1"}]},
-        "Super-Herói":{desc:"",poderes:[{nome:"Sobrehumano",desc:"",custo:"1"},{nome:"Façanha épica",desc:"",custo:"1"},{nome:"Herói de ação",desc:"",custo:"1"}]}
-      };
-      const LISTA_KITS = Object.keys(DB_KITS).sort();
-      const DB_VANTAGENS = {
-        "Aceleração":{custo:"1",desc:""},"+Ação":{custo:"1",desc:""},"Acumulador":{custo:"1",desc:""},"Ágil":{custo:"1",desc:""},
-        "Ajudante":{custo:"1",desc:""},"Alcance":{custo:"1-2",desc:""},"Anulação":{custo:"2",desc:""},"Arena":{custo:"1",desc:""},
-        "Artefato":{custo:"1+",desc:""},"Ataque Especial":{custo:"1",desc:""},"Base":{custo:"1",desc:""},"Brutal":{custo:"1",desc:""},
-        "Carismático":{custo:"1",desc:""},"Clone":{custo:"1",desc:""},"Companheiro":{custo:"1",desc:""},"Confusão":{custo:"1",desc:""},
-        "Cura":{custo:"1",desc:""},"Defesa Especial":{custo:"1",desc:""},"Desgaste":{custo:"1",desc:""},"Devoto":{custo:"1",desc:""},
-        "Elo Mental":{custo:"1",desc:""},"Estender":{custo:"1",desc:""},"Famoso":{custo:"1",desc:""},"Foco":{custo:"1",desc:""},
-        "Forte":{custo:"1",desc:""},"Gênio":{custo:"1",desc:""},"Golpe Final":{custo:"1",desc:""},"Grimório":{custo:"1+",desc:""},
-        "Ilusão":{custo:"2",desc:""},"Imitar":{custo:"1",desc:""},"Imortal":{custo:"1",desc:""},"Improviso":{custo:"2",desc:""},
-        "Imune":{custo:"1",desc:""},"Incorpóreo":{custo:"2",desc:""},"Inimigo":{custo:"1-2",desc:""},"Inofensivo":{custo:"1",desc:""},
-        "Instrutor":{custo:"1",desc:""},"Inventário":{custo:"1-3",desc:""},"Invisível":{custo:"1-2",desc:""},"Irresistível":{custo:"1",desc:""},
-        "Maestria":{custo:"1",desc:""},"Magia":{custo:"2",desc:""},"+Mana":{custo:"1",desc:""},"+Membros":{custo:"2",desc:""},
-        "Mentor":{custo:"1",desc:""},"Obstinado":{custo:"1",desc:""},"Paralisia":{custo:"1",desc:""},"Patrono":{custo:"1",desc:""},
-        "Punição":{custo:"1-2",desc:""},"Regeneração":{custo:"1-2",desc:""},"Resoluto":{custo:"1",desc:""},"Riqueza":{custo:"2+",desc:""},
-        "Sentido":{custo:"1",desc:""},"Telepata":{custo:"1",desc:""},"Teleporte":{custo:"1",desc:""},"Torcida":{custo:"1",desc:""},
-        "Transformação":{custo:"1-2",desc:""},"+Vida":{custo:"1",desc:""},"Vigoroso":{custo:"1",desc:""},"Voo":{custo:"1",desc:""}
-      };
-      const LISTA_VANTAGENS = Object.keys(DB_VANTAGENS).sort();
-      const DB_DESVANTAGENS = {
-        "Ambiente":{custo:"-1",desc:""},"Amnésia":{custo:"-2",desc:""},"Antipático":{custo:"-1",desc:""},"Assombrado":{custo:"-1 ou -2",desc:""},
-        "Atrapalhado":{custo:"-1",desc:""},"Aura":{custo:"-1 ou -2",desc:""},"Bateria":{custo:"-1",desc:""},"Código":{custo:"-1",desc:""},
-        "Dependência":{custo:"-2",desc:""},"Diferente":{custo:"-1",desc:""},"Elo Vital":{custo:"-1",desc:""},"Fracote":{custo:"-1",desc:""},
-        "Frágil":{custo:"-1",desc:""},"Fraqueza":{custo:"-1 ou -2",desc:""},"Fúria":{custo:"-2",desc:""},"Inapto":{custo:"-1",desc:""},
-        "Inculto":{custo:"-1",desc:""},"Indeciso":{custo:"-1",desc:""},"Infame":{custo:"-1",desc:""},"Lento":{custo:"-1",desc:""},
-        "Maldição":{custo:"-1 ou -2",desc:""},"Monstruoso":{custo:"-1",desc:""},"Munição":{custo:"-1",desc:""},"Pacifista":{custo:"-1 ou -2",desc:""},
-        "Pobreza":{custo:"-1",desc:""},"Ponto Fraco":{custo:"-1",desc:""},"Protegido":{custo:"-1",desc:""},"Restrição":{custo:"-1 ou -2",desc:""},
-        "Sem Vida":{custo:"-2",desc:""},"Tapado":{custo:"-1",desc:""},"Transtorno":{custo:"-1",desc:""},"Utensílio":{custo:"-1 ou -2",desc:""}
-      };
-      const LISTA_DESVANTAGENS = Object.keys(DB_DESVANTAGENS).sort();
-      const OPCOES_POR_ITEM = {
-        "Arte":["Atuação","Culinária","Dança","Escrita","Ilustração","Música"],
-        "Esporte":["Acrobacia","Atletismo","Corrida","Natação","Pilotagem"],
-        "Saber":["Arcano","Ciências","Direito","Geografia","História","Idiomas","Natureza","Religião","Tecnologia"],
-        "Sobrevivência":["Florestas","Desertos","Gelo","Urbano","Mar"],
-        "Ajudante":["Curandeiro","Especialista","Familiar","Lutador","Montaria"],
-        "Ataque Especial":["Área","Choque","Penetrante","Preciso","Paralisante"],
-        "Defesa Especial":["Bloqueio","Esquiva","Proteção","Reflexão","Tenaz"],
-        "Imune":["Abiótico","Anfíbio","Doenças","Resiliente","Sem Mente"],
-        "Inimigo":["Humanos","Espíritos","Monstros","Youkai","Construtos"],
-        "Arena":["Água","Céu","Cidades","Desertos","Florestas","Subterrâneo"],
-        "Sentido":["Aguçado","Infravisão","Intuição","Radar","Raio X"],
-        "Maestria":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],
-        "Mentor":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],
-        "Ambiente":["Água","Céu","Cidades","Desertos","Florestas","Subterrâneo","Frio","Calor"],
-        "Código":["Caçador","Combate","Heróis","Honra","Redenção"],
-        "Dependência":["Remédio","Ambiente Específico","Item Mágico"],
-        "Fraqueza":["Luz Solar","Água","Fogo","Símbolos Sagrados"],
-        "Inapto":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],
-        "Transtorno":["Cleptomania","Compulsão","Fantasia","Fobia","Megalomania","Paranoia"]
-      };
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plus Distophya - Ficha 3DeT Victory</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cb: #030810; --cp: #060d1a; --ca: #00e5ff;
+      --cg: rgba(0,229,255,0.4); --cg2: rgba(0,229,255,0.15);
+      --ct: #cde8f0; --cr: #ff1744; --cgreen: #00e676; --cy: #ffd600;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--cb); color: var(--ct); font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.012) 2px, rgba(0,229,255,0.012) 4px);
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    h1,h2,h3,h4,.orb { font-family: 'Orbitron', sans-serif !important; }
+    .mono { font-family: 'Share Tech Mono', monospace; }
+    .panel { background: var(--cp); border: 1px solid rgba(0,229,255,0.25); border-radius: 8px; }
+    .panel:hover { border-color: rgba(0,229,255,0.5); }
+    .neon { color: var(--ca); text-shadow: 0 0 10px var(--cg); }
+    .cbtn {
+      background: transparent; border: 1px solid var(--ca); color: var(--ca);
+      font-family: 'Orbitron', sans-serif; text-transform: uppercase; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.2s; border-radius: 6px; padding: 6px 12px;
+    }
+    .cbtn:hover { background: rgba(0,229,255,0.1); box-shadow: 0 0 15px var(--cg); }
+    input, textarea, select {
+      background: rgba(0,0,0,0.6) !important; color: var(--ct) !important;
+      border: 1px solid rgba(0,229,255,0.2) !important; font-family: 'Rajdhani', sans-serif !important;
+      border-radius: 6px; outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--ca) !important; box-shadow: 0 0 8px var(--cg2) !important; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--ca); }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    @keyframes flicker { 0%,100%{opacity:1} 93%{opacity:0.8} 96%{opacity:0.9} }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 8px var(--cg)} 50%{box-shadow:0 0 25px var(--cg),0 0 50px var(--cg2)} }
+    @keyframes roll { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+    .flicker { animation: flicker 4s infinite; }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    .rolling { animation: roll 0.5s linear infinite; }
+    @media print {
+      .no-print { display: none !important; }
+      body::before, body::after { display: none !important; }
+      body, * { background: white !important; color: black !important; border-color: #ccc !important; box-shadow: none !important; text-shadow: none !important; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.PERICIAS = ["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"];
+window.ARQUETIPOS = {"Humano":0,"Aberrante":1,"Abissal":1,"Alien":1,"Anfíbio":1,"Celestial":1,"Construto":1,"Dahllan":1,"Elfo":1,"Fada":1,"Goblin":1,"Hynne":1,"Kemono":1,"Medusa":1,"Minotauro":1,"Ogro":1,"Vampiro":1,"Centauro":2,"Ciborgue":2,"Fantasma":2,"Kallyanach":2,"Osteon":2,"Qareen":2,"Sauroide":2};
+window.LISTA_ARQ = Object.keys(window.ARQUETIPOS).sort();
+window.KITS = {"Abastado":["Meritocracia","Poder aquisitivo","Tempo é dinheiro!"],"Agente Secreto":["Identidade secreta","Olho clínico","Plano de ação"],"Alquimista":["Diagrama","Diagrama pessoal","Troca equivalente"],"Artista Marcial":["Kata","Montagem de treino","Lutarei para conseguir!"],"Bárbaro":["Espírito livre","Frenesi de combate","Resistência superior"],"Clérigo":["Devoto fervoroso","Dom divino","Poder concedido"],"Curandeiro":["Paramédico","Cura crítica","Explosão de cura"],"DPS":["Estilo de combate","Ataque gratuito","Último recurso"],"Druida":["Forma selvagem","Irmãos selvagens","Dádiva da natureza"],"Guerreiro":["Análise de combate","Crítico aprimorado","Mestre das armas","Ataque Contínuo"],"Ladino":["Ataque furtivo","Especialista em fugas","Sentido de tesouro"],"Mago":["Aptidão mágica","Bateria de mana","Preparar magias","Magia Intensa","Recuperação Arcana"],"Monge":["Agilidade superior","Alma de aço","Controle dos chakras"],"Ninja":["Mestre ninja","Ninpo de combate","Ougi"],"Paladino":["Arma sagrada","Dharma","Sétimo sentido"],"Super-Herói":["Sobrehumano","Façanha épica","Herói de ação"],"Tanque":["Hoje não!","Defesa gratuita","Último bastião"]};
+window.LISTA_KITS = Object.keys(window.KITS).sort();
+window.VANTAGENS = {"Aceleração":{c:"1",d:"Pode gastar 1PM para realizar um movimento extra em seu turno, ou Ganho na iniciativa."},"+Ação":{c:"1",d:"Você tem mais PA, além daqueles oferecidos por Poder. Cada compra = +2PA."},"Acumulador":{c:"1",d:"Ao acertar um ataque, pode gastar 2PM para ganhar P+1 no próximo ataque. Máximo P+5."},"Ágil":{c:"1",d:"Recebe H+2 em testes de agilidade, coordenação ou equilíbrio. Pode gastar 2PM para crítico com 5 ou 6."},"Ajudante":{c:"1",d:"Uma vez por rodada, gaste 2PM para invocar ajudante. Tipos: Curandeiro, Especialista, Familiar (1PM), Lutador ou Montaria (1PM)."},"Alcance":{c:"1-2",d:"1pt: alcança Longe sem penalidade. 2pt: também alcança Muito Longe sem penalidade."},"Anulação":{c:"2",d:"Gaste 1 ação e 3PM para anular uma vantagem usada em sua presença. Alvo faz teste R(9+P) para resistir."},"Arena":{c:"1",d:"Gaste 2PM para ter Ganho em testes em um tipo de terreno específico (Água, Céu, Cidades, Ermos ou Subterrâneo)."},"Artefato":{c:"1+",d:"Você possui um item especial e único. Cada ponto = 10XP para adquirir arma, armadura ou acessório."},"Ataque Especial":{c:"1",d:"Ao atacar, gaste PM para efeitos: Área(3PM), Choque(1PM), Distante(1PM), Penetrante(2PM), Perigoso(1PM), Potente(1PM/P+2), Preciso(1PM), Titânico(3PM)."},"Base":{c:"1",d:"Você tem uma base de operações. Pode alcançá-la fora de combate. Todos seus testes lá têm Ganho."},"Brutal":{c:"1",d:"Ao atacar, recupera energias. Versões (1pt cada): Vida (1PV/3 dano), Mana (1PM/3 dano), Derrota (3PV+1PM ao derrotar)."},"Carismático":{c:"1",d:"Recebe P+2 em testes sociais. Pode gastar 2PM para crítico com 5 ou 6."},"Clone":{c:"1",d:"Gaste 2PM por clone. Ao receber ataque, clone desaparece no lugar de você. Clones não agem sozinhos."},"Companheiro":{c:"1",d:"Você tem um companheiro que luta ao seu lado, com atributos definidos pelo Mestre."},"Confusão":{c:"1",d:"Ataque + 2PM. Se vencer, alvo fica confuso (alvos escolhidos ao acaso). Dura até fim da cena ou sofrer dano."},"Cura":{c:"1",d:"Gaste 2PM para curar 1D PV (limite = H dados). Ou gaste 2PM para alvo repetir teste de R contra efeito negativo."},"Defesa Especial":{c:"1",d:"Ao receber ataque, gaste PM para: Blindada(1PM), Bloqueio(1PM), Esquiva(1PM), Proteção(1PM), Provocação(1PM), Reflexão(1PM), Tenaz(1PM/+2R), Titânica(3PM)."},"Desgaste":{c:"1",d:"Ataque + 2PM. Se vencer e causar dano, alvo sofre o mesmo dano na próxima rodada."},"Devoto":{c:"1",d:"Gaste 2PM para Ganho ao seguir/defender sua devoção. Máximo 2x por cena."},"Elo Mental":{c:"1",d:"Ligação com aliado (que também deve ter). Compartilham PM, comunicação silenciosa e podem passar Ganho um ao outro."},"Estender":{c:"1",d:"Gaste 1PM/turno para vantagem pessoal também funcionar em aliado Perto."},"Famoso":{c:"1",d:"Gaste 3PM para Ganho em testes sociais com NPCs que te reconhecem."},"Foco":{c:"1",d:"Gaste 2PM e 1 turno se concentrando (Perda na defesa). Próximo teste recebe crítico automático."},"Forte":{c:"1",d:"Recebe P+2 em testes de força física. Pode gastar 2PM para crítico com 5 ou 6."},"Gênio":{c:"1",d:"Recebe H+2 em testes de conhecimento e raciocínio. Pode gastar 2PM para crítico com 5 ou 6."},"Golpe Final":{c:"1",d:"Gaste 3PM para atacar alvo perto da derrota. O ataque sobe uma escala."},"Grimório":{c:"1+",d:"Permite começar com técnicas. Cada ponto = 10XP para truques ou técnicas comuns."},"Ilusão":{c:"2",d:"Cria ilusões 3D sem substância. Custo: 1PM(livro), 3PM(pessoa), 5PM(caminhão), 8PM(prédio). Criar = 1 ação."},"Imitar":{c:"1",d:"Teste Percepção(9) ao ver vantagem usada. Se passar, gaste 3PM para adquiri-la até fim da cena."},"Imortal":{c:"1",d:"Em testes de morte, você nunca tem resultado pior que inconsciente."},"Improviso":{c:"2",d:"Gaste 3PM para aprender uma perícia que não tem até fim da cena. Só uma por vez."},"Imune":{c:"1",d:"Imune a algo específico. Opções: Abiótico, Anfíbio, Doenças, Resiliente ou Sem Mente."},"Incorpóreo":{c:"2",d:"Gaste 1 ação e 5PM: atravessa barreiras físicas, imune a dano físico (exceto Magia). Dura até fim da cena."},"Inimigo":{c:"1-2",d:"Crítico com 5 ou 6 contra tipo escolhido (Humanos, Humanoides, Construtos, Espíritos ou Monstros)."},"Inofensivo":{c:"1",d:"Em combate, ganhe ação extra antes do 1º turno. Ganho na iniciativa contra quem já te viu lutar."},"Instrutor":{c:"1",d:"Gaste 2PM + ação: aliado pode usar uma perícia sua em seu próximo teste."},"Inventário":{c:"1-3",d:"1pt: 3 comuns+1 incomum. 2pt: 5 comuns+2 incomuns. 3pt: 5 comuns+4 incomuns+1 raro."},"Invisível":{c:"1-2",d:"Gaste 3PM: Ganho para se esconder, ataques contra você têm Perda. 1pt: interrompe ao atacar. 2pt: só ao sofrer dano."},"Irresistível":{c:"1",d:"Para cada 2PM gastos, a meta para resistir suas vantagens aumenta +3."},"Maestria":{c:"1",d:"Gaste 1PM em testes da perícia escolhida para crítico com 5 ou 6."},"Magia":{c:"2",d:"Gaste 1PM para +1 em qualquer teste (máx = H). Pode usar Mística em vez de Luta para atacar/defender."},"+Mana":{c:"1",d:"Cada compra = +10PM máximo."},"+Membros":{c:"2",d:"Gaste 3PM para segunda ação no turno. Máximo 1 ação extra por rodada."},"Mentor":{c:"1",d:"1x por cena, Ganho em teste da perícia escolhida. Técnicas com essa perícia gastam -1PM."},"Obstinado":{c:"1",d:"Gaste 1 ponto de P, H ou R como 1PA. 8h de sono restauram 1 ponto de cada atributo."},"Paralisia":{c:"1",d:"Ataque + 2PM. Se vencer, alvo fica imobilizado e indefeso. Dura até fim da cena ou sofrer dano."},"Patrono":{c:"1",d:"Ganho em testes de compra para missões do Patrono. +1 item consumível de cada raridade no Inventário."},"Punição":{c:"1-2",d:"Ataque + 2PM. Se vencer, alvo sofre efeitos de uma desvantagem (escolhida na compra)."},"Regeneração":{c:"1-2",d:"1pt: +1PV no início do turno. 2pt: +3PV no início do turno. Testes de morte nunca piores que inconsciente."},"Resoluto":{c:"1",d:"Recebe R+2 em testes de força de vontade. Pode gastar 2PM para crítico com 5 ou 6."},"Riqueza":{c:"2+",d:"Gaste PM para subir escala em testes de compra: 2pt/Sugoi(2PM), 4pt/Kiodai(4PM), 6pt/Kami(6PM)."},"Sentido":{c:"1",d:"Sentido especial: Aguçado, Infravisão, Intuição, Radar ou Raio X."},"Telepata":{c:"1",d:"Gaste 1PM+movimento: Ganho em perícia social, ou descubra atributo/vantagem de personagem, ou Ganho na defesa."},"Teleporte":{c:"1",d:"Gaste 1PM por movimento substituído para ir a qualquer lugar visível. Gaste 3PM para Ganho na defesa."},"Torcida":{c:"1",d:"Com torcida presente: 1 Ganho por rodada em qualquer teste. Role 1D no início da cena: com 1, há torcida."},"Transformação":{c:"1-2",d:"Crie outra forma com os mesmos pontos. 1pt: desvantagens se acumulam. 2pt: cada forma tem só as suas."},"+Vida":{c:"1",d:"Cada compra = +10PV máximo."},"Vigoroso":{c:"1",d:"Recebe R+2 em testes de saúde física. Pode gastar 2PM para crítico com 5 ou 6."},"Voo":{c:"1",d:"Você pode voar. Levantar voo usa 1 movimento e 2PM. Ignora terrenos difíceis."}};
+window.LISTA_VANT = Object.keys(window.VANTAGENS).sort();
+window.DESVANTAGENS = {"Ambiente":{c:"-1",d:"Role 1D no início de cada cena: com 1, seu ambiente não existe ali e você tem Perda em todos os testes."},"Amnésia":{c:"-2",d:"Você não sabe quem é. O Mestre faz sua ficha em segredo."},"Antipático":{c:"-1",d:"Perda e sem críticos em testes de Poder social. Incompatível com Carismático."},"Assombrado":{c:"-1 ou -2",d:"-1pt: role 1D ao entrar em situação de risco: com 1, Perda em todos os testes. -2pt: ativa com resultado ímpar."},"Atrapalhado":{c:"-1",d:"Perda e sem críticos em testes de Habilidade envolvendo coordenação. Incompatível com Ágil."},"Aura":{c:"-1 ou -2",d:"-1pt: todos Perto de você têm Perda em testes. -2pt: todos Longe ou menos."},"Bateria":{c:"-1",d:"Com 0PM você desliga (inconsciente). Com PM abaixo de H, todos os testes têm Perda."},"Código":{c:"-1",d:"Você segue um código de conduta. Ao violar, Perda em todos os testes até se redimir."},"Dependência":{c:"-2",d:"Precisa de algo raro/proibido todo dia. Sem satisfazê-la, Perda em todos os testes."},"Diferente":{c:"-1",d:"Seu corpo é muito diferente. Perda ao usar itens feitos para outros."},"Elo Vital":{c:"-1",d:"Aliado (que também deve ter) sofre o mesmo dano que você. Curar um não cura o outro."},"Fracote":{c:"-1",d:"Perda e sem críticos em testes de Poder físico. Incompatível com Forte."},"Frágil":{c:"-1",d:"Perda e sem críticos em testes de Resistência físicos. Incompatível com Vigoroso."},"Fraqueza":{c:"-1 ou -2",d:"-1pt: Incomum (1 em 1D). -2pt: Comum (1-3 em 1D). Perto dela, todos os testes têm Perda."},"Fúria":{c:"-2",d:"Ao sofrer dano, teste R(9 ou dano). Se falhar, entra em frenesi e ataca o mais próximo."},"Inapto":{c:"-1",d:"Perda e falhas críticas em uma perícia específica que você não tem."},"Inculto":{c:"-1",d:"Não lê a língua local. Testes sociais com quem não te entende têm Perda."},"Indeciso":{c:"-1",d:"Perda e sem críticos em testes de Resistência de força de vontade. Incompatível com Resoluto."},"Infame":{c:"-1",d:"Perda em testes sociais com NPCs que te reconhecem. Incompatível com Famoso."},"Lento":{c:"-1",d:"Perda na iniciativa. Gasta 1 movimento extra por distância. Incompatível com Aceleração."},"Maldição":{c:"-1 ou -2",d:"-1pt: maldição suave/constrangedora. -2pt: maldição grave com efeito mecânico severo."},"Monstruoso":{c:"-1",d:"Perda na iniciativa (exceto surpresa). Perda em testes sociais de aparência. Incompatível com Inofensivo."},"Munição":{c:"-1",d:"Ao atacar, precisa gastar 1 movimento para recarregar. Sem recarregar, não soma Poder."},"Pacifista":{c:"-1 ou -2",d:"-1pt: pode se defender mas não atacar. -2pt: não faz nada que cause dano."},"Pobreza":{c:"-1",d:"Todos os testes de compra têm Perda. Incompatível com Riqueza."},"Ponto Fraco":{c:"-1",d:"Adversário que descobre pode gastar 1PM para Ganho contra você."},"Protegido":{c:"-1",d:"Deve proteger alguém. Se estiver ferido/indefeso, Perda em todos os testes."},"Restrição":{c:"-1 ou -2",d:"-1pt: Incomum. -2pt: Comum. Quando acontece, gasta o dobro de PM para usar vantagens."},"Sem Vida":{c:"-2",d:"Não recupera PV normalmente. Pode ser consertado (Máquinas ou Mística, 1h, teste 9). Testes de morte nunca piores que inconsciente."},"Tapado":{c:"-1",d:"Perda e sem críticos em testes de Habilidade intelectuais. Incompatível com Gênio."},"Transtorno":{c:"-1",d:"Transtorno mental: Cleptomania, Compulsão, Distração, Fantasia, Fobia, Megalomania, Mitomania ou Paranoia."},"Utensílio":{c:"-1 ou -2",d:"-1pt: sem item, sem críticos na perícia. -2pt: sem item, não pode usar vantagens/técnicas com PM."}};
+window.LISTA_DESV = Object.keys(window.DESVANTAGENS).sort();
+window.OPCOES = {"Ajudante":["Curandeiro","Especialista","Familiar","Lutador","Montaria"],"Ataque Especial":["Área","Choque","Distante","Espiritual","Múltiplo","Penetrante","Perigoso","Potente","Preciso","Titânico"],"Defesa Especial":["Blindada","Bloqueio","Esquiva","Proteção","Provocação","Reflexão","Tenaz","Titânica"],"Imune":["Abiótico","Anfíbio","Doenças","Resiliente","Sem Mente"],"Inimigo":["Humanos","Humanoides","Construtos","Espíritos","Monstros"],"Arena":["Água","Céu","Cidades","Ermos","Subterrâneo"],"Sentido":["Aguçado","Infravisão","Intuição","Radar","Raio X"],"Maestria":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Mentor":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Código":["Asimov 1ª","Asimov 2ª","Caçador","Combate","Derrota","Gratidão","Heróis","Honestidade","Redenção"],"Transtorno":["Cleptomania","Compulsão","Distração","Fantasia","Fobia","Megalomania","Mitomania","Paranoia"],"Inapto":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Arte":["Atuação","Culinária","Dança","Escrita","Ilustração","Música"],"Esporte":["Acrobacia","Atletismo","Corrida","Natação","Pilotagem"],"Saber":["Arcano","Ciências","Direito","Geografia","História","Idiomas","Natureza","Religião","Tecnologia"]};
+window.SUBOPCOES = {"Ajudante":{"Curandeiro":"Cura 2D PV ou permite repetir teste de R contra efeito negativo. Custo: 2PM.","Especialista":"Ganho em um teste de uma perícia escolhida (exceto atacar/defender). Custo: 2PM.","Familiar":"Gasta 1PM para ser invocado e reduz à metade o custo de outra vantagem na rodada. Custo: 1PM.","Lutador":"Ganho em um teste de ataque, ou em testes de defesa por uma rodada. Custo: 2PM.","Montaria":"Movimento extra, ou Ganho em iniciativa ou perseguição. Custo: 1PM."},"Ataque Especial":{"Área":"Todos Perto do alvo também recebem o ataque. Custo: 3PM.","Choque":"Ataca com R em vez de P. Custo: 1PM.","Distante":"Alcança um passo de distância além. Custo: 1PM.","Espiritual":"Alvo perde PM em vez de PV. Custo: 1PM.","Múltiplo":"Atinge mais alvos ao alcance. 1PM por alvo extra. Custo: 1PM/alvo.","Penetrante":"Alvo tem Perda de defesa. Custo: 2PM.","Perigoso":"Crítico com 5 ou 6. Custo: 1PM.","Potente":"P+2 no ataque. Custo: 1PM por P+2.","Preciso":"Ataca com H em vez de P. Custo: 1PM.","Titânico":"Crítico automático no ataque. Custo: 3PM."},"Defesa Especial":{"Blindada":"Defesa consegue crítico com 5 ou 6. Custo: 1PM.","Bloqueio":"Defende com P em vez de R. Custo: 1PM.","Esquiva":"Defende com H em vez de R. Custo: 1PM.","Proteção":"Usa sua defesa por um aliado Perto. Custo: 1PM.","Provocação":"Recebe ataque destinado a aliado Perto. Custo: 1PM.","Reflexão":"Se sua defesa maior que o ataque, oponente sofre a diferença. Custo: 1PM.","Tenaz":"R+2 na defesa. Custo: 1PM por +2.","Titânica":"Crítico automático na defesa. Custo: 3PM."},"Imune":{"Abiótico":"Sem necessidades biológicas básicas: comer, beber, respirar ou dormir.","Anfíbio":"Respira e se move normalmente embaixo da água.","Doenças":"Imune a doenças naturais ou mágicas.","Resiliente":"Não se cansa por esforço intenso. Qualquer lugar de descanso é ideal.","Sem Mente":"Imune a magias e efeitos que afetam a mente."},"Inimigo":{"Humanos":"Crítico com 5 ou 6 contra Humanos. Custo: 2pt.","Humanoides":"Crítico com 5 ou 6 contra Humanoides. Custo: 1pt.","Construtos":"Crítico com 5 ou 6 contra Construtos. Custo: 1pt.","Espíritos":"Crítico com 5 ou 6 contra Espíritos. Custo: 1pt.","Monstros":"Crítico com 5 ou 6 contra Monstros. Custo: 1pt."},"Arena":{"Água":"Gaste 2PM para Ganho em testes em ambientes aquáticos.","Céu":"Gaste 2PM para Ganho em testes no ar.","Cidades":"Gaste 2PM para Ganho em testes em ambientes urbanos.","Ermos":"Gaste 2PM para Ganho em testes em ambientes selvagens.","Subterrâneo":"Gaste 2PM para Ganho em testes em ambientes subterrâneos."},"Sentido":{"Aguçado":"Ganho em Percepção com o sentido escolhido.","Infravisão":"Percebe seres de sangue quente e enxerga no escuro.","Intuição":"Percebe intenções ocultas: mentiras, segredos, intenção de ataque.","Radar":"Percebe tudo em volta mesmo de costas ou no escuro.","Raio X":"Vê através de portas e paredes (exceto metal ou mágico)."},"Maestria":{"Animais":"Gaste 1PM para crítico com 5 ou 6 em testes de Animais.","Arte":"Gaste 1PM para crítico com 5 ou 6 em testes de Arte.","Esporte":"Gaste 1PM para crítico com 5 ou 6 em testes de Esporte.","Influência":"Gaste 1PM para crítico com 5 ou 6 em testes de Influência.","Luta":"Gaste 1PM para crítico com 5 ou 6 em testes de Luta.","Manha":"Gaste 1PM para crítico com 5 ou 6 em testes de Manha.","Máquinas":"Gaste 1PM para crítico com 5 ou 6 em testes de Máquinas.","Medicina":"Gaste 1PM para crítico com 5 ou 6 em testes de Medicina.","Mística":"Gaste 1PM para crítico com 5 ou 6 em testes de Mística.","Percepção":"Gaste 1PM para crítico com 5 ou 6 em testes de Percepção.","Saber":"Gaste 1PM para crítico com 5 ou 6 em testes de Saber.","Sobrevivência":"Gaste 1PM para crítico com 5 ou 6 em testes de Sobrevivência."},"Mentor":{"Animais":"1x por cena: Ganho em Animais. Técnicas com Animais gastam -1PM.","Arte":"1x por cena: Ganho em Arte. Técnicas com Arte gastam -1PM.","Esporte":"1x por cena: Ganho em Esporte. Técnicas com Esporte gastam -1PM.","Influência":"1x por cena: Ganho em Influência. Técnicas com Influência gastam -1PM.","Luta":"1x por cena: Ganho em Luta. Técnicas com Luta gastam -1PM.","Manha":"1x por cena: Ganho em Manha. Técnicas com Manha gastam -1PM.","Máquinas":"1x por cena: Ganho em Máquinas. Técnicas com Máquinas gastam -1PM.","Medicina":"1x por cena: Ganho em Medicina. Técnicas com Medicina gastam -1PM.","Mística":"1x por cena: Ganho em Mística. Técnicas com Mística gastam -1PM.","Percepção":"1x por cena: Ganho em Percepção. Técnicas com Percepção gastam -1PM.","Saber":"1x por cena: Ganho em Saber. Técnicas com Saber gastam -1PM.","Sobrevivência":"1x por cena: Ganho em Sobrevivência. Técnicas com Sobrevivência gastam -1PM."},"Código":{"Asimov 1ª":"Jamais causar mal a um ser humano ou permitir que sofra qualquer mal.","Asimov 2ª":"Sempre obedecer a seres humanos, exceto quando viola outro Código.","Caçador":"Nunca matar filhotes ou gestantes. Nunca abandonar uma caça. Nunca permitir fuga.","Combate":"Nunca atacar oponente em condição desfavorável ou de escala inferior.","Derrota":"Nunca seguir lutando depois de derrotado. Aceitar qualquer condição do vitorioso.","Gratidão":"Ao receber um grande favor, fica a serviço da pessoa até devolver o favor.","Heróis":"Sempre cumprir sua palavra, proteger os mais fracos, jamais recusar ajuda.","Honestidade":"Nunca mentir, roubar, trapacear ou desobedecer às leis locais.","Redenção":"Nunca atacar primeiro, sempre aceitar rendição, sempre poupar oponentes derrotados."},"Transtorno":{"Cleptomania":"Rouba coisas desnecessariamente. Teste para resistir à chance de roubar.","Compulsão":"Precisa fazer algo várias vezes por dia. Perda em todos os testes até cumprir.","Distração":"Não consegue críticos em algo que não o interessa.","Fantasia":"Acredita ser algo que não é. Perda em testes sociais.","Fobia":"Medo terrível de algo. Quando Perto, só pode fazer movimentos. Teste R(9) para agir.","Megalomania":"Acredita ser invencível. Nunca se rende mesmo após ser derrotado.","Mitomania":"Nunca diz a verdade. Precisa de um teste para dizer algo verdadeiro.","Paranoia":"Não confia em ninguém. Descanso recupera metade dos recursos."},"Inapto":{"Animais":"Perda e falhas críticas em testes de Animais.","Arte":"Perda e falhas críticas em testes de Arte.","Esporte":"Perda e falhas críticas em testes de Esporte.","Influência":"Perda e falhas críticas em testes de Influência.","Luta":"Perda e falhas críticas em testes de Luta.","Manha":"Perda e falhas críticas em testes de Manha.","Máquinas":"Perda e falhas críticas em testes de Máquinas.","Medicina":"Perda e falhas críticas em testes de Medicina.","Mística":"Perda e falhas críticas em testes de Mística.","Percepção":"Perda e falhas críticas em testes de Percepção.","Saber":"Perda e falhas críticas em testes de Saber.","Sobrevivência":"Perda e falhas críticas em testes de Sobrevivência."}};
+</script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo,useLayoutEffect} = React;
+const PERICIAS = window.PERICIAS;
+const ARQUETIPOS = window.ARQUETIPOS;
+const LISTA_ARQ = window.LISTA_ARQ;
+const KITS = window.KITS;
+const LISTA_KITS = window.LISTA_KITS;
+const VANTAGENS = window.VANTAGENS;
+const LISTA_VANT = window.LISTA_VANT;
+const DESVANTAGENS = window.DESVANTAGENS;
+const LISTA_DESV = window.LISTA_DESV;
+const OPCOES = window.OPCOES;
+const SUBOPCOES = window.SUBOPCOES;
 
-      const LucideIcon = ({ name, className = "", ...props }) => {
-        const spanRef = useRef(null);
-        useLayoutEffect(() => {
-          if (spanRef.current && window.lucide) {
-            spanRef.current.innerHTML = `<i data-lucide="${name}" class="${className}"></i>`;
-            window.lucide.createIcons({ root: spanRef.current });
-          }
-        });
-        return <span ref={spanRef} {...props} className="inline-flex items-center justify-center"></span>;
-      };
+const EMPTY = {
+  id:null,nome:'',arquetipo:'',arquetipoCusto:0,experiencia:0,
+  escala:'Ningen',marco:'Iniciante',foto:null,
+  atributos:{poder:0,habilidade:0,resistencia:0},
+  recursos:{pa:0,pm:5,pv:5},
+  pericias:[],vantagens:[],desvantagens:[],kits:[],tecnicas:[],
+  nivelInv:0,trocas:{ci:0,ir:0,rl:0},
+  inventario:{comuns:[],incomuns:[],raros:[],lendarios:[]},
+  anotacoes:'',historia:''
+};
 
-      const Shield = (p) => <LucideIcon name="shield" {...p} />;
-      const Sword = (p) => <LucideIcon name="sword" {...p} />;
-      const Zap = (p) => <LucideIcon name="zap" {...p} />;
-      const Heart = (p) => <LucideIcon name="heart" {...p} />;
-      const Star = (p) => <LucideIcon name="star" {...p} />;
-      const Skull = (p) => <LucideIcon name="skull" {...p} />;
-      const BookOpen = (p) => <LucideIcon name="book-open" {...p} />;
-      const Save = (p) => <LucideIcon name="save" {...p} />;
-      const Trash2 = (p) => <LucideIcon name="trash-2" {...p} />;
-      const Plus = (p) => <LucideIcon name="plus" {...p} />;
-      const Minus = (p) => <LucideIcon name="minus" {...p} />;
-      const Info = (p) => <LucideIcon name="info" {...p} />;
-      const Wand2 = (p) => <LucideIcon name="wand-2" {...p} />;
-      const Backpack = (p) => <LucideIcon name="backpack" {...p} />;
-      const Upload = (p) => <LucideIcon name="upload" {...p} />;
-      const ImageIcon = (p) => <LucideIcon name="image" {...p} />;
-      const Printer = (p) => <LucideIcon name="printer" {...p} />;
-      const FileJson = (p) => <LucideIcon name="file-json" {...p} />;
-      const Crown = (p) => <LucideIcon name="crown" {...p} />;
-      const AlertCircle = (p) => <LucideIcon name="alert-circle" {...p} />;
-      const ArrowRightLeft = (p) => <LucideIcon name="arrow-right-left" {...p} />;
-      const ArrowUp = (p) => <LucideIcon name="arrow-up" {...p} />;
-      const ArrowDown = (p) => <LucideIcon name="arrow-down" {...p} />;
-      const Menu = (p) => <LucideIcon name="menu" {...p} />;
-      const X = (p) => <LucideIcon name="x" {...p} />;
-      const FileText = (p) => <LucideIcon name="file-text" {...p} />;
-      const PlusCircle = (p) => <LucideIcon name="plus-circle" {...p} />;
-      const Dice = (p) => <LucideIcon name="dice-5" {...p} />;
-      const FolderPlus = (p) => <LucideIcon name="folder-plus" {...p} />;
-      const Folder = (p) => <LucideIcon name="folder" {...p} />;
-      const FolderOpen = (p) => <LucideIcon name="folder-open" {...p} />;
-      const ChevronRight = (p) => <LucideIcon name="chevron-right" {...p} />;
-      const ChevronDown = (p) => <LucideIcon name="chevron-down" {...p} />;
-      const Users = (p) => <LucideIcon name="users" {...p} />;
-      const Copy = (p) => <LucideIcon name="copy" {...p} />;
-      const CloudUpload = (p) => <LucideIcon name="cloud-upload" {...p} />;
-      const CloudDownload = (p) => <LucideIcon name="cloud-download" {...p} />;
+const Icon = ({n,s='16'}) => {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    if(ref.current && window.lucide) {
+      ref.current.innerHTML = `<i data-lucide="${n}" style="width:${s}px;height:${s}px"></i>`;
+      window.lucide.createIcons({root:ref.current});
+    }
+  });
+  return <span ref={ref} style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}} />;
+};
 
-      const emptyCharacter = {
-        id: null, nome: '', arquetipo: '', arquetipoCusto: 0, pontos: 10, experiencia: 0,
-        escala: 'Ningen', marco: 'Iniciante', foto: null,
-        atributos: { poder: 0, habilidade: 0, resistencia: 0 },
-        recursos: { pa_atual: 0, pm_atual: 5, pv_atual: 5 },
-        pericias: [], vantagens: [], desvantagens: [], kits: [], tecnicas: [],
-        nivelInventario: 0,
-        trocas: { comumParaIncomum: 0, incomumParaRaro: 0, raroParaLendario: 0 },
-        inventario: { comuns: [], incomuns: [], raros: [], lendarios: [] },
-        anotacoes: '', historia: ''
-      };
+const Btn = ({onClick,children,style={},className=''}) => (
+  <button onClick={onClick} className={'cbtn '+className} style={style}>{children}</button>
+);
 
-      const AttributeRow = ({ icon, label, value, onChange, color }) => {
-        const borderColors = { red: 'border-red-500', blue: 'border-blue-500', green: 'border-green-500' };
-        return (
-          <div className={`flex items-center justify-between bg-slate-900 p-4 rounded-xl border-l-4 ${borderColors[color]} group print:bg-transparent print:border print:border-black print:py-2`}>
-            <div className="flex items-center gap-3">{icon}<span className="font-bold print:text-black">{label}</span></div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => onChange(parseInt(value||0)-1)} className="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors no-print"><Minus className="w-4 h-4" /></button>
-              <input type="number" className="w-12 text-center bg-transparent text-2xl font-black outline-none print:text-black" value={value} onChange={(e) => onChange(e.target.value)} />
-              <button onClick={() => onChange(parseInt(value||0)+1)} className="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors no-print"><Plus className="w-4 h-4" /></button>
-            </div>
-          </div>
-        );
-      };
+const Stepper = ({value,onChange,min=0}) => (
+  <div style={{display:'flex',alignItems:'center',gap:4}}>
+    <Btn onClick={()=>onChange(Math.max(min,value-1))} style={{padding:'2px 8px',fontSize:14}}>−</Btn>
+    <input type="number" value={value} onChange={e=>onChange(Math.max(min,parseInt(e.target.value)||0))}
+      style={{width:50,textAlign:'center',fontSize:20,fontWeight:900}} />
+    <Btn onClick={()=>onChange(value+1)} style={{padding:'2px 8px',fontSize:14}}>+</Btn>
+  </div>
+);
 
-      const ResourceBar = ({ label, current, max, color, icon, onChange }) => {
-        const gradientColors = { red: 'from-red-600 to-red-400', blue: 'from-blue-600 to-blue-400' };
-        const focusBorder = { red: 'focus:border-red-500', blue: 'focus:border-blue-500' };
-        return (
-          <div className="space-y-2">
-            <div className="flex justify-between items-end">
-              <span className={`flex items-center gap-2 font-bold text-${color}-400 print:text-black`}>{icon} {label}</span>
-              <div className="flex items-center gap-2">
-                <input type="number" className={`w-12 bg-slate-900 rounded text-center border border-slate-700 ${focusBorder[color]} outline-none font-bold print:bg-transparent print:text-black print:border-black`} value={current} onChange={(e) => onChange(parseInt(e.target.value)||0)} />
-                <span className="text-slate-500 print:text-black">/ {max}</span>
+const Bar = ({label,current,max,color,icon,onChange}) => {
+  const pct = max > 0 ? Math.min(100,(current/max)*100) : 0;
+  const bg = color==='red' ? 'linear-gradient(90deg,#ff1744,#ff5252)' : 'linear-gradient(90deg,#00b8d4,#00e5ff)';
+  const glow = color==='red' ? '0 0 10px rgba(255,23,68,0.6)' : '0 0 10px rgba(0,229,255,0.6)';
+  const c = color==='red' ? '#ff5252' : '#00e5ff';
+  return (
+    <div style={{marginBottom:8}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+        <span style={{color:c,fontFamily:'Orbitron',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
+          <Icon n={icon} s="14"/> {label}
+        </span>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <input type="number" value={current} onChange={e=>onChange(parseInt(e.target.value)||0)}
+            style={{width:48,textAlign:'center',fontSize:14,fontWeight:700,padding:'2px 4px'}} />
+          <span style={{color:'rgba(0,229,255,0.4)',fontSize:12}}>/ {max}</span>
+        </div>
+      </div>
+      <div style={{height:8,background:'rgba(0,0,0,0.8)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:4,overflow:'hidden'}}>
+        <div style={{height:'100%',width:pct+'%',background:bg,boxShadow:glow,transition:'width 0.3s'}} />
+      </div>
+    </div>
+  );
+};
+
+const ListSection = ({title,color,items,suggestions,onAdd,onUpdate,onRemove}) => {
+  const listId = 'dl-'+title.replace(/\s/g,'-');
+  const total = items.reduce((a,i)=>a+(parseInt(i.custo)||0),0);
+  const borderColor = color==='red'?'rgba(255,23,68,0.3)':color==='green'?'rgba(0,230,118,0.3)':'rgba(0,229,255,0.3)';
+  const titleColor = color==='red'?'#ff5252':color==='green'?'#00e676':'#00e5ff';
+  return (
+    <div className="panel" style={{padding:16,borderColor}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8}}>
+        <span style={{fontFamily:'Orbitron',fontSize:12,color:titleColor,textTransform:'uppercase',letterSpacing:1}}>
+          {title} <span style={{color:'rgba(0,229,255,0.4)',fontSize:10}}>({total>0?'+'+total:total}pts)</span>
+        </span>
+        <Btn onClick={onAdd} style={{padding:'2px 8px',fontSize:11}}>+ ADD</Btn>
+      </div>
+      {suggestions && <datalist id={listId}>{suggestions.map(s=><option key={s} value={s}/>)}</datalist>}
+      <div style={{maxHeight:320,overflowY:'auto',display:'flex',flexDirection:'column',gap:8}}>
+        {items.map(item => {
+          const subOpts = OPCOES[item.nome];
+          const subId = 'sub-'+item.id;
+          return (
+            <div key={item.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.12)',borderRadius:6,padding:8,position:'relative'}}>
+              <div style={{display:'flex',gap:6,marginBottom:6,flexWrap:'wrap'}}>
+                <input list={listId} placeholder="Nome" value={item.nome}
+                  onChange={e=>onUpdate(item.id,'nome',e.target.value)}
+                  style={{flex:'2 1 120px',fontSize:13,fontWeight:700,padding:'3px 6px'}} />
+                {subOpts && <datalist id={subId}>{subOpts.map(o=><option key={o} value={o}/>)}</datalist>}
+                <input list={subOpts?subId:undefined} placeholder="Detalhe/Opção" value={item.detalhe||''}
+                  onChange={e=>onUpdate(item.id,'detalhe',e.target.value)}
+                  style={{flex:'2 1 100px',fontSize:12,padding:'3px 6px',fontStyle:'italic'}} />
+                <input type="number" placeholder="Pts" value={item.custo}
+                  onChange={e=>onUpdate(item.id,'custo',e.target.value)}
+                  style={{width:44,textAlign:'center',fontSize:13,fontWeight:700,padding:'3px 4px'}} />
+                <button onClick={()=>onRemove(item.id)} className="no-print"
+                  style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',padding:'2px 4px',fontSize:14}}>×</button>
               </div>
+              <textarea placeholder="Descrição do efeito..." value={item.descricao||''}
+                onChange={e=>onUpdate(item.id,'descricao',e.target.value)}
+                rows={2} style={{width:'100%',fontSize:11,padding:'4px 6px',resize:'none',lineHeight:1.4}} />
             </div>
-            <div className="h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-700 print:border-black print:h-2">
-              <div className={`h-full bg-gradient-to-r ${gradientColors[color]} transition-all duration-300 print:bg-black`} style={{width:`${Math.min(100,(current/max)*100)}%`}}></div>
-            </div>
-          </div>
-        );
-      };
+          );
+        })}
+        {items.length===0 && <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',padding:8,fontStyle:'italic'}}>Vazio</p>}
+      </div>
+    </div>
+  );
+};
 
-      const Section = ({ title, icon, items, suggestionList, onAdd, onUpdate, onRemove, color }) => {
-        const list = title.toLowerCase();
-        const colorMap = { cyan: 'border-cyan-500/30', emerald: 'border-emerald-500/30', rose: 'border-rose-500/30' };
-        const listId = `list-${title.toLowerCase().replace(/\s/g,'-')}`;
-        const totalPoints = items.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
-        const totalLabel = totalPoints > 0 ? `+${totalPoints}` : totalPoints;
-        return (
-          <div className={`bg-slate-800 p-4 rounded-2xl border ${colorMap[color]} space-y-4 print:bg-transparent print:border-black print:break-inside-avoid`}>
-            <div className="flex justify-between items-center border-b border-slate-700 pb-2 print:border-black">
-              <div className="flex items-baseline gap-2">
-                <h3 className="flex items-center gap-2 font-bold uppercase tracking-tighter text-sm print:text-black">{icon} {title}</h3>
-                <span className="text-xs font-normal text-slate-400 print:text-black">({totalLabel} pts)</span>
+const InvCol = ({title,color,items,limit,onAdd,onUpdate,onRemove}) => {
+  const colors = {slate:'#94a3b8',blue:'#00e5ff',yellow:'#ffd600',purple:'#a855f7'};
+  const c = colors[color]||'#00e5ff';
+  const pct = limit>0 ? Math.min(100,(items.length/limit)*100) : 0;
+  return (
+    <div style={{background:'rgba(0,0,0,0.35)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:8,padding:12}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+        <div>
+          <div style={{fontFamily:'Orbitron',fontSize:11,color:c,textTransform:'uppercase',letterSpacing:1}}>{title}</div>
+          {limit>0 ? (
+            <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
+              <div style={{width:56,height:4,background:'rgba(0,0,0,0.6)',borderRadius:2,overflow:'hidden'}}>
+                <div style={{height:'100%',width:pct+'%',background:c,transition:'width 0.3s'}} />
               </div>
-              <button onClick={onAdd} className="p-1 hover:bg-slate-700 rounded-lg transition-colors no-print"><Plus className="w-4 h-4" /></button>
+              <span style={{fontSize:10,color:'rgba(0,229,255,0.4)'}}>{items.length}/{limit}</span>
             </div>
-            {suggestionList && suggestionList.length > 0 && (
-              <datalist id={listId}>{suggestionList.map((opt) => <option key={opt} value={opt} />)}</datalist>
-            )}
-            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-              {items.map(item => {
-                const subOptions = OPCOES_POR_ITEM[item.nome];
-                const subListId = `sublist-${item.id}`;
-                return (
-                  <div key={item.id} className="group relative bg-slate-900/30 p-2 rounded-lg border border-slate-700/50 print:bg-transparent print:border-black">
-                    <div className="flex gap-1 items-center flex-wrap md:flex-nowrap mb-1">
-                      <input placeholder={suggestionList && suggestionList.length > 0 ? "Selecione..." : "Nome"} list={suggestionList && suggestionList.length > 0 ? listId : undefined}
-                        className="flex-1 min-w-[120px] bg-slate-900 border border-slate-700 rounded p-1 px-2 text-sm text-white outline-none focus:border-blue-500 print:bg-transparent print:border-none print:p-0 print:text-black print:border-b print:border-dotted print:border-slate-400 font-bold"
-                        value={item.nome} onChange={(e) => onUpdate(item.id,'nome',e.target.value)} />
-                      {subOptions && <datalist id={subListId}>{subOptions.map(opt => <option key={opt} value={opt} />)}</datalist>}
-                      <input placeholder="Detalhes / Opção" list={subOptions ? subListId : undefined}
-                        className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded p-1 px-2 text-xs text-slate-300 outline-none focus:border-blue-500 print:bg-transparent print:border-none print:p-0 print:text-black italic"
-                        value={item.detalhe||''} onChange={(e) => onUpdate(item.id,'detalhe',e.target.value)} />
-                      <input type="number" placeholder="Pts"
-                        className="w-10 bg-slate-900 border border-slate-700 rounded p-1 text-sm text-white text-center outline-none print:bg-transparent print:border-none print:p-0 print:text-black font-bold"
-                        value={item.custo} onChange={(e) => onUpdate(item.id,'custo',e.target.value)} />
-                      <button onClick={() => onRemove(item.id)} className="p-1 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity no-print rounded hover:bg-rose-500/10"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                    <textarea placeholder="Descrição completa do efeito ou poder..."
-                      className="w-full mt-1 bg-slate-950/80 border border-slate-700/50 rounded p-2 text-[11px] text-slate-300 outline-none resize-none min-h-[2.5rem] leading-relaxed auto-expand focus:ring-1 focus:ring-blue-500 print:text-black print:text-xs print:bg-transparent print:border-none print:p-0"
-                      rows={2} onInput={(e) => { e.target.style.height="auto"; e.target.style.height=e.target.scrollHeight+"px" }}
-                      value={item.descricao||''} onChange={(e) => onUpdate(item.id,'descricao',e.target.value)} />
-                  </div>
-                );
-              })}
-              {items.length === 0 && <p className="text-center text-slate-600 text-xs py-4 italic print:hidden">Vazio</p>}
+          ) : <span style={{fontSize:10,color:'rgba(0,229,255,0.25)'}}>Indisponível</span>}
+        </div>
+        <button onClick={onAdd} disabled={limit===0}
+          style={{background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.2)',color:'#00e5ff',borderRadius:4,padding:'2px 8px',cursor:'pointer',opacity:limit===0?0.3:1}}>+</button>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {items.map(item => (
+          <div key={item.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.1)',borderRadius:4,padding:6,position:'relative'}}>
+            <div style={{display:'flex',gap:4,marginBottom:3}}>
+              <input placeholder="Item" value={item.nome} onChange={e=>onUpdate(item.id,'nome',e.target.value)}
+                style={{flex:1,fontSize:11,fontWeight:700,padding:'2px 4px'}} />
+              <input placeholder="Qtd" value={item.qtd} onChange={e=>onUpdate(item.id,'qtd',e.target.value)}
+                style={{width:32,textAlign:'center',fontSize:10,padding:'2px 2px'}} />
             </div>
+            <input placeholder="Efeito" value={item.desc} onChange={e=>onUpdate(item.id,'desc',e.target.value)}
+              style={{width:'100%',fontSize:10,padding:'2px 4px',color:'rgba(0,229,255,0.6)'}} />
+            <button onClick={()=>onRemove(item.id)} className="no-print"
+              style={{position:'absolute',top:3,right:3,background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:12}}>×</button>
           </div>
-        );
-      };
+        ))}
+        {limit>0 && Array.from({length:Math.max(0,limit-items.length)}).map((_,i)=>(
+          <div key={'e'+i} style={{border:'1px dashed rgba(0,229,255,0.1)',borderRadius:4,padding:8,textAlign:'center'}}>
+            <span style={{fontSize:9,color:'rgba(0,229,255,0.2)',textTransform:'uppercase'}}>Vazio</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
-      const TradePanel = ({ from, to, type, limitFrom, limitTo, tradeCount, onTrade, fromColor, toColor }) => (
-        <div className="flex items-center justify-between bg-slate-800 p-2 rounded-lg border border-slate-700">
-          <div className="text-xs text-slate-400 text-center flex-1">
-            <div className={`font-bold ${fromColor}`}>{from}</div>
-            <div className="text-[10px] my-1">para</div>
-            <div className={`font-bold ${toColor}`}>{to}</div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <button onClick={() => onTrade(type,1)} className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-green-400 disabled:opacity-30 disabled:cursor-not-allowed" disabled={limitFrom<3}><ArrowUp className="w-3 h-3" /></button>
-            <button onClick={() => onTrade(type,-1)} className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-rose-400 disabled:opacity-30 disabled:cursor-not-allowed" disabled={(tradeCount||0)<=0}><ArrowDown className="w-3 h-3" /></button>
+const DiceModal = ({onClose,attrs,onRoll}) => {
+  const [attr,setAttr] = useState('poder');
+  const [skill,setSkill] = useState(false);
+  const [gain,setGain] = useState(0);
+  const [loss,setLoss] = useState(0);
+  const [crit,setCrit] = useState(6);
+  const [mod,setMod] = useState(0);
+  const [roll,setRoll] = useState(null);
+  const [rolling,setRolling] = useState(false);
+  const [hist,setHist] = useState([]);
+  const dice = Math.max(1,Math.min(3,1+(skill?1:0)+gain-loss));
+  const doRoll = () => {
+    if(rolling) return;
+    setRolling(true);
+    setTimeout(()=>{
+      const res = Array.from({length:dice},()=>Math.floor(Math.random()*6)+1);
+      const av = attrs[attr]||0;
+      const crits = res.filter(r=>r>=crit).length;
+      const fail = res.every(r=>r===1);
+      const total = res.reduce((a,b)=>a+b,0)+av+(crits*av)+mod;
+      const nr = {id:Date.now(),attr,dice,res,total,av,crits,fail,mod,crit};
+      setRoll(nr); setHist(p=>[nr,...p].slice(0,8)); setRolling(false);
+      if(onRoll) onRoll(nr);
+    },500);
+  };
+  const colors = {poder:'#ff1744',habilidade:'#00e5ff',resistencia:'#00e676'};
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.92)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div className="panel" style={{width:'100%',maxWidth:480,maxHeight:'90vh',overflowY:'auto',padding:20}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:14}}>TESTE 3DeT</span>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:16}}>
+          {['poder','habilidade','resistencia'].map(a=>(
+            <button key={a} onClick={()=>setAttr(a)} style={{
+              background:attr===a?colors[a]+'22':'rgba(0,0,0,0.4)',
+              border:`1px solid ${attr===a?colors[a]:'rgba(0,229,255,0.2)'}`,
+              color:attr===a?colors[a]:'rgba(0,229,255,0.5)',
+              borderRadius:6,padding:'10px 4px',cursor:'pointer',
+              fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase',letterSpacing:0.5
+            }}>
+              <div style={{fontSize:11,marginBottom:2}}>{a.slice(0,3).toUpperCase()}</div>
+              <div style={{fontSize:16,fontWeight:900}}>{attrs[a]}</div>
+            </button>
+          ))}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+          <button onClick={()=>setSkill(!skill)} style={{
+            background:skill?'rgba(0,229,255,0.12)':'rgba(0,0,0,0.4)',
+            border:`1px solid ${skill?'#00e5ff':'rgba(0,229,255,0.2)'}`,
+            color:skill?'#00e5ff':'rgba(0,229,255,0.4)',
+            borderRadius:6,padding:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:9
+          }}>{skill?'COM PERÍCIA':'SEM PERÍCIA'}</button>
+          <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:8,textAlign:'center'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:4}}>DADOS</div>
+            <span style={{fontFamily:'Orbitron',fontSize:18,color:'#00e5ff',fontWeight:900}}>{dice}D</span>
           </div>
         </div>
-      );
-
-      const InventoryColumn = ({ title, items, limit, onAdd, onUpdate, onRemove, color }) => {
-        const isFull = items.length >= limit && limit > 0;
-        const colors = { slate:'text-slate-300 border-slate-600', blue:'text-blue-400 border-blue-500/50', yellow:'text-yellow-400 border-yellow-500/50', purple:'text-purple-400 border-purple-500/50' };
-        const barColors = { slate:'bg-slate-500', blue:'bg-blue-500', yellow:'bg-yellow-500', purple:'bg-purple-500' };
-        return (
-          <div className={`flex flex-col h-full bg-slate-950/30 rounded-xl p-3 border ${colors[color].split(' ')[1]} print:bg-transparent print:border-black print:border`}>
-            <div className="flex justify-between items-center mb-3">
-              <div>
-                <h4 className={`text-sm font-bold uppercase ${colors[color].split(' ')[0]} print:text-black`}>{title}</h4>
-                {limit > 0 ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden"><div className={`h-full ${barColors[color]} transition-all`} style={{width:`${Math.min(100,(items.length/limit)*100)}%`}}></div></div>
-                    <span className={`text-[10px] font-bold ${items.length>limit?'text-rose-500':'text-slate-500'} print:text-black`}>{items.length}/{limit}</span>
-                  </div>
-                ) : (<span className="text-[10px] text-slate-600 uppercase font-bold mt-1 block print:hidden">Indisponível</span>)}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
+          {[['Ganhos',gain,setGain,'#00e676'],['Perdas',loss,setLoss,'#ff1744'],['Mod',mod,setMod,'#00e5ff']].map(([label,val,setter,c])=>(
+            <div key={label} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:8,textAlign:'center'}}>
+              <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:4,fontFamily:'Orbitron'}}>{label.toUpperCase()}</div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                <button onClick={()=>setter(label==='Mod'?val-1:Math.max(0,val-1))} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',color:'#fff',borderRadius:3,width:20,height:20,cursor:'pointer',fontSize:12}}>−</button>
+                <span style={{fontFamily:'Orbitron',color:c,fontWeight:900,minWidth:20,textAlign:'center'}}>{val>0?'+'+val:val}</span>
+                <button onClick={()=>setter(val+1)} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',color:'#fff',borderRadius:3,width:20,height:20,cursor:'pointer',fontSize:12}}>+</button>
               </div>
-              <button onClick={onAdd} className={`p-1.5 rounded transition-colors no-print ${limit===0?'opacity-50 cursor-not-allowed bg-slate-800':'bg-slate-700 hover:bg-slate-600'}`} disabled={limit===0}><Plus className="w-3 h-3" /></button>
             </div>
-            <div className="space-y-2 flex-1">
-              {items.map(item => (
-                <div key={item.id} className="group bg-slate-900 p-1.5 rounded border border-slate-700/50 flex flex-col gap-1 relative print:bg-transparent print:border-black">
-                  <div className="flex justify-between gap-2">
-                    <input placeholder="Item" className="w-full bg-transparent text-xs font-bold outline-none print:text-black text-white" value={item.nome} onChange={(e) => onUpdate(item.id,'nome',e.target.value)} />
-                    <input placeholder="Qtd" className="w-8 bg-slate-800 text-center text-[10px] rounded outline-none print:bg-transparent print:text-black text-white" value={item.qtd} onChange={(e) => onUpdate(item.id,'qtd',e.target.value)} />
-                  </div>
-                  <input placeholder="Efeito" className="w-full bg-transparent text-[10px] text-slate-400 outline-none print:text-black" value={item.desc} onChange={(e) => onUpdate(item.id,'desc',e.target.value)} />
-                  <button onClick={() => onRemove(item.id)} className="absolute top-1 right-1 p-1 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity no-print"><Trash2 className="w-3 h-3" /></button>
-                </div>
-              ))}
-              {limit > 0 && Array.from({length:Math.max(0,limit-items.length)}).map((_,i) => (
-                <div key={`empty-${i}`} className="border-2 border-dashed border-slate-800 rounded p-1.5 text-center print:border-black">
-                  <span className="text-[10px] text-slate-700 uppercase font-bold print:text-slate-400">Vazio</span>
+          ))}
+        </div>
+        <label style={{display:'flex',alignItems:'center',gap:6,marginBottom:12,fontSize:11,color:'rgba(0,229,255,0.5)'}}>
+          <input type="checkbox" checked={crit===5} onChange={()=>setCrit(crit===6?5:6)} />
+          Crítico também com 5 (Maestria)
+        </label>
+        <button onClick={doRoll} disabled={rolling} style={{
+          width:'100%',padding:14,background:'rgba(0,229,255,0.1)',border:'1px solid #00e5ff',
+          color:'#00e5ff',fontFamily:'Orbitron',fontSize:12,letterSpacing:2,cursor:'pointer',
+          borderRadius:6,marginBottom:12,textTransform:'uppercase'
+        }}>{rolling?'ROLANDO...':('ROLAR '+dice+'D + '+(attrs[attr]||0))}</button>
+        <div style={{background:'rgba(0,0,0,0.6)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,minHeight:100,padding:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+          {rolling && <div style={{width:32,height:32,border:'3px solid rgba(0,229,255,0.2)',borderTop:'3px solid #00e5ff',borderRadius:'50%',animation:'roll 0.6s linear infinite'}} />}
+          {!rolling && roll && (
+            <div style={{textAlign:'center',width:'100%'}}>
+              {roll.fail && <div style={{background:'#ff1744',color:'#fff',fontSize:10,fontFamily:'Orbitron',padding:'2px 8px',borderRadius:3,marginBottom:8}}>FALHA CRÍTICA!</div>}
+              <div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:8}}>
+                {roll.res.map((v,i)=>{
+                  const isCrit=v>=roll.crit;
+                  return <div key={i} style={{
+                    width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',
+                    borderRadius:8,border:'2px solid',fontSize:22,fontWeight:900,
+                    background:isCrit?'rgba(255,214,0,0.2)':roll.fail?'rgba(255,23,68,0.2)':'rgba(0,229,255,0.08)',
+                    borderColor:isCrit?'#ffd600':roll.fail?'#ff1744':'rgba(0,229,255,0.3)',
+                    color:isCrit?'#ffd600':roll.fail?'#ff5252':'#00e5ff'
+                  }}>{v}</div>;
+                })}
+              </div>
+              {!roll.fail && <div style={{background:'rgba(0,229,255,0.1)',border:'1px solid rgba(0,229,255,0.3)',borderRadius:20,padding:'6px 20px',display:'inline-flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:10,color:'rgba(0,229,255,0.5)',fontFamily:'Orbitron'}}>RESULTADO</span>
+                <span style={{fontSize:26,fontWeight:900,color:'#00e5ff',fontFamily:'Orbitron'}}>{roll.total}</span>
+              </div>}
+            </div>
+          )}
+          {!rolling && !roll && <p style={{color:'rgba(0,229,255,0.25)',fontSize:11}}>Configure e role os dados...</p>}
+        </div>
+        {hist.length>0 && (
+          <div style={{marginTop:12}}>
+            <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:6,textTransform:'uppercase'}}>Histórico</div>
+            <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:100,overflowY:'auto'}}>
+              {hist.map(h=>(
+                <div key={h.id} style={{display:'flex',justifyContent:'space-between',fontSize:10,padding:'3px 6px',background:'rgba(0,0,0,0.3)',borderRadius:4}}>
+                  <span style={{color:'rgba(0,229,255,0.5)',fontFamily:'Orbitron'}}>{h.attr.slice(0,3).toUpperCase()} ({h.dice}D)</span>
+                  <span style={{color:'rgba(0,229,255,0.4)'}}>[{h.res.join(',')}]</span>
+                  <span style={{color:h.fail?'#ff1744':'#00e5ff',fontWeight:700}}>{h.fail?'FALHA':'= '+h.total}</span>
                 </div>
               ))}
             </div>
           </div>
-        );
-      };
+        )}
+      </div>
+    </div>
+  );
+};
 
-      const DiceModal = ({ onClose, attributes, onRollBroadcast }) => {
-        const [selectedAttribute, setSelectedAttribute] = useState('poder');
-        const [hasSkill, setHasSkill] = useState(false);
-        const [gainCount, setGainCount] = useState(0);
-        const [lossCount, setLossCount] = useState(0);
-        const [critRange, setCritRange] = useState(6);
-        const [modifier, setModifier] = useState(0);
-        const [history, setHistory] = useState([]);
-        const [currentRoll, setCurrentRoll] = useState(null);
-        const [isRolling, setIsRolling] = useState(false);
+const App = () => {
+  const fileRef = useRef(null);
+  const impRef = useRef(null);
+  const [char,setChar] = useState({...EMPTY,id:Date.now()});
+  const [sheets,setSheets] = useState([]);
+  const [sidebar,setSidebar] = useState(false);
+  const [dice,setDice] = useState(false);
+  const [kitIn,setKitIn] = useState('');
+  const [lobby,setLobby] = useState(false);
+  const [lobbyMode,setLobbyMode] = useState(null);
+  const [lobbyId,setLobbyId] = useState('');
+  const [joinId,setJoinId] = useState('');
+  const [connected,setConnected] = useState(false);
+  const [rolls,setRolls] = useState([]);
+  const peerRef = useRef(null);
+  const connsRef = useRef([]);
+  const clientRef = useRef(null);
 
-        const diceCount = useMemo(() => {
-          let count = 1;
-          if (hasSkill) count++;
-          count += gainCount;
-          count -= lossCount;
-          return Math.max(1, Math.min(3, count));
-        }, [hasSkill, gainCount, lossCount]);
+  const FIREBASE = "https://ficha-editavel-3det-default-rtdb.firebaseio.com";
 
-        const roll = () => {
-          if (isRolling) return;
-          setIsRolling(true);
-          setTimeout(() => {
-            const results = Array.from({length: diceCount}, () => Math.floor(Math.random()*6)+1);
-            const attrValue = attributes[selectedAttribute] || 0;
-            const diceSum = results.reduce((a,b) => a+b, 0);
-            const criticalHits = results.filter(r => r >= critRange).length;
-            const criticalBonus = criticalHits * attrValue;
-            const isCriticalFailure = results.every(r => r === 1);
-            const total = diceSum + attrValue + criticalBonus + modifier;
-            const newRoll = { id: Date.now(), attribute: selectedAttribute, diceCount, results, total, attrValue, criticalBonus, isCriticalFailure, criticalHits, modifier };
-            setCurrentRoll(newRoll);
-            setHistory(prev => [newRoll, ...prev].slice(0, 10));
-            setIsRolling(false);
-            if (onRollBroadcast) onRollBroadcast(newRoll);
-          }, 600);
-        };
+  const syncToCloud = async () => {
+    try {
+      let sid = char.syncId;
+      if(!sid){sid=Math.random().toString(36).substring(2,7).toUpperCase();setChar(c=>({...c,syncId:sid}));}
+      await fetch(`${FIREBASE}/fichas/${sid}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({...char,syncId:sid})});
+      navigator.clipboard.writeText(sid);
+      alert('☁️ Ficha salva!\n\nCódigo: '+sid+'\n\nJá copiado!');
+    } catch(e){alert('❌ Erro ao salvar na nuvem.');}
+  };
 
-        return (
-          <div id="dice-modal" className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
-                <h2 className="text-lg font-bold flex items-center gap-2 text-white"><Dice className="w-6 h-6 text-indigo-400" /> Teste 3DeT</h2>
-                <button onClick={onClose} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"><X className="w-6 h-6" /></button>
+  const importFromCloud = async () => {
+    const code = prompt('Digite o código da ficha (ex: 8F2A1):');
+    if(!code) return;
+    try {
+      const res = await fetch(`${FIREBASE}/fichas/${code.trim().toUpperCase()}.json`);
+      const data = await res.json();
+      if(data&&data.id){
+        const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:{...EMPTY.inventario,...(data.inventario||{})}};
+        setSheets(p=>{const f=p.filter(x=>x.id!==s.id);return [...f,s];});
+        alert('☁️ Ficha de "'+(s.nome||'Jogador')+'" importada!');
+      } else alert('❌ Nenhuma ficha encontrada.');
+    } catch(e){alert('❌ Erro ao buscar da nuvem.');}
+  };
+
+  const startHost = () => {
+    const peer = new Peer();
+    peer.on('open',id=>{setLobbyId(id);setLobbyMode('host');setConnected(true);});
+    peer.on('connection',conn=>{
+      connsRef.current.push(conn);
+      conn.on('data',d=>{if(d.type==='ROLL'){setRolls(p=>[d.payload,...p].slice(0,50));connsRef.current.forEach(c=>{if(c.peer!==conn.peer)c.send(d);});}});
+      conn.on('close',()=>{connsRef.current=connsRef.current.filter(c=>c.peer!==conn.peer);});
+    });
+    peer.on('error',e=>{alert('Erro P2P: '+e.type);setConnected(false);});
+    peerRef.current=peer;
+  };
+
+  const joinLobby = () => {
+    if(!joinId.trim()) return;
+    const peer = new Peer();
+    peer.on('open',()=>{
+      const conn=peer.connect(joinId.trim());
+      conn.on('open',()=>{setLobbyMode('client');setLobbyId(joinId.trim());setConnected(true);clientRef.current=conn;});
+      conn.on('data',d=>{if(d.type==='ROLL')setRolls(p=>[d.payload,...p].slice(0,50));});
+      conn.on('close',()=>{alert('Conexão perdida.');leaveLobby();});
+    });
+    peer.on('error',e=>{alert('Erro: '+e.type);});
+    peerRef.current=peer;
+  };
+
+  const leaveLobby = () => {
+    if(peerRef.current)peerRef.current.destroy();
+    peerRef.current=null;connsRef.current=[];clientRef.current=null;
+    setLobbyMode(null);setLobbyId('');setConnected(false);setRolls([]);
+  };
+
+  const broadcastRoll = (roll) => {
+    const payload={id:Date.now()+Math.random(),player:char.nome||'Jogador',roll,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+    if(connected)setRolls(p=>[payload,...p].slice(0,50));
+    const msg={type:'ROLL',payload};
+    if(lobbyMode==='host')connsRef.current.forEach(c=>c.send(msg));
+    else if(lobbyMode==='client'&&clientRef.current)clientRef.current.send(msg);
+  };
+
+  useEffect(()=>{
+    const s = localStorage.getItem('3det_v2');
+    if(s) try{setSheets(JSON.parse(s))}catch(e){}
+  },[]);
+
+  const save = () => {
+    const ns = {...char,id:char.id||Date.now(),saved:new Date().toISOString()};
+    try {
+      const idx = sheets.findIndex(s=>s.id===ns.id);
+      const arr = [...sheets];
+      if(idx>=0) arr[idx]=ns; else arr.push(ns);
+      localStorage.setItem('3det_v2',JSON.stringify(arr));
+      setSheets(arr); setChar(ns); alert('Ficha salva!');
+    } catch(e){alert('Erro ao salvar. Tente remover a foto.');}
+  };
+
+  const pts = useMemo(()=>{
+    const a = (char.atributos.poder||0)+(char.atributos.habilidade||0)+(char.atributos.resistencia||0);
+    const v = char.vantagens.reduce((x,i)=>x+(parseInt(i.custo)||0),0);
+    const d = char.desvantagens.reduce((x,i)=>x+(parseInt(i.custo)||0),0);
+    const p = char.pericias.reduce((x,i)=>x+(parseInt(i.custo)||0),0);
+    const n = (char.kits||[]).length; const k = n*(n+1)/2;
+    return a+v+d+p+k+(parseInt(char.arquetipoCusto)||0);
+  },[char.atributos,char.vantagens,char.desvantagens,char.pericias,char.kits,char.arquetipoCusto]);
+
+  const addKit = () => {
+    if(!kitIn.trim()) return;
+    const name = kitIn.trim();
+    const poderes = KITS[name]||[];
+    const newV = [...char.vantagens,...poderes.map((p,i)=>({id:Date.now()+i+Math.random(),nome:p,detalhe:'(Kit: '+name+')',descricao:'',custo:'0'}))];
+    setChar(c=>({...c,kits:[...(c.kits||[]),{id:Date.now(),nome:name}],vantagens:newV}));
+    setKitIn('');
+  };
+
+  const addItem = list => setChar(c=>({...c,[list]:[...(c[list]||[]),{id:Date.now(),nome:'',detalhe:'',descricao:'',custo:list==='pericias'?'1':''}]}));
+  const updItem = (list,id,f,v) => setChar(c=>{
+    const nl = c[list].map(item=>{
+      if(item.id!==id) return item;
+      const u = {...item,[f]:v};
+      if(f==='nome'){
+        const info = list==='vantagens'?VANTAGENS[v]:list==='desvantagens'?DESVANTAGENS[v]:null;
+        if(info){if(!u.custo||u.custo==='')u.custo=(info.c.match(/-?\d+/)||[''])[0]; u.descricao=info.d;}
+        u.detalhe='';
+      }
+      if(f==='detalhe'&&v){
+        const sub = SUBOPCOES[item.nome]&&SUBOPCOES[item.nome][v];
+        if(sub) u.descricao=sub;
+      }
+      return u;
+    });
+    return {...c,[list]:nl};
+  });
+  const remItem = (list,id) => setChar(c=>({...c,[list]:c[list].filter(i=>i.id!==id)}));
+  const addInv = cat => setChar(c=>({...c,inventario:{...c.inventario,[cat]:[...c.inventario[cat],{id:Date.now(),nome:'',qtd:1,desc:''}]}}));
+  const updInv = (cat,id,f,v) => setChar(c=>({...c,inventario:{...c.inventario,[cat]:c.inventario[cat].map(i=>i.id===id?{...i,[f]:v}:i)}}));
+  const remInv = (cat,id) => setChar(c=>({...c,inventario:{...c.inventario,[cat]:c.inventario[cat].filter(i=>i.id!==id)}}));
+
+  const maxPA = char.atributos.poder||1;
+  const maxPM = char.atributos.habilidade===0?1:char.atributos.habilidade*5;
+  const maxPV = char.atributos.resistencia===0?1:char.atributos.resistencia*5;
+
+  const hasPatr = char.vantagens.some(v=>v.nome.toLowerCase().includes('patrono'));
+  const getLimits = (lvl,tr) => {
+    let l={comuns:2,incomuns:0,raros:0,lendarios:0};
+    if(lvl>=1){l.comuns=3;l.incomuns=1;}
+    if(lvl>=2){l.comuns=5;l.incomuns=2;}
+    if(lvl>=3){l.incomuns=4;l.raros=1;l.lendarios=1;}
+    if(hasPatr){if(l.comuns>0)l.comuns++;if(l.incomuns>0)l.incomuns++;if(l.raros>0)l.raros++;if(l.lendarios>0)l.lendarios++;}
+    l.comuns-=tr.ci*3;l.incomuns+=tr.ci;l.incomuns-=tr.ir*3;l.raros+=tr.ir;l.raros-=tr.rl*3;l.lendarios+=tr.rl;
+    return l;
+  };
+  const tr = char.trocas||{ci:0,ir:0,rl:0};
+  const lim = getLimits(char.nivelInv||0,tr);
+  const exportJ = () => {const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(char));const a=document.createElement('a');a.href=d;a.download=(char.nome||'personagem')+'_3det.json';document.body.appendChild(a);a.click();a.remove();};
+  const importJ = e => {const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{try{const l=JSON.parse(ev.target.result);if(!l.inventario)l.inventario=EMPTY.inventario;if(!l.kits)l.kits=[];if(!l.id)l.id=Date.now();setChar({...EMPTY,...l});alert('Ficha carregada!');}catch(err){alert('Erro ao ler arquivo.');}e.target.value=null;};r.readAsText(f);}};
+
+  return (
+    <div style={{minHeight:'100vh',background:'var(--cb)',color:'var(--ct)',position:'relative',zIndex:1}}>
+
+      {/* TOP BAR */}
+      <div className="no-print" style={{position:'sticky',top:0,zIndex:100,background:'linear-gradient(90deg,var(--cb),var(--cp),var(--cb))',borderBottom:'1px solid var(--ca)',boxShadow:'0 0 20px var(--cg2)',padding:'10px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <Btn onClick={()=>setSidebar(true)} style={{padding:'6px 10px',fontSize:10}}>☰ FICHAS</Btn>
+        <div style={{textAlign:'center'}}>
+          <div className="flicker orb" style={{color:'#00e5ff',textShadow:'0 0 10px var(--cg)',fontSize:'clamp(11px,3.5vw,20px)',fontWeight:900,letterSpacing:4,textTransform:'uppercase'}}>PLUS DISTOPHYA</div>
+          <div className="mono" style={{color:'rgba(0,229,255,0.4)',fontSize:9,letterSpacing:3}}>◆ FICHA 3DeT VICTORY ◆</div>
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
+          <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>☁️ SYNC</button>
+          <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>📥 BAIXAR</button>
+          <button onClick={()=>setLobby(!lobby)} style={{background:connected?'rgba(0,230,118,0.15)':'rgba(245,158,11,0.15)',border:`1px solid ${connected?'rgba(0,230,118,0.4)':'rgba(245,158,11,0.4)'}`,color:connected?'#00e676':'#f59e0b',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>👥 {connected?'NA SALA':'VER SALA'}</button>
+          <Btn onClick={save} style={{padding:'6px 10px',fontSize:10}}>💾 SALVAR</Btn>
+        </div>
+      </div>
+
+      {/* DICE FAB */}
+      <button className="no-print pulse" onClick={()=>setDice(true)} style={{position:'fixed',bottom:24,right:24,zIndex:150,width:56,height:56,borderRadius:'50%',background:'var(--cp)',border:'2px solid var(--ca)',color:'var(--ca)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}} title="Rolar Dados">🎲</button>
+
+      {dice && <DiceModal onClose={()=>setDice(false)} attrs={char.atributos} onRoll={broadcastRoll} />}
+
+      {/* LOBBY SIDEBAR */}
+      {lobby && (
+        <div style={{position:'fixed',top:0,right:0,bottom:0,width:300,background:'var(--cp)',borderLeft:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
+          <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:12}}>SALA DE ROLAGENS</span>
+            <button onClick={()=>setLobby(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+          </div>
+          <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
+            {!connected ? (
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                <p style={{color:'rgba(0,229,255,0.5)',fontSize:12}}>Conecte-se com seus amigos para compartilhar rolagens em tempo real.</p>
+                <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:12,display:'flex',flexDirection:'column',gap:8}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>CRIAR SALA (MESTRE)</div>
+                  <Btn onClick={startHost} style={{fontSize:10}}>👑 CRIAR NOVA SALA</Btn>
+                </div>
+                <div style={{textAlign:'center',color:'rgba(0,229,255,0.3)',fontSize:11,fontFamily:'Share Tech Mono'}}>— OU —</div>
+                <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:12,display:'flex',flexDirection:'column',gap:8}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>ENTRAR (JOGADOR)</div>
+                  <input value={joinId} onChange={e=>setJoinId(e.target.value)} placeholder="Cole o ID da sala..." style={{fontSize:12,padding:'6px 8px',fontFamily:'Share Tech Mono'}} />
+                  <Btn onClick={joinLobby} style={{fontSize:10,borderColor:'rgba(0,230,118,0.4)',color:'#00e676'}}>⚡ CONECTAR</Btn>
+                </div>
               </div>
-              <div className="p-6 overflow-y-auto space-y-6 flex-1">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">1. Escolha o Atributo</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button onClick={() => setSelectedAttribute('poder')} className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${selectedAttribute==='poder'?'bg-red-500 text-white border-red-400':'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
-                      <Sword className="w-5 h-5" /><span className="text-xs font-bold uppercase">Poder ({attributes.poder})</span>
-                    </button>
-                    <button onClick={() => setSelectedAttribute('habilidade')} className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${selectedAttribute==='habilidade'?'bg-blue-500 text-white border-blue-400':'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
-                      <Zap className="w-5 h-5" /><span className="text-xs font-bold uppercase">Habilidade ({attributes.habilidade})</span>
-                    </button>
-                    <button onClick={() => setSelectedAttribute('resistencia')} className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${selectedAttribute==='resistencia'?'bg-green-500 text-white border-green-400':'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
-                      <Shield className="w-5 h-5" /><span className="text-xs font-bold uppercase">Resistência ({attributes.resistencia})</span>
-                    </button>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                <div style={{background:'rgba(0,230,118,0.08)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:6,padding:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e676'}}>● {lobbyMode==='host'?'HOST':'CONECTADO'}</span>
+                    <button onClick={leaveLobby} style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:11,fontFamily:'Orbitron'}}>SAIR</button>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.4)',borderRadius:4,padding:'6px 8px'}}>
+                    <span style={{fontFamily:'Share Tech Mono',fontSize:11,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:8}}>{lobbyId}</span>
+                    <button onClick={()=>{navigator.clipboard.writeText(lobbyId);alert('ID copiado!');}} style={{background:'none',border:'1px solid rgba(0,229,255,0.3)',color:'#00e5ff',borderRadius:3,padding:'2px 6px',cursor:'pointer',fontSize:10}}>📋</button>
                   </div>
                 </div>
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase">2. Modificadores</label>
-                    <span className="text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/30">Total: {diceCount}D</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setHasSkill(!hasSkill)} className={`p-2 rounded-lg border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${hasSkill?'bg-indigo-600 border-indigo-500 text-white':'bg-slate-800 border-slate-700 text-slate-400'}`}>
-                      {hasSkill ? 'Com Perícia' : 'Sem Perícia'}
-                    </button>
-                    <div className={`p-2 rounded-lg border flex flex-col items-center justify-between ${modifier!==0?'bg-blue-900/30 border-blue-500/50':'bg-slate-800 border-slate-700'}`}>
-                      <span className={`text-[10px] font-bold uppercase mb-1 ${modifier!==0?'text-blue-400':'text-slate-500'}`}>Modificador</span>
-                      <div className="flex items-center gap-2 w-full justify-center">
-                        <button onClick={() => setModifier(modifier-1)} className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold">-</button>
-                        <span className={`font-mono font-bold text-lg w-6 text-center ${modifier!==0?'text-blue-400':'text-slate-500'}`}>{modifier>0?`+${modifier}`:modifier}</span>
-                        <button onClick={() => setModifier(modifier+1)} className="w-6 h-6 flex items-center justify-center rounded bg-blue-600 hover:bg-blue-500 text-white font-bold">+</button>
+                <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',textTransform:'uppercase',borderBottom:'1px solid rgba(0,229,255,0.1)',paddingBottom:4}}>Log de Rolagens</div>
+                {rolls.length===0
+                  ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic'}}>Faça uma rolagem para aparecer aqui.</p>
+                  : rolls.map(r=>(
+                    <div key={r.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:10}}>
+                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                        <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>{r.player}</span>
+                        <span style={{fontSize:9,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono'}}>{r.time}</span>
                       </div>
-                    </div>
-                    <div className={`p-2 rounded-lg border flex flex-col items-center justify-between ${gainCount>0?'bg-emerald-900/30 border-emerald-500/50':'bg-slate-800 border-slate-700'}`}>
-                      <span className={`text-[10px] font-bold uppercase mb-1 ${gainCount>0?'text-emerald-400':'text-slate-500'}`}>Ganhos (+1D)</span>
-                      <div className="flex items-center gap-2 w-full justify-center">
-                        <button onClick={() => setGainCount(Math.max(0,gainCount-1))} className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold">-</button>
-                        <span className={`font-mono font-bold text-lg w-4 text-center ${gainCount>0?'text-emerald-400':'text-slate-500'}`}>{gainCount}</span>
-                        <button onClick={() => setGainCount(gainCount+1)} className="w-6 h-6 flex items-center justify-center rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold">+</button>
-                      </div>
-                    </div>
-                    <div className={`p-2 rounded-lg border flex flex-col items-center justify-between ${lossCount>0?'bg-rose-900/30 border-rose-500/50':'bg-slate-800 border-slate-700'}`}>
-                      <span className={`text-[10px] font-bold uppercase mb-1 ${lossCount>0?'text-rose-400':'text-slate-500'}`}>Perdas (-1D)</span>
-                      <div className="flex items-center gap-2 w-full justify-center">
-                        <button onClick={() => setLossCount(Math.max(0,lossCount-1))} className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold">-</button>
-                        <span className={`font-mono font-bold text-lg w-4 text-center ${lossCount>0?'text-rose-400':'text-slate-500'}`}>{lossCount}</span>
-                        <button onClick={() => setLossCount(lossCount+1)} className="w-6 h-6 flex items-center justify-center rounded bg-rose-600 hover:bg-rose-500 text-white font-bold">+</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <input type="checkbox" id="crit5" checked={critRange===5} onChange={() => setCritRange(critRange===6?5:6)} className="w-4 h-4 rounded" />
-                    <label htmlFor="crit5" className="text-xs text-slate-400 select-none cursor-pointer">Crítico também com 5 (Maestria/Vantagem)</label>
-                  </div>
-                </div>
-                <button onClick={roll} disabled={isRolling} className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-black text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                  {isRolling ? 'Rolando...' : `Rolar ${diceCount}D + ${attributes[selectedAttribute]}`}
-                </button>
-                <div className="min-h-[140px] bg-slate-950/50 rounded-xl border border-slate-800 p-4 flex flex-col items-center justify-center relative overflow-hidden">
-                  {isRolling ? (
-                    <Dice className="w-16 h-16 text-indigo-500 rolling opacity-50" />
-                  ) : currentRoll ? (
-                    <div className="w-full text-center">
-                      {currentRoll.isCriticalFailure && <div className="absolute top-0 left-0 w-full bg-rose-600 text-white text-xs font-bold uppercase py-1">Falha Crítica!</div>}
-                      <div className="flex flex-wrap justify-center gap-3 mb-4 mt-2">
-                        {currentRoll.results.map((val,idx) => {
-                          const isCrit = val >= critRange;
-                          let style = "bg-slate-800 border-slate-600 text-slate-300";
-                          if (isCrit) style = "bg-yellow-500 text-slate-900 border-yellow-400 scale-110";
-                          if (currentRoll.isCriticalFailure) style = "bg-rose-900 text-rose-200 border-rose-700";
-                          return <div key={idx} className={`w-14 h-14 flex items-center justify-center rounded-xl border-2 text-3xl font-black ${style}`}>{val}</div>;
-                        })}
-                      </div>
-                      <div className="text-sm text-slate-400 font-mono mb-2">
-                        {currentRoll.isCriticalFailure ? <span className="text-rose-400 font-bold">Erro Automático</span> : (
-                          <>{currentRoll.results.reduce((a,b)=>a+b,0)} (Dados) + {currentRoll.attrValue} (Atributo)
-                            {currentRoll.criticalBonus>0 && <span className="text-yellow-400"> + {currentRoll.criticalBonus} (Crítico)</span>}
-                            {currentRoll.modifier!==0 && <span className={currentRoll.modifier>0?"text-blue-400":"text-rose-400"}>{currentRoll.modifier>0?` + ${currentRoll.modifier}`:` - ${Math.abs(currentRoll.modifier)}`} (Mod)</span>}
-                          </>
-                        )}
-                      </div>
-                      {!currentRoll.isCriticalFailure && (
-                        <div className="inline-block bg-indigo-600 px-6 py-2 rounded-full shadow-lg">
-                          <span className="text-indigo-200 text-xs font-bold uppercase mr-2">Resultado Final</span>
-                          <span className="text-2xl font-black text-white">{currentRoll.total}</span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (<p className="text-slate-600 italic text-sm">Configure e role os dados...</p>)}
-                </div>
-                {history.length > 0 && (
-                  <div className="border-t border-slate-700 pt-4">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Últimas Rolagens</h4>
-                    <div className="space-y-2 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
-                      {history.map(h => (
-                        <div key={h.id} className="flex justify-between items-center text-xs p-2 bg-slate-800/50 rounded border border-slate-800">
-                          <span className="text-slate-400 uppercase font-bold">{h.attribute.substr(0,3)} ({h.diceCount}D)</span>
-                          <div className="flex gap-2">
-                            <span className="font-mono text-slate-500">[{h.results.join(', ')}]</span>
-                            {h.isCriticalFailure ? <span className="font-bold text-rose-500">Falha</span> : <span className="font-bold text-indigo-400">= {h.total}</span>}
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <span style={{fontFamily:'Orbitron',fontSize:22,fontWeight:900,color:r.roll.fail?'#ff1744':'#00e5ff'}}>{r.roll.fail?'FALHA':r.roll.total}</span>
+                        <div>
+                          <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textTransform:'uppercase'}}>{r.roll.attr} ({r.roll.dice}D)</div>
+                          <div style={{display:'flex',gap:3,marginTop:2}}>
+                            {r.roll.res.map((v,i)=>(
+                              <span key={i} style={{width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,borderRadius:2,background:v>=r.roll.crit?'rgba(255,214,0,0.2)':'rgba(0,229,255,0.08)',color:v>=r.roll.crit?'#ffd600':'#00e5ff',border:'1px solid rgba(0,229,255,0.15)'}}>{v}</span>
+                            ))}
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      const App = () => {
-        const fileInputRef = useRef(null);
-        const importInputRef = useRef(null);
-        const [showSidebar, setShowSidebar] = useState(false);
-        const [showDiceModal, setShowDiceModal] = useState(false);
-        const [savedSheets, setSavedSheets] = useState([]);
-        const [kitInput, setKitInput] = useState('');
-        const [character, setCharacter] = useState({ ...emptyCharacter, id: Date.now() });
-
-        useLayoutEffect(() => {
-          const textareas = document.querySelectorAll('.auto-expand');
-          textareas.forEach(t => { t.style.height='auto'; t.style.height=t.scrollHeight+'px'; });
-        });
-
-        useEffect(() => {
-          const saved = localStorage.getItem('3det_sheets');
-          if (saved) { try { setSavedSheets(JSON.parse(saved)); } catch(e) {} }
-        }, []);
-
-        const calculatedTotalPoints = useMemo(() => {
-          const attrPoints = (character.atributos.poder||0)+(character.atributos.habilidade||0)+(character.atributos.resistencia||0);
-          const advPoints = character.vantagens.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
-          const disadvPoints = character.desvantagens.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
-          const skillPoints = character.pericias.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
-          const nKits = (character.kits||[]).length;
-          const kitsPoints = (nKits*(nKits+1))/2;
-          const archPoints = parseInt(character.arquetipoCusto)||0;
-          return attrPoints+advPoints+disadvPoints+skillPoints+archPoints+kitsPoints;
-        }, [character.atributos,character.vantagens,character.desvantagens,character.pericias,character.kits,character.arquetipoCusto]);
-
-        const handleAddKit = () => {
-          if (!kitInput.trim()) return;
-          const kitName = kitInput.trim();
-          const newKit = { id: Date.now(), nome: kitName };
-          const newKits = [...(character.kits||[]), newKit];
-          let newVantagens = [...character.vantagens];
-          const kitData = DB_KITS[kitName];
-          if (kitData && kitData.poderes) {
-            kitData.poderes.forEach((p,idx) => {
-              newVantagens.push({ id: Date.now()+idx+Math.random(), nome: p.nome, detalhe:`(Kit: ${kitName})`, descricao:"", custo:"0" });
-            });
-          }
-          setCharacter({ ...character, kits: newKits, vantagens: newVantagens });
-          setKitInput('');
-        };
-
-        const handleArquetipoChange = (e) => {
-          const novoNome = e.target.value;
-          const novoCusto = DB_ARQUETIPOS[novoNome] ? DB_ARQUETIPOS[novoNome].custo : character.arquetipoCusto;
-          setCharacter({ ...character, arquetipo: novoNome, arquetipoCusto: novoCusto });
-        };
-
-        const updateAttr = (attr, val) => setCharacter(prev => ({ ...prev, atributos: { ...prev.atributos, [attr]: Math.max(0, parseInt(val)||0) } }));
-
-        const addListItem = (list) => setCharacter(prev => ({
-          ...prev, [list]: [...(prev[list]||[]), { id: Date.now(), nome:'', detalhe:'', descricao:'', custo: list==='pericias'?'1':'' }]
-        }));
-
-        const updateListItem = (list, id, field, value) => {
-          setCharacter(prev => {
-            const newList = prev[list].map(item => {
-              if (item.id === id) {
-                const updated = { ...item, [field]: value };
-                if (field === 'nome') {
-                  const info = list==='vantagens' ? DB_VANTAGENS[value] : list==='desvantagens' ? DB_DESVANTAGENS[value] : null;
-                  if (info && !updated.custo) { updated.custo = (info.custo.match(/-?\d+/)||[""])[0]; }
+                  ))
                 }
-                return updated;
-              }
-              return item;
-            });
-            return { ...prev, [list]: newList };
-          });
-        };
-
-        const removeListItem = (list, id) => setCharacter(prev => ({ ...prev, [list]: prev[list].filter(item => item.id !== id) }));
-        const addInventoryItem = (cat) => setCharacter(prev => ({ ...prev, inventario: { ...prev.inventario, [cat]: [...prev.inventario[cat], { id: Date.now(), nome:'', qtd:1, desc:'' }] } }));
-        const updateInventoryItem = (cat, id, field, value) => setCharacter(prev => ({ ...prev, inventario: { ...prev.inventario, [cat]: prev.inventario[cat].map(item => item.id===id ? { ...item, [field]:value } : item) } }));
-        const removeInventoryItem = (cat, id) => setCharacter(prev => ({ ...prev, inventario: { ...prev.inventario, [cat]: prev.inventario[cat].filter(item => item.id!==id) } }));
-
-        const saveToLibrary = () => {
-          const newSheet = { ...character, id: character.id||Date.now(), lastModified: new Date().toISOString() };
-          try {
-            const existingIndex = savedSheets.findIndex(s => s.id === newSheet.id);
-            let newSaved = [...savedSheets];
-            if (existingIndex >= 0) newSaved[existingIndex] = newSheet; else newSaved.push(newSheet);
-            localStorage.setItem('3det_sheets', JSON.stringify(newSaved));
-            setSavedSheets(newSaved);
-            setCharacter(newSheet);
-            alert('Ficha salva na biblioteca!');
-          } catch(e) { alert('Erro ao salvar. Tente remover a foto.'); }
-        };
-
-        const loadFromLibrary = (sheet) => { setCharacter({ ...emptyCharacter, ...sheet, kits: sheet.kits||[], escala: sheet.escala||'Ningen', marco: sheet.marco||'Iniciante' }); setShowSidebar(false); };
-        const deleteFromLibrary = (e, id) => { e.stopPropagation(); if(window.confirm('Remover ficha?')) { const n=savedSheets.filter(s=>s.id!==id); localStorage.setItem('3det_sheets',JSON.stringify(n)); setSavedSheets(n); } };
-        const createNewSheet = () => { if(window.confirm('Criar nova ficha?')) { setCharacter({ ...emptyCharacter, id: Date.now() }); setShowSidebar(false); } };
-        const exportFile = () => { const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(character)); const a=document.createElement('a'); a.setAttribute('href',d); a.setAttribute('download',`${character.nome||'personagem'}_3det.json`); document.body.appendChild(a); a.click(); a.remove(); };
-        const importFile = (e) => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              try {
-                const loaded = JSON.parse(ev.target.result);
-                if (!loaded.inventario) loaded.inventario = emptyCharacter.inventario;
-                if (!loaded.kits) loaded.kits = [];
-                if (!loaded.id) loaded.id = Date.now();
-                setCharacter({ ...emptyCharacter, ...loaded });
-                alert('Ficha carregada!');
-              } catch(err) { alert('Erro ao ler arquivo.'); }
-              e.target.value = null;
-            };
-            reader.readAsText(file);
-          }
-        };
-        const handleImageUpload = (e) => { const file=e.target.files[0]; if(file) { const r=new FileReader(); r.onloadend=()=>setCharacter(p=>({...p,foto:r.result})); r.readAsDataURL(file); } };
-
-        const hasPatrono = character.vantagens.some(v => v.nome.toLowerCase().includes('patrono'));
-        const getInventoryLimits = (level, trades) => {
-          let limits = { comuns:2, incomuns:0, raros:0, lendarios:0 };
-          if (level>=1) { limits.comuns=3; limits.incomuns=1; }
-          if (level>=2) { limits.comuns=5; limits.incomuns=2; }
-          if (level>=3) { limits.incomuns=4; limits.raros=1; limits.lendarios=1; }
-          if (hasPatrono) { if(limits.comuns>0)limits.comuns+=1; if(limits.incomuns>0)limits.incomuns+=1; if(limits.raros>0)limits.raros+=1; if(limits.lendarios>0)limits.lendarios+=1; }
-          limits.comuns -= trades.comumParaIncomum*3; limits.incomuns += trades.comumParaIncomum;
-          limits.incomuns -= trades.incomumParaRaro*3; limits.raros += trades.incomumParaRaro;
-          limits.raros -= trades.raroParaLendario*3; limits.lendarios += trades.raroParaLendario;
-          return limits;
-        };
-        const limits = getInventoryLimits(character.nivelInventario, character.trocas||{comumParaIncomum:0,incomumParaRaro:0,raroParaLendario:0});
-        const performTrade = (type, dir) => setCharacter(prev => { const t=prev.trocas||{comumParaIncomum:0,incomumParaRaro:0,raroParaLendario:0}; const nv=t[type]+dir; if(nv<0)return prev; return {...prev,trocas:{...t,[type]:nv}}; });
-
-        const maxPA = character.atributos.poder||1;
-        const maxPM = (character.atributos.habilidade||0)*5||5;
-        const maxPV = (character.atributos.resistencia||0)*5||5;
-
-        return (
-          <div className="min-h-screen w-full bg-slate-900 text-slate-100 font-sans print:bg-white print:text-black">
-            {/* TOP BAR */}
-            <div className="sticky top-0 left-0 w-full bg-slate-950/90 backdrop-blur-md border-b border-slate-800 p-3 flex justify-between items-center z-40 no-print">
-              <button onClick={() => setShowSidebar(true)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors flex items-center gap-2">
-                <Menu className="w-6 h-6" /><span className="font-bold text-sm uppercase tracking-wide hidden md:inline">Minhas Fichas</span>
-              </button>
-              <h1 className="text-sm font-bold text-slate-500 uppercase tracking-widest">3DeT Victory</h1>
-              <div className="flex gap-2">
-                <button onClick={saveToLibrary} className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors flex items-center gap-1"><Save className="w-5 h-5" /><span className="text-xs font-bold hidden md:inline">Salvar</span></button>
               </div>
-            </div>
-
-            {/* DICE BUTTON */}
-            <button onClick={() => setShowDiceModal(true)} className="fixed bottom-8 right-8 z-[100] p-4 bg-indigo-600 text-white rounded-full shadow-xl hover:scale-110 hover:bg-indigo-500 transition-all duration-200 flex items-center justify-center cursor-pointer no-print" title="Rolar Dados">
-              <Dice className="w-8 h-8" />
-            </button>
-
-            {showDiceModal && <DiceModal onClose={() => setShowDiceModal(false)} attributes={character.atributos} />}
-
-            {/* SIDEBAR */}
-            {showSidebar && (
-              <>
-                <div className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm no-print" onClick={() => setShowSidebar(false)}></div>
-                <div className="fixed inset-y-0 left-0 w-80 bg-slate-900 border-r border-slate-700 shadow-2xl z-50 no-print flex flex-col">
-                  <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-                    <h2 className="font-bold text-lg text-white flex items-center gap-2"><BookOpen className="w-5 h-5 text-indigo-400" /> Biblioteca</h2>
-                    <button onClick={() => setShowSidebar(false)} className="text-slate-400 hover:text-white"><X className="w-6 h-6" /></button>
-                  </div>
-                  <div className="p-4 border-b border-slate-800 grid grid-cols-2 gap-2">
-                    <button onClick={createNewSheet} className="flex flex-col items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-[10px] font-bold text-slate-300 gap-1"><PlusCircle className="w-5 h-5 text-green-400" /> Nova Ficha</button>
-                    <button onClick={() => importInputRef.current.click()} className="flex flex-col items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-[10px] font-bold text-slate-300 gap-1"><Upload className="w-5 h-5 text-blue-400" /> Importar</button>
-                    <input type="file" ref={importInputRef} onChange={importFile} accept=".json" className="hidden" />
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                    {savedSheets.length === 0 ? (
-                      <div className="text-center py-8 text-slate-600 text-sm">Nenhuma ficha salva.</div>
-                    ) : (
-                      savedSheets.map(sheet => (
-                        <div key={sheet.id} onClick={() => loadFromLibrary(sheet)} className="group bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-indigo-500 cursor-pointer transition-all relative">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 border border-slate-700">
-                              {sheet.foto ? <img src={sheet.foto} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-600"><FileText className="w-5 h-5" /></div>}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-slate-200 truncate">{sheet.nome||'Sem Nome'}</h4>
-                              <p className="text-xs text-slate-500 truncate">{sheet.arquetipo||'Sem Arquétipo'} • {sheet.pontos}pts</p>
-                            </div>
-                          </div>
-                          <button onClick={(e) => deleteFromLibrary(e,sheet.id)} className="absolute top-2 right-2 p-1.5 text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-md opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <div className="p-3 bg-slate-950 text-[10px] text-center text-slate-600">Armazenado no navegador</div>
-                </div>
-              </>
             )}
+          </div>
+        </div>
+      )}
 
-            {/* MAIN CONTENT */}
-            <div className="pt-6 pb-10 px-4 md:px-8 print:pt-0 print:pb-0">
-              <div className="max-w-6xl mx-auto space-y-6 print:space-y-4">
-
-                {/* HEADER */}
-                <div className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 print:border-black print:shadow-none print:bg-transparent">
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-shrink-0 flex flex-col items-center gap-2 mx-auto md:mx-0">
-                      <div className="w-40 h-40 rounded-2xl bg-slate-900 border-2 border-dashed border-slate-600 flex items-center justify-center overflow-hidden relative group cursor-pointer print:border-black" onClick={() => fileInputRef.current?.click()}>
-                        {character.foto ? <img src={character.foto} alt="Personagem" className="w-full h-full object-cover" /> : (
-                          <div className="text-center p-4 text-slate-500 hover:text-slate-300 transition-colors"><ImageIcon className="w-8 h-8 mx-auto mb-2" /><span className="text-xs font-bold uppercase">Adicionar Foto</span></div>
-                        )}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center no-print"><Upload className="text-white w-6 h-6" /></div>
-                      </div>
-                      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-                      {character.foto && <button onClick={(e) => { e.stopPropagation(); setCharacter(p=>({...p,foto:null})); }} className="text-xs text-rose-400 hover:text-rose-300 no-print flex items-center gap-1"><Trash2 className="w-3 h-3" /> Remover</button>}
+      {/* SIDEBAR */}
+      {sidebar && (
+        <div>
+          <div onClick={()=>setSidebar(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.85)',zIndex:200}} />
+          <div style={{position:'fixed',top:0,left:0,bottom:0,width:300,background:'var(--cp)',borderRight:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
+            <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:13}}>BIBLIOTECA</span>
+              <button onClick={()=>setSidebar(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+            </div>
+            <div style={{padding:12,borderBottom:'1px solid rgba(0,229,255,0.1)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <Btn onClick={()=>{if(window.confirm('Nova ficha?')){setChar({...EMPTY,id:Date.now()});setSidebar(false);}}} style={{fontSize:10,padding:'6px 8px'}}>+ Nova Ficha</Btn>
+              <Btn onClick={()=>impRef.current.click()} style={{fontSize:10,padding:'6px 8px'}}>📂 Importar</Btn>
+              <input ref={impRef} type="file" accept=".json" onChange={importJ} style={{display:'none'}} />
+            </div>
+            <div style={{flex:1,overflowY:'auto',padding:12,display:'flex',flexDirection:'column',gap:8}}>
+              {sheets.length===0
+                ? <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center',fontSize:12,marginTop:20}}>Nenhuma ficha salva.</p>
+                : sheets.map(sh=>(
+                  <div key={sh.id} onClick={()=>{setChar({...EMPTY,...sh,kits:sh.kits||[]});setSidebar(false);}}
+                    style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:10,cursor:'pointer',display:'flex',alignItems:'center',gap:10,position:'relative'}}>
+                    {sh.foto && <img src={sh.foto} style={{width:36,height:36,borderRadius:4,objectFit:'cover'}} alt="" />}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:700,fontSize:13,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sh.nome||'Sem Nome'}</div>
+                      <div style={{fontSize:10,color:'rgba(0,229,255,0.4)'}}>{sh.arquetipo||'—'}</div>
                     </div>
+                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Remover?')){const n=sheets.filter(s=>s.id!==sh.id);localStorage.setItem('3det_v2',JSON.stringify(n));setSheets(n);}}}
+                      style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:14}}>×</button>
+                  </div>
+                ))
+              }
+            </div>
+            <div style={{padding:8,textAlign:'center',fontSize:9,color:'rgba(0,229,255,0.2)',fontFamily:'Share Tech Mono'}}>Armazenado no navegador</div>
+          </div>
+        </div>
+      )}
 
-                    <div className="flex-1 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="space-y-1 lg:col-span-2">
-                          <label className="text-xs font-bold uppercase tracking-wider text-blue-400 print:text-black">Nome</label>
-                          <input className="w-full bg-slate-900 border-none rounded-lg p-3 text-2xl font-bold focus:ring-2 focus:ring-blue-500 outline-none print:bg-transparent print:border-b print:border-black print:rounded-none print:p-1 text-white" placeholder="Nome do Personagem" value={character.nome} onChange={(e) => setCharacter({ ...character, nome: e.target.value })} />
-                        </div>
-                        <div className="space-y-1 lg:col-span-2">
-                          <label className="text-xs font-bold uppercase tracking-wider text-blue-400 print:text-black">Arquétipo</label>
-                          <div className="flex gap-2">
-                            <input list="lista-arquetipos" className="flex-1 bg-slate-900 border-none rounded-lg p-3 text-xl font-bold focus:ring-2 focus:ring-blue-500 outline-none print:bg-transparent print:border-b print:border-black print:rounded-none print:p-1 text-white" placeholder="Selecione ou digite..." value={character.arquetipo} onChange={handleArquetipoChange} />
-                            <div className="flex flex-col items-center justify-center bg-slate-900 rounded-lg p-1 w-16 border border-slate-700">
-                              <span className="text-[10px] text-slate-500 uppercase print:hidden">Pts</span>
-                              <input type="number" className="w-full bg-transparent text-center font-bold text-lg outline-none text-white" value={character.arquetipoCusto} onChange={(e) => setCharacter({ ...character, arquetipoCusto: parseInt(e.target.value)||0 })} />
-                            </div>
-                          </div>
-                          <datalist id="lista-arquetipos">{LISTA_ARQUETIPOS.map(arq => <option key={arq} value={arq}>{arq} ({DB_ARQUETIPOS[arq].custo}pt)</option>)}</datalist>
-                        </div>
-                        <div className="space-y-1 lg:col-span-2">
-                          <label className="text-xs font-bold uppercase tracking-wider text-blue-400 print:text-black">Marco</label>
-                          <select className="w-full bg-slate-900 border-none rounded-lg p-3 text-xl font-bold focus:ring-2 focus:ring-blue-500 outline-none print:bg-transparent print:border-b print:border-black text-white cursor-pointer" value={character.marco} onChange={(e) => setCharacter({ ...character, marco: e.target.value })}>
-                            <option className="bg-slate-900" value="Iniciante">Iniciante</option>
-                            <option className="bg-slate-900" value="Herói">Herói</option>
-                            <option className="bg-slate-900" value="Veterano">Veterano</option>
-                            <option className="bg-slate-900" value="Lenda">Lenda</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1 lg:col-span-2">
-                          <label className="text-xs font-bold uppercase tracking-wider text-blue-400 print:text-black">Escala</label>
-                          <select className="w-full bg-slate-900 border-none rounded-lg p-3 text-xl font-bold focus:ring-2 focus:ring-blue-500 outline-none print:bg-transparent print:border-b print:border-black text-white cursor-pointer" value={character.escala} onChange={(e) => setCharacter({ ...character, escala: e.target.value })}>
-                            <option className="bg-slate-900" value="Ningen">Ningen</option>
-                            <option className="bg-slate-900" value="Sugoi">Sugoi</option>
-                            <option className="bg-slate-900" value="Kiodai">Kiodai</option>
-                            <option className="bg-slate-900" value="Kami">Kami</option>
-                          </select>
-                        </div>
-                      </div>
+      {/* MAIN */}
+      <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 16px',position:'relative',zIndex:1}}>
 
-                      {/* KITS */}
-                      <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 mt-4">
-                        <label className="text-xs font-bold uppercase tracking-wider text-amber-400 print:text-black mb-3 flex items-center gap-1"><Crown className="w-4 h-4" /> Kits ({character.kits?.length||0})</label>
-                        <div className="flex gap-2 items-center mb-3 no-print">
-                          <input list="lista-kits" value={kitInput} onChange={(e) => setKitInput(e.target.value)} className="flex-1 bg-slate-800 border border-slate-700 rounded-lg p-2 text-base text-white focus:ring-2 focus:ring-amber-500 outline-none font-bold" placeholder="Digite ou selecione um Kit..." />
-                          <button onClick={handleAddKit} className="p-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white font-bold text-sm transition-colors flex items-center gap-1"><Plus className="w-4 h-4" /> Adicionar</button>
-                          <datalist id="lista-kits">{LISTA_KITS.map(k => <option key={k} value={k} />)}</datalist>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {(character.kits||[]).map(kit => (
-                            <span key={kit.id} className="bg-amber-900/40 border border-amber-500/50 text-amber-300 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
-                              {kit.nome}
-                              <button onClick={() => setCharacter({ ...character, kits: character.kits.filter(k => k.id !== kit.id) })} className="text-amber-500 hover:text-amber-200 no-print"><X className="w-4 h-4" /></button>
-                            </span>
-                          ))}
-                          {(!character.kits||character.kits.length===0) && <span className="text-xs text-slate-500 italic print:hidden">Nenhum kit selecionado.</span>}
-                        </div>
-                        <p className="text-[10px] text-slate-500 mt-2 print:hidden italic">*O custo é calculado automaticamente (1º=1pt, 2º=2pt, etc).</p>
-                      </div>
+        {/* HEADER CARD */}
+        <div className="panel" style={{padding:20,marginBottom:20}}>
+          <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+            <div onClick={()=>fileRef.current.click()} style={{width:140,height:140,borderRadius:8,background:'rgba(0,0,0,0.6)',border:'2px dashed rgba(0,229,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,overflow:'hidden'}}>
+              {char.foto
+                ? <img src={char.foto} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="" />
+                : <div style={{textAlign:'center',color:'rgba(0,229,255,0.3)'}}>
+                    <div style={{fontSize:28,marginBottom:4}}>📷</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>Foto</div>
+                  </div>
+              }
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onloadend=()=>setChar(c=>({...c,foto:r.result}));r.readAsDataURL(f);}}} />
 
-                      <div className="grid grid-cols-2 gap-4 pt-2">
-                        <div className="bg-slate-900 p-3 rounded-xl border border-slate-700 text-center print:border-black print:bg-transparent flex flex-col justify-center">
-                          <span className="block text-xs text-slate-400 uppercase print:text-black mb-1">Pontos Totais</span>
-                          <span className="text-3xl font-black text-white print:text-black block">{calculatedTotalPoints}</span>
-                        </div>
-                        <div className="bg-slate-900 p-3 rounded-xl border border-slate-700 text-center print:border-black print:bg-transparent flex flex-col justify-center">
-                          <span className="block text-xs text-slate-400 uppercase print:text-black mb-1">XP (Experiência)</span>
-                          <input type="number" className="bg-transparent text-center text-3xl font-black w-full outline-none print:text-black text-white" value={character.experiencia} onChange={(e) => setCharacter({ ...character, experiencia: parseInt(e.target.value)||0 })} />
-                        </div>
-                      </div>
-                    </div>
+            <div style={{flex:1,minWidth:260,display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <div>
+                  <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Nome</label>
+                  <input value={char.nome} onChange={e=>setChar(c=>({...c,nome:e.target.value}))} placeholder="Nome do Personagem" style={{width:'100%',fontSize:18,fontWeight:700,padding:'6px 10px',fontFamily:'Orbitron'}} />
+                </div>
+                <div>
+                  <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Arquétipo</label>
+                  <div style={{display:'flex',gap:6}}>
+                    <input list="arq-list" value={char.arquetipo} onChange={e=>{const v=e.target.value;setChar(c=>({...c,arquetipo:v,arquetipoCusto:ARQUETIPOS[v]!==undefined?ARQUETIPOS[v]:c.arquetipoCusto}));}} placeholder="Arquétipo..." style={{flex:1,fontSize:14,fontWeight:700,padding:'6px 8px'}} />
+                    <datalist id="arq-list">{LISTA_ARQ.map(a=><option key={a} value={a}>{a} ({ARQUETIPOS[a]}pt)</option>)}</datalist>
+                    <input type="number" value={char.arquetipoCusto} onChange={e=>setChar(c=>({...c,arquetipoCusto:parseInt(e.target.value)||0}))} style={{width:44,textAlign:'center',fontSize:14,fontWeight:700,padding:'6px 4px'}} />
                   </div>
                 </div>
-
-                {/* ATTRIBUTES */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:gap-4">
-                  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6 print:bg-transparent print:border-black print:p-4">
-                    <h3 className="flex items-center gap-2 text-lg font-bold border-b border-slate-700 pb-2 uppercase tracking-tighter print:border-black"><Star className="w-5 h-5 text-yellow-400 print:text-black" /> Atributos</h3>
-                    <div className="space-y-4">
-                      <AttributeRow icon={<Sword className="text-red-500 print:text-black" />} label="Poder" color="red" value={character.atributos.poder} onChange={(v) => updateAttr('poder',v)} />
-                      <AttributeRow icon={<Zap className="text-blue-500 print:text-black" />} label="Habilidade" color="blue" value={character.atributos.habilidade} onChange={(v) => updateAttr('habilidade',v)} />
-                      <AttributeRow icon={<Shield className="text-green-500 print:text-black" />} label="Resistência" color="green" value={character.atributos.resistencia} onChange={(v) => updateAttr('resistencia',v)} />
-                    </div>
-                  </div>
-
-                  <div className="lg:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6 print:bg-transparent print:border-black print:p-4">
-                    <h3 className="flex items-center gap-2 text-lg font-bold border-b border-slate-700 pb-2 uppercase tracking-tighter text-slate-400 print:text-black print:border-black">Estado Atual</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4">
-                      <ResourceBar label="Vida (Rx5)" current={character.recursos.pv_atual} max={maxPV} color="red" icon={<Heart className="w-4 h-4" />} onChange={(val) => setCharacter({ ...character, recursos: { ...character.recursos, pv_atual: val } })} />
-                      <ResourceBar label="Mana (Hx5)" current={character.recursos.pm_atual} max={maxPM} color="blue" icon={<Zap className="w-4 h-4" />} onChange={(val) => setCharacter({ ...character, recursos: { ...character.recursos, pm_atual: val } })} />
-                    </div>
-                    <div className="mt-4 flex items-center justify-between bg-slate-900 p-4 rounded-xl border border-amber-500/30 print:bg-transparent print:border-black">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-amber-500 rounded-lg text-slate-900"><Star className="w-6 h-6 fill-current" /></div>
-                        <span className="font-bold text-amber-500 uppercase print:text-black">Pontos de Ação</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setCharacter({ ...character, recursos: { ...character.recursos, pa_atual: Math.max(0,(character.recursos.pa_atual||0)-1) } })} className="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-white no-print border border-slate-700"><Minus className="w-4 h-4" /></button>
-                        <div className="flex items-center gap-2">
-                          <input type="number" className="w-16 text-center bg-slate-800 border border-slate-700 rounded text-3xl font-black text-amber-500 outline-none print:bg-transparent print:text-black" value={character.recursos.pa_atual} onChange={(e) => setCharacter({ ...character, recursos: { ...character.recursos, pa_atual: parseInt(e.target.value)||0 } })} />
-                          <span className="text-slate-500 font-bold text-xl print:text-black">/ {maxPA}</span>
-                        </div>
-                        <button onClick={() => setCharacter({ ...character, recursos: { ...character.recursos, pa_atual: (character.recursos.pa_atual||0)+1 } })} className="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-white no-print border border-slate-700"><Plus className="w-4 h-4" /></button>
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Marco</label>
+                  <select value={char.marco} onChange={e=>setChar(c=>({...c,marco:e.target.value}))} style={{width:'100%',fontSize:14,fontWeight:700,padding:'6px 8px',appearance:'none'}}>
+                    {['Iniciante','Herói','Veterano','Lenda'].map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
                 </div>
-
-                {/* LISTS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:gap-4 print:block print:space-y-4">
-                  <Section title="Perícias" icon={<BookOpen className="text-cyan-400 print:text-black" />} items={character.pericias} suggestionList={LISTA_PERICIAS} onAdd={() => addListItem('pericias')} onUpdate={(id,f,v) => updateListItem('pericias',id,f,v)} onRemove={(id) => removeListItem('pericias',id)} color="cyan" />
-                  <Section title="Vantagens" icon={<Plus className="text-emerald-400 print:text-black" />} items={character.vantagens} suggestionList={LISTA_VANTAGENS} onAdd={() => addListItem('vantagens')} onUpdate={(id,f,v) => updateListItem('vantagens',id,f,v)} onRemove={(id) => removeListItem('vantagens',id)} color="emerald" />
-                  <Section title="Desvantagens" icon={<Skull className="text-rose-400 print:text-black" />} items={character.desvantagens} suggestionList={LISTA_DESVANTAGENS} onAdd={() => addListItem('desvantagens')} onUpdate={(id,f,v) => updateListItem('desvantagens',id,f,v)} onRemove={(id) => removeListItem('desvantagens',id)} color="rose" />
+                <div>
+                  <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Escala</label>
+                  <select value={char.escala} onChange={e=>setChar(c=>({...c,escala:e.target.value}))} style={{width:'100%',fontSize:14,fontWeight:700,padding:'6px 8px',appearance:'none'}}>
+                    {['Ningen','Sugoi','Kiodai','Kami'].map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
                 </div>
+              </div>
 
-                {/* TECHNIQUES */}
-                <div className="bg-slate-800 p-6 rounded-2xl border border-indigo-500/30 print:bg-transparent print:border-black print:p-4 print:break-inside-avoid">
-                  <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4 print:border-black">
-                    <h3 className="flex items-center gap-2 text-lg font-bold uppercase tracking-tighter print:text-black"><Wand2 className="w-5 h-5 text-indigo-400 print:text-black" /> Técnicas</h3>
-                    <button onClick={() => addListItem('tecnicas')} className="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors no-print flex items-center gap-1 text-xs"><Plus className="w-4 h-4" /> Adicionar</button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {character.tecnicas.map(tecnica => (
-                      <div key={tecnica.id} className="group bg-slate-900 p-2 rounded-lg border border-slate-700 relative print:bg-transparent print:border-black">
-                        <div className="flex-1 space-y-1">
-                          <input placeholder="Nome da Técnica" className="w-full bg-transparent border-b border-slate-800 focus:border-indigo-500 outline-none font-bold text-sm print:text-black text-white" value={tecnica.nome} onChange={(e) => updateListItem('tecnicas',tecnica.id,'nome',e.target.value)} />
-                          <input placeholder="Custo / Alcance / Duração" className="w-full bg-transparent text-[10px] text-slate-400 outline-none print:text-black uppercase font-bold tracking-wide" value={tecnica.custo} onChange={(e) => updateListItem('tecnicas',tecnica.id,'custo',e.target.value)} />
-                          <textarea placeholder="Descrição do efeito..." className="w-full bg-transparent text-[11px] text-slate-300 outline-none resize-none min-h-[2rem] leading-relaxed auto-expand print:text-black mt-1" rows={1} onInput={(e) => { e.target.style.height="auto"; e.target.style.height=e.target.scrollHeight+"px" }} value={tecnica.descricao||''} onChange={(e) => updateListItem('tecnicas',tecnica.id,'descricao',e.target.value)} />
-                        </div>
-                        <button onClick={() => removeListItem('tecnicas',tecnica.id)} className="absolute top-2 right-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity no-print"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    ))}
-                    {character.tecnicas.length === 0 && <p className="col-span-full text-center text-slate-600 text-xs py-2 italic print:hidden">Nenhuma técnica aprendida.</p>}
-                  </div>
+              <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:12}}>
+                <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff',marginBottom:8,textTransform:'uppercase'}}>👑 Kits ({(char.kits||[]).length})</div>
+                <div className="no-print" style={{display:'flex',gap:8,marginBottom:8}}>
+                  <input list="kit-list" value={kitIn} onChange={e=>setKitIn(e.target.value)} placeholder="Selecione um Kit..." style={{flex:1,fontSize:13,padding:'5px 8px'}} />
+                  <datalist id="kit-list">{LISTA_KITS.map(k=><option key={k} value={k}/>)}</datalist>
+                  <Btn onClick={addKit} style={{padding:'5px 12px',fontSize:11}}>+ ADD</Btn>
                 </div>
-
-                {/* INVENTORY */}
-                <div className="bg-slate-800 p-6 rounded-2xl border border-orange-500/30 print:bg-transparent print:border-black print:p-4 print:break-inside-avoid">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-slate-700 pb-4 print:border-black">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-500/10 rounded-lg"><Backpack className="w-6 h-6 text-orange-400 print:text-black" /></div>
-                      <div>
-                        <h3 className="text-xl font-bold uppercase tracking-tighter print:text-black">Inventário</h3>
-                        {hasPatrono && <span className="text-yellow-400 flex items-center gap-1 text-xs"><Crown className="w-3 h-3" /> Bônus de Patrono Ativo</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 print:border-black print:bg-transparent">
-                      <span className="text-xs font-bold uppercase text-slate-400 print:text-black">Nível da Vantagem:</span>
-                      <select className="bg-slate-800 text-sm font-bold rounded px-2 py-1 outline-none border border-slate-600 focus:border-orange-500 print:bg-transparent print:text-black text-white cursor-pointer" value={character.nivelInventario} onChange={(e) => setCharacter({ ...character, nivelInventario: parseInt(e.target.value) })}>
-                        <option value={0}>0 Pontos (Padrão)</option>
-                        <option value={1}>1 Ponto (Pequeno)</option>
-                        <option value={2}>2 Pontos (Grande)</option>
-                        <option value={3}>3 Pontos (Supremo)</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <InventoryColumn title="Comuns" items={character.inventario.comuns} limit={limits.comuns} onAdd={() => addInventoryItem('comuns')} onUpdate={(id,f,v) => updateInventoryItem('comuns',id,f,v)} onRemove={(id) => removeInventoryItem('comuns',id)} color="slate" />
-                    <InventoryColumn title="Incomuns" items={character.inventario.incomuns} limit={limits.incomuns} onAdd={() => addInventoryItem('incomuns')} onUpdate={(id,f,v) => updateInventoryItem('incomuns',id,f,v)} onRemove={(id) => removeInventoryItem('incomuns',id)} color="blue" />
-                    <InventoryColumn title="Raros" items={character.inventario.raros} limit={limits.raros} onAdd={() => addInventoryItem('raros')} onUpdate={(id,f,v) => updateInventoryItem('raros',id,f,v)} onRemove={(id) => removeInventoryItem('raros',id)} color="yellow" />
-                    <InventoryColumn title="Lendários" items={character.inventario.lendarios} limit={limits.lendarios} onAdd={() => addInventoryItem('lendarios')} onUpdate={(id,f,v) => updateInventoryItem('lendarios',id,f,v)} onRemove={(id) => removeInventoryItem('lendarios',id)} color="purple" />
-                  </div>
-                  <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50 print:hidden">
-                    <div className="flex items-center gap-2 mb-3 text-slate-400 text-sm font-bold uppercase tracking-wider"><ArrowRightLeft className="w-4 h-4" /> Troca de Itens</div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <TradePanel from="3 Comuns" to="1 Incomum" type="comumParaIncomum" limitFrom={limits.comuns} limitTo={limits.incomuns} tradeCount={character.trocas?.comumParaIncomum} onTrade={performTrade} fromColor="text-slate-200" toColor="text-blue-400" />
-                      <TradePanel from="3 Incomuns" to="1 Raro" type="incomumParaRaro" limitFrom={limits.incomuns} limitTo={limits.raros} tradeCount={character.trocas?.incomumParaRaro} onTrade={performTrade} fromColor="text-blue-400" toColor="text-yellow-400" />
-                      <TradePanel from="3 Raros" to="1 Lendário" type="raroParaLendario" limitFrom={limits.raros} limitTo={limits.lendarios} tradeCount={character.trocas?.raroParaLendario} onTrade={performTrade} fromColor="text-yellow-400" toColor="text-purple-400" />
-                    </div>
-                  </div>
-                  <div className="mt-4 p-3 bg-slate-900/50 rounded-lg text-xs text-slate-400 flex items-start gap-2 border border-slate-700/50 print:hidden">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <p><strong>Regra "Na Hora":</strong> Slots vazios podem ser preenchidos durante a aventura.</p>
-                  </div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                  {(char.kits||[]).map(k=>(
+                    <span key={k.id} style={{background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.3)',borderRadius:4,padding:'3px 8px',fontSize:11,fontFamily:'Orbitron',color:'#00e5ff',display:'flex',alignItems:'center',gap:4}}>
+                      {k.nome}
+                      <button className="no-print" onClick={()=>setChar(c=>({...c,kits:c.kits.filter(x=>x.id!==k.id)}))} style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:12}}>×</button>
+                    </span>
+                  ))}
+                  {(char.kits||[]).length===0 && <span style={{fontSize:11,color:'rgba(0,229,255,0.25)',fontStyle:'italic'}}>Nenhum kit.</span>}
                 </div>
+              </div>
 
-                {/* NOTES */}
-                <div className="grid grid-cols-1 gap-6 print:break-inside-avoid">
-                  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 print:bg-transparent print:border-black print:p-4">
-                    <h3 className="flex items-center gap-2 text-lg font-bold border-b border-slate-700 pb-2 uppercase mb-4 text-slate-400 print:text-black print:border-black"><Info className="w-5 h-5" /> Anotações Rápidas</h3>
-                    <textarea className="w-full bg-slate-900 border-none rounded-xl p-4 min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none resize-none print:bg-transparent print:border print:border-black print:text-black auto-expand text-white" placeholder="Notas gerais, lembretes..." value={character.anotacoes} onChange={(e) => setCharacter({ ...character, anotacoes: e.target.value })}></textarea>
-                  </div>
-                  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 print:bg-transparent print:border-black print:p-4">
-                    <h3 className="flex items-center gap-2 text-lg font-bold border-b border-slate-700 pb-2 uppercase mb-4 text-slate-400 print:text-black print:border-black"><BookOpen className="w-5 h-5" /> História do Personagem</h3>
-                    <textarea className="w-full bg-slate-900 border-none rounded-xl p-4 min-h-[200px] focus:ring-2 focus:ring-indigo-500 outline-none resize-y print:bg-transparent print:border print:border-black print:text-black auto-expand text-white" placeholder="Escreva aqui a biografia, origens e objetivos do seu herói..." value={character.historia} onChange={(e) => setCharacter({ ...character, historia: e.target.value })}></textarea>
-                  </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:12,textAlign:'center'}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',marginBottom:4,textTransform:'uppercase'}}>Pontos Totais</div>
+                  <div style={{fontFamily:'Orbitron',fontSize:28,fontWeight:900,color:'#00e5ff',textShadow:'0 0 15px var(--cg)'}}>{pts}</div>
                 </div>
-
-                {/* FOOTER */}
-                <div className="flex flex-wrap justify-center gap-4 py-8 no-print border-t border-slate-800 mt-8">
-                  <button onClick={exportFile} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-6 py-3 rounded-full font-bold transition-all"><FileJson className="w-5 h-5" /> Baixar Arquivo (.JSON)</button>
-                  <button onClick={saveToLibrary} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-full font-bold transition-all shadow-lg hover:scale-105"><Save className="w-5 h-5" /> Salvar na Biblioteca</button>
-                  <button onClick={() => window.print()} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-6 py-3 rounded-full font-bold transition-all"><Printer className="w-5 h-5" /> Imprimir / PDF</button>
+                <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:12,textAlign:'center'}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',marginBottom:4,textTransform:'uppercase'}}>XP</div>
+                  <input type="number" value={char.experiencia} onChange={e=>setChar(c=>({...c,experiencia:parseInt(e.target.value)||0}))} style={{width:'100%',textAlign:'center',fontSize:24,fontWeight:900,fontFamily:'Orbitron',color:'#00e5ff',background:'transparent',border:'none'}} />
                 </div>
               </div>
             </div>
           </div>
-        );
-      };
+        </div>
 
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<App />);
-    </script>
-  </body>
+        {/* ATRIBUTOS + ESTADO */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:16,marginBottom:20}}>
+          <div className="panel" style={{padding:20}}>
+            <div style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16,textTransform:'uppercase'}}>⭐ Atributos</div>
+            {[['poder','#ff1744'],['habilidade','#00e5ff'],['resistencia','#00e676']].map(([a,c])=>(
+              <div key={a} style={{background:'rgba(0,0,0,0.4)',borderLeft:'3px solid '+c,borderRadius:6,padding:'10px 12px',marginBottom:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontFamily:'Orbitron',fontSize:11,color:c,textTransform:'uppercase'}}>{a.slice(0,1).toUpperCase()+a.slice(1)}</span>
+                <Stepper value={char.atributos[a]} onChange={v=>setChar(c=>({...c,atributos:{...c.atributos,[a]:Math.max(0,v)}}))} />
+              </div>
+            ))}
+          </div>
+          <div className="panel" style={{padding:20}}>
+            <div style={{fontFamily:'Orbitron',fontSize:12,color:'rgba(0,229,255,0.7)',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16,textTransform:'uppercase'}}>Estado Atual</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+              <Bar label="Vida (Rx5)" current={char.recursos.pv} max={maxPV} color="red" icon="heart" onChange={v=>setChar(c=>({...c,recursos:{...c.recursos,pv:v}}))} />
+              <Bar label="Mana (Hx5)" current={char.recursos.pm} max={maxPM} color="blue" icon="zap" onChange={v=>setChar(c=>({...c,recursos:{...c.recursos,pm:v}}))} />
+            </div>
+            <div style={{background:'rgba(0,0,0,0.5)',border:'1px solid rgba(255,214,0,0.3)',borderRadius:6,padding:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontFamily:'Orbitron',fontSize:11,color:'#ffd600',textTransform:'uppercase'}}>⭐ Pontos de Ação</span>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <Btn onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pa:Math.max(0,(c.recursos.pa||0)-1)}}))} style={{padding:'2px 8px',fontSize:14,borderColor:'rgba(255,214,0,0.4)',color:'#ffd600'}}>−</Btn>
+                <input type="number" value={char.recursos.pa||0} onChange={e=>setChar(c=>({...c,recursos:{...c.recursos,pa:parseInt(e.target.value)||0}}))} style={{width:52,textAlign:'center',fontSize:24,fontWeight:900,fontFamily:'Orbitron',color:'#ffd600',borderColor:'rgba(255,214,0,0.3)'}} />
+                <span style={{color:'rgba(255,214,0,0.4)',fontSize:14}}>/ {maxPA}</span>
+                <Btn onClick={()=>setChar(c=>({...c,recursos:{...c.recursos,pa:(c.recursos.pa||0)+1}}))} style={{padding:'2px 8px',fontSize:14,borderColor:'rgba(255,214,0,0.4)',color:'#ffd600'}}>+</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* LISTAS */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:20}}>
+          <ListSection title="Perícias" color="blue" items={char.pericias} suggestions={PERICIAS} onAdd={()=>addItem('pericias')} onUpdate={(id,f,v)=>updItem('pericias',id,f,v)} onRemove={id=>remItem('pericias',id)} />
+          <ListSection title="Vantagens" color="green" items={char.vantagens} suggestions={LISTA_VANT} onAdd={()=>addItem('vantagens')} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
+          <ListSection title="Desvantagens" color="red" items={char.desvantagens} suggestions={LISTA_DESV} onAdd={()=>addItem('desvantagens')} onUpdate={(id,f,v)=>updItem('desvantagens',id,f,v)} onRemove={id=>remItem('desvantagens',id)} />
+        </div>
+
+        {/* TÉCNICAS */}
+        <div className="panel" style={{padding:20,marginBottom:20}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16}}>
+            <span style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',textTransform:'uppercase'}}>✨ Técnicas</span>
+            <Btn onClick={()=>addItem('tecnicas')} style={{fontSize:10,padding:'4px 10px'}}>+ ADD</Btn>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
+            {char.tecnicas.map(t=>(
+              <div key={t.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:10,position:'relative'}}>
+                <input placeholder="Nome da Técnica" value={t.nome} onChange={e=>updItem('tecnicas',t.id,'nome',e.target.value)}
+                  style={{width:'100%',fontSize:13,fontWeight:700,padding:'3px 6px',marginBottom:6,background:'transparent',border:'none',borderBottom:'1px solid rgba(0,229,255,0.15)',color:'var(--ct)',outline:'none'}} />
+                <input placeholder="Custo / Alcance / Duração" value={t.custo} onChange={e=>updItem('tecnicas',t.id,'custo',e.target.value)}
+                  style={{width:'100%',fontSize:10,padding:'2px 6px',marginBottom:4}} />
+                <textarea placeholder="Descrição do efeito..." value={t.descricao||''} onChange={e=>updItem('tecnicas',t.id,'descricao',e.target.value)}
+                  rows={2} style={{width:'100%',fontSize:11,padding:'4px 6px',resize:'none'}} />
+                <button className="no-print" onClick={()=>remItem('tecnicas',t.id)} style={{position:'absolute',top:6,right:6,background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:14}}>×</button>
+              </div>
+            ))}
+            {char.tecnicas.length===0 && <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,fontStyle:'italic'}}>Nenhuma técnica.</p>}
+          </div>
+        </div>
+
+        {/* INVENTÁRIO */}
+        <div className="panel" style={{padding:20,marginBottom:20}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16,flexWrap:'wrap',gap:8}}>
+            <span style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',textTransform:'uppercase'}}>🎒 Inventário</span>
+            <select value={char.nivelInv||0} onChange={e=>setChar(c=>({...c,nivelInv:parseInt(e.target.value)}))} style={{fontSize:12,padding:'4px 8px',fontFamily:'Orbitron'}}>
+              <option value={0}>0pt (Padrão)</option>
+              <option value={1}>1pt (Pequeno)</option>
+              <option value={2}>2pt (Grande)</option>
+              <option value={3}>3pt (Supremo)</option>
+            </select>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+            <InvCol title="Comuns" color="slate" items={char.inventario.comuns} limit={lim.comuns} onAdd={()=>addInv('comuns')} onUpdate={(id,f,v)=>updInv('comuns',id,f,v)} onRemove={id=>remInv('comuns',id)} />
+            <InvCol title="Incomuns" color="blue" items={char.inventario.incomuns} limit={lim.incomuns} onAdd={()=>addInv('incomuns')} onUpdate={(id,f,v)=>updInv('incomuns',id,f,v)} onRemove={id=>remInv('incomuns',id)} />
+            <InvCol title="Raros" color="yellow" items={char.inventario.raros} limit={lim.raros} onAdd={()=>addInv('raros')} onUpdate={(id,f,v)=>updInv('raros',id,f,v)} onRemove={id=>remInv('raros',id)} />
+            <InvCol title="Lendários" color="purple" items={char.inventario.lendarios} limit={lim.lendarios} onAdd={()=>addInv('lendarios')} onUpdate={(id,f,v)=>updInv('lendarios',id,f,v)} onRemove={id=>remInv('lendarios',id)} />
+          </div>
+        </div>
+
+        {/* NOTAS */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+          <div className="panel" style={{padding:16}}>
+            <div style={{fontFamily:'Orbitron',fontSize:11,color:'rgba(0,229,255,0.6)',marginBottom:8,textTransform:'uppercase'}}>📝 Anotações</div>
+            <textarea value={char.anotacoes} onChange={e=>setChar(c=>({...c,anotacoes:e.target.value}))} placeholder="Notas rápidas..." rows={5} style={{width:'100%',resize:'vertical',fontSize:13,padding:8}} />
+          </div>
+          <div className="panel" style={{padding:16}}>
+            <div style={{fontFamily:'Orbitron',fontSize:11,color:'rgba(0,229,255,0.6)',marginBottom:8,textTransform:'uppercase'}}>📖 História</div>
+            <textarea value={char.historia} onChange={e=>setChar(c=>({...c,historia:e.target.value}))} placeholder="Biografia do personagem..." rows={5} style={{width:'100%',resize:'vertical',fontSize:13,padding:8}} />
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="no-print" style={{display:'flex',justifyContent:'center',gap:12,paddingTop:16,borderTop:'1px solid rgba(0,229,255,0.15)',flexWrap:'wrap'}}>
+          <Btn onClick={exportJ} style={{padding:'10px 20px'}}>📥 Baixar JSON</Btn>
+          <Btn onClick={save} style={{padding:'10px 20px',background:'rgba(0,229,255,0.1)',boxShadow:'0 0 15px var(--cg)'}}>💾 Salvar na Biblioteca</Btn>
+          <Btn onClick={()=>window.print()} style={{padding:'10px 20px'}}>🖨️ Imprimir</Btn>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
 </html>
