@@ -88,6 +88,20 @@ window.FIREBASE_URL = "https://plusdistophya-default-rtdb.firebaseio.com";
 
 <script>
 window.PERICIAS = ["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"];
+window.PERICIAS_DESC = {
+"Animais":"Você sabe cuidar, adestrar, cavalgar e lidar com animais e outras criaturas irracionais, como vários monstros. Pode substituir Medicina (apenas para animais). Com bons resultados nos testes, você consegue até se comunicar com animais.",
+"Arte":"Você sabe fazer performances artísticas como cantar, dançar, tocar música, cozinhar, fazer cosplay (e se disfarçar), desenhar, avaliar objetos de arte e outras.",
+"Esporte":"Você conhece os muitos tipos de esportes e suas regras, além de ser capacitado em atividades físicas como correr, escalar, nadar, fazer acrobacias, equilibrar-se, saltar e outras.",
+"Influência":"Você sabe convencer outros a acreditar em algo ou fazer o que você quer. Envolve coisas como diplomacia, liderança, intimidação, sedução, blefe, hipnose, lábia, barganha, obter informações e outros.",
+"Luta":"Você sabe atacar e se defender em combate, seja corpo a corpo ou à distância. Também envolve a parte teórica dos combates, como reconhecer estilos de luta, analisar técnicas de inimigos e desenvolver táticas ou planos de ação — incluindo confrontos entre grandes grupos, como exércitos. Conflitos violentos (quase) sempre exigem testes de Luta!",
+"Manha":"Você sabe fazer coisas malandras ou ilegais, como construir (e sabotar) armadilhas, arrombar portas e fechaduras, bater carteiras, criar (e decifrar) mensagens criptografadas, se disfarçar, falsificar objetos, ser furtivo, intimidar, rastrear pistas e pegadas...",
+"Máquinas":"Você sabe operar, construir e consertar máquinas, veículos e aparelhos de todo tipo. Também sabe lidar com computadores, hackear sistemas, vasculhar a internet, jogar games ou agir em simulações e realidades virtuais. Pode substituir Medicina (apenas para construtos).",
+"Medicina":"Você sabe realizar primeiros socorros, diagnósticos, tratar doenças e venenos, realizar cirurgias e todo tipo de conhecimento de saúde. Pode despertar um personagem inconsciente ou estabilizar um personagem quase morto.",
+"Mística":"Você sabe sobre forças sobrenaturais e artes místicas. Quando atacar ou se defender com poderes mágicos ou sobrenaturais (como a vantagem Magia), use esta perícia. Também é usada para reconhecer, contra-atacar e teorizar sobre conhecimentos ocultos, magia e criaturas mágicas.",
+"Percepção":"Você sabe usar seus sentidos para perceber melhor o mundo ao redor. Usada para ouvir ruídos muito baixos, notar coisas e personagens distantes, escondidos ou sob disfarce, ler lábios, rastrear pistas, evitar ser surpreendido e até mesmo como um 'sexto sentido' para tentar notar se alguém está mentindo ou agindo de forma suspeita.",
+"Saber":"Você sabe tudo sobre tudo, qualquer conhecimento teórico em ciências, idiomas e até assuntos sobrenaturais, ou como e onde pesquisá-los. Uma perícia ampla, engloba todos os campos, própria para aqueles cientistas exagerados ou super nerds que sabem de tudo!",
+"Sobrevivência":"Você sabe subsistir e se orientar em condições adversas. Pode encontrar e produzir alimento, construir abrigos, rastrear pistas, reconhecer criaturas selvagens, construir e sabotar armadilhas, ser furtivo, nadar, prever o clima, entre outros."
+};
 window.ARQUETIPOS_DATA = {
 "Humano":{custo:0,desc:"Mesmo com as Convergências trazendo incontáveis criaturas fantásticas, a população humana ainda supera todas as outras juntas.",poderes:[{nome:"Mais Além",desc:"Uma vez por cena, gaste 2PM para ter Ganho em um teste."}],desv:[]},
 "Aberrante":{custo:1,desc:"Seres que não fazem parte deste universo, nem pertencem ao mundo natural.",poderes:[{nome:"Deformidade",desc:"Escolha uma perícia. Quando testá-la (mesmo sem a perícia), o atributo correspondente tem +1."},{nome:"Teratismo",desc:"Você recebe uma Técnica Comum à sua escolha."}],desv:[{nome:"Monstruoso",custo:"-1",desc:"Pode confiar, ninguém merece esta desvantagem mais do que você."}]},
@@ -174,6 +188,7 @@ window.LISTA_TEC = Object.keys(window.TECNICAS_DATA).sort();
 <script type="text/babel">
 const {useState,useEffect,useRef,useMemo,useLayoutEffect,useCallback} = React;
 const PERICIAS = window.PERICIAS;
+const PERICIAS_DESC = window.PERICIAS_DESC || {};
 const ARQUETIPOS = window.ARQUETIPOS_DATA;
 const LISTA_ARQ = window.LISTA_ARQ;
 const KITS = window.KITS;
@@ -264,15 +279,29 @@ const Bar = ({label,current,max,color,icon,onChange}) => {
   const bg = color==='red' ? 'linear-gradient(90deg,#ff1744,#ff5252)' : 'linear-gradient(90deg,#00b8d4,#00e5ff)';
   const glow = color==='red' ? '0 0 10px rgba(255,23,68,0.6)' : '0 0 10px rgba(0,229,255,0.6)';
   const c = color==='red' ? '#ff5252' : '#00e5ff';
+  const btnStyle = {
+    width:26,height:26,background:'rgba(0,0,0,0.45)',border:'1px solid '+c+'55',
+    color:c,cursor:'pointer',fontSize:16,fontWeight:900,borderRadius:4,
+    display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+    transition:'background 0.15s',lineHeight:1,padding:0
+  };
   return (
     <div style={{marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
         <span style={{color:c,fontFamily:'Orbitron',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
           <Icon n={icon} s="14"/> {label}
         </span>
-        <div style={{display:'flex',alignItems:'center',gap:6}}>
+        <div style={{display:'flex',alignItems:'center',gap:4}}>
+          <button style={btnStyle}
+            onClick={()=>onChange(Math.max(0,current-1))}
+            onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
+            onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.45)'}>−</button>
           <input type="number" value={current} onChange={e=>onChange(parseInt(e.target.value)||0)}
             style={{width:48,textAlign:'center',fontSize:14,fontWeight:700,padding:'2px 4px'}} />
+          <button style={btnStyle}
+            onClick={()=>onChange(current+1)}
+            onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
+            onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.45)'}>+</button>
           <span style={{color:'rgba(0,229,255,0.4)',fontSize:12}}>/ {max}</span>
         </div>
       </div>
@@ -1140,6 +1169,11 @@ const App = () => {
       if(f==='nome'){
         const info = list==='vantagens'?VANTAGENS[v]:list==='desvantagens'?DESVANTAGENS[v]:null;
         if(info){if(!u.custo||u.custo==='')u.custo=(info.c.match(/-?\d+/)||[''])[0]; u.descricao=info.d;}
+        // Auto-preenche descrição da perícia ao selecionar
+        if(list==='pericias'){
+          const pd = PERICIAS_DESC[v];
+          if(pd) u.descricao = pd;
+        }
         // Auto-preenche técnica ao selecionar nome da lista
         if(list==='tecnicas'){
           const tec = TECNICAS_DATA[v];
