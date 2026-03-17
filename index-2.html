@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Ficha 3DeT Victory - Gerenciável</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --cyber-bg: #030810;
+        --cyber-panel: #060d1a;
+        --cyber-panel2: #0a1628;
+        --cyber-border: #00e5ff;
+        --cyber-glow: rgba(0,229,255,0.4);
+        --cyber-glow2: rgba(0,229,255,0.15);
+        --cyber-accent: #00e5ff;
+        --cyber-accent2: #00b8d4;
+        --cyber-text: #cde8f0;
+        --cyber-dim: #4a7080;
+        --cyber-red: #ff1744;
+        --cyber-red-glow: rgba(255,23,68,0.4);
+        --cyber-green: #00e676;
+        --cyber-green-glow: rgba(0,230,118,0.4);
+        --cyber-yellow: #ffd600;
+        --cyber-yellow-glow: rgba(255,214,0,0.4);
+        --cyber-purple: #aa00ff;
+        --cyber-white: #e8f4f8;
+      }
+      * { box-sizing: border-box; }
+      body { color-scheme: dark; font-family: 'Rajdhani', sans-serif; background: var(--cyber-bg); }
+
+      /* SCANLINES */
+      body::before {
+        content: '';
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px);
+        pointer-events: none; z-index: 9999;
+      }
+
+      /* GRID BG */
+      body::after {
+        content: '';
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-image: linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none; z-index: 0;
+      }
+
+      /* NEON GLOW UTILITY */
+      .neon-text { color: var(--cyber-accent); text-shadow: 0 0 10px var(--cyber-glow), 0 0 20px var(--cyber-glow), 0 0 40px var(--cyber-glow2); }
+      .neon-border { border-color: var(--cyber-border) !important; box-shadow: 0 0 8px var(--cyber-glow), inset 0 0 8px rgba(0,229,255,0.05); }
+      .neon-border-red { border-color: var(--cyber-red) !important; box-shadow: 0 0 8px var(--cyber-red-glow), inset 0 0 8px rgba(255,23,68,0.05); }
+      .neon-border-green { border-color: var(--cyber-green) !important; box-shadow: 0 0 8px var(--cyber-green-glow), inset 0 0 8px rgba(0,230,118,0.05); }
+      .neon-border-yellow { border-color: var(--cyber-yellow) !important; box-shadow: 0 0 8px var(--cyber-yellow-glow), inset 0 0 8px rgba(255,214,0,0.05); }
+
+      /* GLITCH ANIMATION */
+      @keyframes glitch {
+        0%,100% { transform: translate(0); }
+        20% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+        40% { transform: translate(2px, -1px); }
+        60% { transform: translate(-1px, 2px); filter: hue-rotate(-90deg); }
+        80% { transform: translate(1px, -2px); }
+      }
+      @keyframes flicker {
+        0%,100% { opacity: 1; }
+        92% { opacity: 1; }
+        93% { opacity: 0.8; }
+        94% { opacity: 1; }
+        96% { opacity: 0.9; }
+        97% { opacity: 1; }
+      }
+      @keyframes pulse-border {
+        0%,100% { box-shadow: 0 0 8px var(--cyber-glow), inset 0 0 8px rgba(0,229,255,0.05); }
+        50% { box-shadow: 0 0 20px var(--cyber-glow), 0 0 40px rgba(0,229,255,0.2), inset 0 0 12px rgba(0,229,255,0.1); }
+      }
+      @keyframes scanline-move {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100vh); }
+      }
+      .glitch:hover { animation: glitch 0.3s linear; }
+      .flicker { animation: flicker 4s infinite; }
+
+      /* CYBER HEADER */
+      .cyber-header {
+        background: linear-gradient(90deg, var(--cyber-bg), var(--cyber-panel), var(--cyber-bg)) !important;
+        border-bottom: 1px solid var(--cyber-border) !important;
+        box-shadow: 0 0 20px var(--cyber-glow2), 0 4px 30px rgba(0,0,0,0.8) !important;
+      }
+
+      /* CYBER PANELS */
+      .cyber-panel {
+        background: var(--cyber-panel) !important;
+        border: 1px solid rgba(0,229,255,0.3) !important;
+        box-shadow: 0 0 15px rgba(0,229,255,0.08), inset 0 0 30px rgba(0,0,0,0.5) !important;
+      }
+      .cyber-panel:hover { border-color: rgba(0,229,255,0.6) !important; }
+
+      /* CYBER INPUTS */
+      input, textarea, select {
+        background: rgba(0,0,0,0.6) !important;
+        color: var(--cyber-text) !important;
+        border: 1px solid rgba(0,229,255,0.2) !important;
+        font-family: 'Rajdhani', sans-serif !important;
+      }
+      input:focus, textarea:focus, select:focus {
+        border-color: var(--cyber-border) !important;
+        box-shadow: 0 0 10px var(--cyber-glow2) !important;
+        outline: none !important;
+      }
+
+      /* CYBER BUTTONS */
+      .cyber-btn {
+        background: transparent !important;
+        border: 1px solid var(--cyber-border) !important;
+        color: var(--cyber-accent) !important;
+        font-family: 'Orbitron', sans-serif !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        transition: all 0.2s !important;
+        position: relative; overflow: hidden;
+      }
+      .cyber-btn:hover {
+        background: rgba(0,229,255,0.1) !important;
+        box-shadow: 0 0 20px var(--cyber-glow) !important;
+      }
+      .cyber-btn::before {
+        content: ''; position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(0,229,255,0.05), transparent);
+        transform: rotate(45deg) translateX(-100%);
+        transition: transform 0.5s;
+      }
+      .cyber-btn:hover::before { transform: rotate(45deg) translateX(100%); }
+
+      /* SCROLLBAR */
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: var(--cyber-bg); }
+      ::-webkit-scrollbar-thumb { background: var(--cyber-border); box-shadow: 0 0 6px var(--cyber-glow); }
+
+      /* CORNER DECORATION */
+      .cyber-corner { position: relative; }
+      .cyber-corner::before, .cyber-corner::after {
+        content: ''; position: absolute;
+        width: 12px; height: 12px;
+      }
+      .cyber-corner::before { top: -1px; left: -1px; border-top: 2px solid var(--cyber-border); border-left: 2px solid var(--cyber-border); }
+      .cyber-corner::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cyber-border); border-right: 2px solid var(--cyber-border); }
+
+      /* ORBITRON headings */
+      h1, h2, h3, h4, .orbitron { font-family: 'Orbitron', sans-serif !important; }
+
+      /* RESOURCE BARS */
+      .cyber-bar-bg { background: rgba(0,0,0,0.8) !important; border: 1px solid rgba(0,229,255,0.2) !important; }
+      
+      /* DICE BUTTON */
+      .cyber-dice {
+        background: var(--cyber-panel) !important;
+        border: 2px solid var(--cyber-border) !important;
+        box-shadow: 0 0 20px var(--cyber-glow), 0 0 40px var(--cyber-glow2) !important;
+        animation: pulse-border 2s ease-in-out infinite !important;
+      }
+      .cyber-dice:hover {
+        background: rgba(0,229,255,0.15) !important;
+        box-shadow: 0 0 30px var(--cyber-glow), 0 0 60px var(--cyber-glow2) !important;
+      }
+
+      /* TAG CHIPS */
+      .cyber-chip {
+        background: rgba(0,229,255,0.08) !important;
+        border: 1px solid rgba(0,229,255,0.4) !important;
+        color: var(--cyber-accent) !important;
+        font-family: 'Orbitron', sans-serif !important;
+        font-size: 10px !important;
+      }
+
+      /* TITLE DECORATION */
+      .title-line::before, .title-line::after {
+        content: '';
+        display: inline-block;
+        width: 40px; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyber-border));
+        vertical-align: middle; margin: 0 8px;
+      }
+      .title-line::after { background: linear-gradient(270deg, transparent, var(--cyber-border)); }
+
+      @media print {
+        .no-print { display: none !important; }
+        body::before, body::after { display: none !important; }
+        body { background: white !important; color: black !important; }
+        * { color: black !important; border-color: black !important; box-shadow: none !important; text-shadow: none !important; }
+        input, textarea, select { border: 1px solid #ccc !important; background: white !important; color: black !important; }
+      }
+      input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+      @keyframes roll {
+        0% { transform: rotate(0deg); } 25% { transform: rotate(90deg); }
+        50% { transform: rotate(180deg); } 75% { transform: rotate(270deg); } 100% { transform: rotate(360deg); }
+      }
+      .rolling { animation: roll 0.5s linear infinite; }
+      textarea { resize: vertical; }
+    </style>
+  </head>
+  <body class="overflow-x-hidden" style="background:var(--cyber-bg);color:var(--cyber-text)">
+    <div id="root"></div>
+    
+    <script>
+const DB_ARQUETIPOS = {
+        "Humano":{custo:0,desc:""},"Aberrante":{custo:1,desc:""},"Abissal":{custo:1,desc:""},"Alien":{custo:1,desc:""},
+        "Anfíbio":{custo:1,desc:""},"Celestial":{custo:1,desc:""},"Construto":{custo:1,desc:""},"Dahllan":{custo:1,desc:""},
+        "Elfo":{custo:1,desc:""},"Fada":{custo:1,desc:""},"Goblin":{custo:1,desc:""},"Hynne":{custo:1,desc:""},
+        "Kemono":{custo:1,desc:""},"Medusa":{custo:1,desc:""},"Minotauro":{custo:1,desc:""},"Ogro":{custo:1,desc:""},
+        "Vampiro":{custo:1,desc:""},"Centauro":{custo:2,desc:""},"Ciborgue":{custo:2,desc:""},"Fantasma":{custo:2,desc:""},
+        "Kallyanach":{custo:2,desc:""},"Osteon":{custo:2,desc:""},"Qareen":{custo:2,desc:""},"Sauroide":{custo:2,desc:""}
+      };
+      window.LISTA_ARQUETIPOS = Object.keys(DB_ARQUETIPOS).sort();
+      window.DB_KITS = {
+        "Abastado":{desc:"",poderes:[{nome:"Meritocracia",desc:"",custo:"1"},{nome:"Poder aquisitivo",desc:"",custo:"1"},{nome:"Tempo é dinheiro!",desc:"",custo:"1"}]},
+        "Agente Secreto":{desc:"",poderes:[{nome:"Identidade secreta",desc:"",custo:"1"},{nome:"Olho clínico",desc:"",custo:"1"},{nome:"Plano de ação",desc:"",custo:"1"}]},
+        "Alquimista":{desc:"",poderes:[{nome:"Diagrama",desc:"",custo:"1"},{nome:"Diagrama pessoal",desc:"",custo:"1"},{nome:"Troca equivalente",desc:"",custo:"1"}]},
+        "Artista Marcial":{desc:"",poderes:[{nome:"Kata",desc:"",custo:"1"},{nome:"Montagem de treino",desc:"",custo:"1"},{nome:"Lutarei para conseguir!",desc:"",custo:"1"}]},
+        "Bárbaro":{desc:"",poderes:[{nome:"Espírito livre",desc:"",custo:"1"},{nome:"Frenesi de combate",desc:"",custo:"1"},{nome:"Resistência superior",desc:"",custo:"1"}]},
+        "Guerreiro":{desc:"",poderes:[{nome:"Análise de combate",desc:"",custo:"1"},{nome:"Crítico aprimorado",desc:"",custo:"1"},{nome:"Mestre das armas",desc:"",custo:"1"},{nome:"Ataque Contínuo",desc:"",custo:"1"}]},
+        "Mago":{desc:"",poderes:[{nome:"Aptidão mágica",desc:"",custo:"1"},{nome:"Bateria de mana",desc:"",custo:"1"},{nome:"Preparar magias",desc:"",custo:"1"},{nome:"Magia Intensa",desc:"",custo:"1"},{nome:"Recuperação Arcana",desc:"",custo:"1"}]},
+        "Ladino":{desc:"",poderes:[{nome:"Ataque furtivo",desc:"",custo:"1"},{nome:"Especialista em fugas",desc:"",custo:"1"},{nome:"Sentido de tesouro",desc:"",custo:"1"}]},
+        "Clérigo":{desc:"",poderes:[{nome:"Devoto fervoroso",desc:"",custo:"1"},{nome:"Dom divino",desc:"",custo:"1"},{nome:"Poder concedido",desc:"",custo:"1"}]},
+        "Curandeiro":{desc:"",poderes:[{nome:"Paramédico",desc:"",custo:"1"},{nome:"Cura crítica",desc:"",custo:"1"},{nome:"Explosão de cura",desc:"",custo:"1"}]},
+        "Monge":{desc:"",poderes:[{nome:"Agilidade superior",desc:"",custo:"1"},{nome:"Alma de aço",desc:"",custo:"1"},{nome:"Controle dos chakras",desc:"",custo:"1"}]},
+        "Ninja":{desc:"",poderes:[{nome:"Mestre ninja",desc:"",custo:"1"},{nome:"Ninpo de combate",desc:"",custo:"1"},{nome:"Ougi",desc:"",custo:"1"}]},
+        "Paladino":{desc:"",poderes:[{nome:"Arma sagrada",desc:"",custo:"1"},{nome:"Dharma",desc:"",custo:"1"},{nome:"Sétimo sentido",desc:"",custo:"1"}]},
+        "Ranger":{desc:"",poderes:[{nome:"Explorador nato",desc:"",custo:"1"},{nome:"Rastreador",desc:"",custo:"1"},{nome:"Companheiro animal",desc:"",custo:"1"}]},
+        "Tanque":{desc:"",poderes:[{nome:"Hoje não!",desc:"",custo:"1"},{nome:"Defesa gratuita",desc:"",custo:"1"},{nome:"Último bastião",desc:"",custo:"1"}]},
+        "DPS":{desc:"",poderes:[{nome:"Estilo de combate",desc:"",custo:"1"},{nome:"Ataque gratuito",desc:"",custo:"1"},{nome:"Último recurso",desc:"",custo:"1"}]},
+        "Super-Herói":{desc:"",poderes:[{nome:"Sobrehumano",desc:"",custo:"1"},{nome:"Façanha épica",desc:"",custo:"1"},{nome:"Herói de ação",desc:"",custo:"1"}]}
+      };
+      window.LISTA_KITS = Object.keys(DB_KITS).sort();
+      window.DB_VANTAGENS = {
+        "Aceleração":{custo:"1",desc:"Você se move muito rápido. Pode gastar 1PM para realizar um movimento extra em seu turno. Você também pode gastar 1PM antes de rolar os dados para receber um Ganho na iniciativa, ou em testes de Habilidade para correr, fugir ou perseguir um oponente."},
+        "+Ação":{custo:"1",desc:"Você tem mais Pontos de Ação, além daqueles oferecidos por seu Poder. Cada vez que compra esta vantagem você recebe +2PA. Você pode comprar esta vantagem várias vezes, para novos aumentos de +2PA."},
+        "Acumulador":{custo:"1",desc:"Sempre que você acerta um ataque (causando dano), pode gastar 2PM para ganhar Poder +1 no ataque seguinte. Pode acumular até P+5 (sempre 2PM por ataque). Se você erra um ataque ou deixa de atacar, os bônus acabam."},
+        "Ágil":{custo:"1",desc:"Você tem grande agilidade e coordenação motora. Recebe H+2 em testes envolvendo agilidade, coordenação ou equilíbrio, incluindo testes de iniciativa. Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
+        "Ajudante":{custo:"1",desc:"Você tem algo ou alguém com quem pode contar. Uma vez por rodada, você pode gastar 2PM para invocar o ajudante. Tipos: Curandeiro (cura 2D PV ou repete teste de R contra efeito), Especialista (Ganho em uma perícia, exceto atacar/defender), Familiar (custa 1PM e reduz à metade o custo de outra vantagem na rodada), Lutador (Ganho em ataque ou defesa por uma rodada), Montaria (movimento extra ou Ganho em iniciativa/perseguição, custa 1PM). Você pode ter apenas uma ajuda por rodada."},
+        "Alcance":{custo:"1-2",desc:"Seus ataques acertam mais longe. 1pt: pode atingir inimigos Longe sem penalidades, e Muito Longe com Perda. 2pt: também pode atingir Muito Longe sem penalidades. O Alcance também afeta suas outras vantagens (Cura, Magia, etc.)."},
+        "Anulação":{custo:"2",desc:"Após o uso de uma vantagem em sua presença (Longe ou menos), você pode gastar uma ação e 3PM para anulá-la. O alvo faz um teste de R (9 + seu Poder) para evitar. Se falhar, não pode usar essa vantagem até o fim da cena. Apenas uma vantagem pode ser anulada por vez."},
+        "Arena":{custo:"1",desc:"Você se dá melhor em um certo tipo de terreno. Quando está nesse lugar, pode gastar 2PM para ter Ganho em um teste. Sugestões: Água, Céu, Cidades, Ermos (desertos, florestas, montanhas), Subterrâneo, uma categoria específica de lugar, ou um único lugar no mundo."},
+        "Artefato":{custo:"1+",desc:"Você possui um item especial e único que apenas você pode utilizar. Pode ser uma espada mágica, arma experimental ou armadura robótica. Cada ponto ao comprar esta vantagem vale 10XP para adquirir uma arma, armadura ou acessório como descrito em Recompensas."},
+        "Ataque Especial":{custo:"1",desc:"Ao atacar, você pode gastar PM para ativar efeitos especiais. Exemplos: Área (todos Perto do alvo, 3PM), Choque (ataca com R em vez de P, 1PM), Distante (alcance extra, 1PM), Espiritual (alvo perde PM em vez de PV, 1PM), Múltiplo (mais alvos, 1PM por extra), Penetrante (alvo tem Perda de defesa, 2PM), Perigoso (crítico com 5 ou 6, 1PM), Potente (P+2, 1PM), Preciso (ataca com H em vez de P, 1PM), Titânico (crítico automático, 3PM)."},
+        "Base":{custo:"1",desc:"Você tem uma base de operações onde pode descansar e se recuperar. Pode alcançá-la em qualquer situação fora de combate, levando aliados (máximo Poder + Habilidade). É viagem de mão única. Todos os seus testes realizados na base têm Ganho."},
+        "Brutal":{custo:"1",desc:"Ao atacar inimigos, você recupera suas próprias energias. Versões (1pt cada): Vida (recupera 1PV para cada 3 pontos de dano causados), Mana (recupera 1PM para cada 3 pontos de dano), Derrota (recupera 3PV e 1PM ao derrotar um oponente). Funciona apenas em combates reais."},
+        "Carismático":{custo:"1",desc:"Você tem facilidade para fazer com que gostem de você. Recebe P+2 em testes sociais ou que envolvam interações com outras pessoas. Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
+        "Clone":{custo:"1",desc:"Você pode criar cópias exatas de si mesmo gastando 2PM por clone e um movimento. Quando recebe um ataque bem-sucedido, não sofre dano, mas uma cópia desaparece. Clones fazem o que você quiser, mas não realizam ações próprias. Um atacante com Sentido adequado pode ignorar clones com um teste de Percepção (9 + seu Poder)."},
+        "Companheiro":{custo:"1",desc:"Você tem um companheiro que luta ao seu lado, com atributos e habilidades definidos pelo Mestre."},
+        "Confusão":{custo:"1",desc:"Faça um ataque e gaste 2PM. Se vencer a defesa do alvo, além de sofrer dano, ele fica confuso e não consegue escolher os alvos de suas perícias ou vantagens (escolhidos ao acaso pelo mestre). Dura até o fim da cena ou até o alvo sofrer dano. A cada turno, o alvo pode fazer um teste de R (9 + seu Poder) para cancelar."},
+        "Cura":{custo:"1",desc:"Você pode curar a si mesmo ou a alguém que possa tocar. Gaste 2PM para curar 1D PV, até um limite de dados igual à Habilidade. Você também pode gastar 2PM para que um personagem repita um teste de Resistência contra algum efeito negativo duradouro após ter falhado."},
+        "Defesa Especial":{custo:"1",desc:"Ao receber um ataque, você pode gastar PM para ativar técnicas de defesa. Exemplos: Blindada (crítico com 5 ou 6, 1PM), Bloqueio (defende com P em vez de R, 1PM), Esquiva (defende com H em vez de R, 1PM), Proteção (usa sua defesa por um aliado, 1PM), Provocação (recebe ataque destinado a aliado, 1PM), Reflexão (se defesa > ataque, oponente sofre a diferença, 1PM), Tenaz (R+2, 1PM por +2), Titânica (crítico automático na defesa, 3PM)."},
+        "Desgaste":{custo:"1",desc:"Faça um ataque e gaste 2PM. Se vencer a defesa do alvo e causar dano, ele vai sofrer o mesmo dano outra vez na próxima rodada. O dano extra pode ser evitado se o alvo gastar sua próxima ação para isso."},
+        "Devoto":{custo:"1",desc:"Você serve a uma causa ou crença. Ao fazer um teste quando está seguindo ou defendendo sua devoção, você pode gastar 2PM para ter Ganho. Você pode recorrer à devoção até duas vezes por cena."},
+        "Elo Mental":{custo:"1",desc:"Você tem uma ligação especial com outro personagem (que também deve ter esta vantagem). Vocês se comunicam sem sinais quando se veem, podem compartilhar PM em situações de perigo, e podem passar Ganho um ao outro antes de rolar. Quando separados, sentem emoções gerais mas sempre sabem a direção e distância do outro."},
+        "Estender":{custo:"1",desc:"Ao usar uma vantagem pessoal (que afeta apenas você), pode gastar 1PM por turno para que ela também funcione com um aliado Perto. Por exemplo, Teleporte pode levar consigo outros personagens gastando mais 1PM por cada um."},
+        "Famoso":{custo:"1",desc:"Você é conhecido ao redor do mundo. Quando faz um teste em situações sociais envolvendo NPCs que o reconhecem (normalmente 1-4 em 1D), pode gastar 3PM para receber Ganho."},
+        "Foco":{custo:"1",desc:"Gaste 2PM e use um turno inteiro se concentrando (Perda na defesa durante esse tempo; se sofrer dano, perde a concentração). No turno seguinte, seu próximo teste recebe um crítico automático (atributo somado outra vez). Você ainda pode rolar mais críticos normalmente."},
+        "Forte":{custo:"1",desc:"Você é muito forte. Recebe P+2 em testes para empreender esforço físico, como levantar peso, derrubar porta ou socar vilão. Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
+        "Gênio":{custo:"1",desc:"Você tem um cérebro notável. Recebe H+2 em testes para resolver problemas que envolvem conhecimento, inteligência e capacidade de raciocínio. Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
+        "Golpe Final":{custo:"1",desc:"Você tem um golpe poderoso que pode finalizar um alvo já enfraquecido. Gaste 3PM e faça um ataque contra um alvo que esteja perto da derrota. Esse ataque é elevado uma escala acima."},
+        "Grimório":{custo:"1+",desc:"Você tem um grimório de magias ou fonte de conhecimentos contendo segredos únicos. Esta vantagem permite já começar com uma ou mais técnicas. Cada ponto de Grimório vale 10XP para adquirir truques ou técnicas comuns (mas não lendárias), com autorização do mestre."},
+        "Ilusão":{custo:"2",desc:"Você consegue criar ilusões tridimensionais sem massa ou substância. Custo por tamanho: 1PM (livro ou menor), 3PM (pessoa ou menor), 5PM (caminhão), 8PM (prédio). Criar gasta uma ação; mover gasta um movimento por rodada. Você não pode recuperar PM gastos até dissipá-la."},
+        "Imitar":{custo:"1",desc:"Quando alguém usa uma vantagem em sua presença (Longe ou menos), você pode fazer um teste de Percepção (9): se tiver sucesso, pode gastar 3PM para adquirir a mesma vantagem até o fim da cena. Apenas uma vantagem pode ser imitada por vez."},
+        "Imortal":{custo:"1",desc:"Você pode ser derrotado, e até tirado de cena, mas não morto. Em testes de morte, você nunca tem um resultado pior que inconsciente."},
+        "Improviso":{custo:"2",desc:"Você pode gastar 3PM para aprender, na hora, uma perícia que não tenha e usá-la até o fim da cena. Você pode improvisar apenas uma perícia por vez. Se improvisar uma nova, vai esquecer a anterior."},
+        "Imune":{custo:"1",desc:"Você é imune a algo que normalmente afeta outras criaturas. Opções: Abiótico (sem necessidades biológicas básicas), Anfíbio (respira e move normalmente embaixo d'água), Doenças (imune a doenças naturais ou mágicas), Resiliente (não se cansa; qualquer lugar de descanso é ideal), Sem Mente (imune a magias e efeitos mentais)."},
+        "Incorpóreo":{custo:"2",desc:"Ao gastar uma ação e 5PM, você pode atravessar barreiras físicas e será imune a qualquer dano por combate violento — exceto Magia ou ataques de outros seres Incorpóreos. Da mesma forma, você também não pode interagir fisicamente com objetos materiais nem causar dano, exceto com Magia. Dura até o fim da cena ou até você decidir encerrar. Mesmo intangível, você pode sofrer dano mental/emocional."},
+        "Inimigo":{custo:"1-2",desc:"Você é treinado em enfrentar certo tipo de criatura. Em todos os testes contra criaturas do tipo escolhido, você consegue acerto crítico com 5 ou 6. Grupos: Humanos, Humanoides, Construtos, Espíritos, Monstros. 1pt por grupo; 2pt se o grupo existe em grande abundância na campanha. Você também pode escolher um único arquétipo ou personagem: contra ele, todos os testes recebem Ganho."},
+        "Inofensivo":{custo:"1",desc:"Você não parece perigoso. Em combate, por surpreender seu oponente, você ganha uma ação extra antes do primeiro turno (não funciona com quem já viu você lutar). Mesmo contra estes, tem Ganho ao rolar iniciativa. Você também pode gastar 3PM para Ganho em testes para enganar ou passar despercebido."},
+        "Instrutor":{custo:"1",desc:"Usando uma ação e gastando 2PM, você permite a um aliado fazer um teste como se ele tivesse uma perícia que você tem. Se o aliado já tem a perícia, pode usar uma vantagem que você possua e a afete. O teste deve ser feito até o próximo turno do aliado."},
+        "Inventário":{custo:"1-3",desc:"Você carrega itens consumíveis. Capacidade: 0pt = sem inventário (apenas 2 itens comuns), 1pt = 3 comuns + 1 incomum, 2pt = 5 comuns + 2 incomuns, 3pt = 5 comuns + 4 incomuns + 1 raro. Você pode trocar 3 itens de nível inferior por 1 superior. O Inventário é recarregado no início de cada aventura."},
+        "Invisível":{custo:"1-2",desc:"Use uma ação e gaste 3PM para ficar invisível. Quando invisível: Ganho em testes para se esconder e todos os ataques contra você têm Perda. 1pt: invisibilidade interrompida ao atacar ou sofrer dano. 2pt: interrompida apenas ao sofrer dano. Você pode desfazê-la sempre que quiser."},
+        "Irresistível":{custo:"1",desc:"Quando um alvo faz um teste para evitar ser afetado por uma de suas vantagens, você pode gastar 2PM ou mais. Para cada 2PM gastos, a meta do teste para resistir aumenta um passo (+3). Deve anunciar o uso antes que o alvo faça seu teste."},
+        "Maestria":{custo:"1",desc:"Escolha uma perícia que você tem. Em testes dessa perícia, você pode gastar 1PM para ter um acerto crítico com 5 ou 6. Você pode comprar esta vantagem mais vezes para outras perícias."},
+        "Magia":{custo:"2",desc:"Você faz mágica. Gastando 1PM, você soma +1 em qualquer teste. O bônus máximo é igual à sua Habilidade. Quando ataca ou defende com Magia, pode usar a perícia Mística em vez de Luta. Você pode fazer testes de Mística sem gastar PM para efeitos mágicos menores (iluminar sala, limpar mesa, aquecer comida)."},
+        "+Mana":{custo:"1",desc:"Você tem mais Pontos de Mana, além daqueles oferecidos por sua Habilidade. Cada vez que compra esta vantagem você recebe +10PM. Você pode comprar esta vantagem várias vezes, para novos aumentos de +10PM."},
+        "+Membros":{custo:"2",desc:"Você tem um ou mais membros extras (braços, tentáculos, cauda, etc.). Pode gastar 3PM para fazer uma segunda ação em seu turno (de combate ou não). Em alguns casos, a ação extra pode conceder Ganho à sua outra ação. Você não pode fazer mais de uma ação extra por rodada."},
+        "Mentor":{custo:"1",desc:"Escolha uma perícia que você tem. Uma vez por cena, você pode lembrar de um ensinamento e ter Ganho em um teste da perícia escolhida. Além disso, técnicas que tenham a perícia do Mentor como pré-requisito gastam -1PM (mínimo 1PM). Você pode comprar esta vantagem mais vezes para outras perícias."},
+        "Obstinado":{custo:"1",desc:"Você pode gastar 1 ponto de P, H ou R (à sua escolha) como se fosse 1 Ponto de Ação. Quando um atributo é reduzido, o limite máximo do recurso correspondente também diminui. Pontos de atributo podem ser recuperados apenas com descanso (8 horas restauram 1 ponto em cada atributo)."},
+        "Paralisia":{custo:"1",desc:"Faça um ataque e gaste 2PM. Se vencer a defesa do alvo, em vez de sofrer dano, ele fica imobilizado e indefeso. Dura até o fim da cena ou até o alvo sofrer dano. A cada turno, o alvo pode fazer um teste de R (6 + seu Poder) para cancelar."},
+        "Patrono":{custo:"1",desc:"Você serve a uma pessoa, organização ou instituição com mais recursos. Quando faz um teste de compra para algo que ajude na missão para o Patrono, pode gastar 1PM para receber Ganho. Você também recebe um item consumível extra de cada raridade já disponível em seu Inventário."},
+        "Punição":{custo:"1-2",desc:"Ao comprar esta vantagem, escolha também uma desvantagem de mesmo valor. Faça um ataque e gaste 2PM. Se vencer a defesa do alvo, em vez de sofrer dano, ele sofre os efeitos da desvantagem escolhida. Dura até o fim da cena ou até o alvo sofrer dano. A cada turno, o alvo pode fazer um teste de R (6 + seu Poder) para cancelar."},
+        "Regeneração":{custo:"1-2",desc:"1pt: No início do seu turno, você recupera 1PV. 2pt: No início do seu turno, você recupera 3PV. Além disso, em testes de morte, você nunca tem um resultado pior que Inconsciente; neste caso, desperta no final da cena e volta a regenerar."},
+        "Resoluto":{custo:"1",desc:"Sua determinação é inabalável. Você recebe R+2 em testes envolvendo força de vontade, como perceber fraudes, resistir a encantos e ilusões (isso inclui testes de morte). Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
+        "Riqueza":{custo:"2+",desc:"Você tem recursos financeiros de escala superior. Quando faz testes de compra, pode gastar PM para subir sua escala: 2pt/Sugoi (Ganho + crítico adicional, 2PM), 4pt/Kiodai (dois Ganhos + dois críticos, 4PM), 6pt/Kami (três Ganhos + três críticos, 6PM). PM gastos nesta vantagem não podem ser recuperados até o fim da cena."},
+        "Sentido":{custo:"1",desc:"Você tem um sentido melhor ou diferente. Opções: Aguçado (escolha um sentido; Ganho em Percepção com ele), Infravisão (percebe seres de sangue quente e enxerga no escuro), Intuição (percebe intenções ocultas, mentiras, segredos), Radar (percebe tudo em volta mesmo de costas; 'ouve' rádio, TV, celular, wi-fi), Raio X (vê através de portas e paredes, exceto metal ou materiais mágicos). Você pode inventar um sentido especial único."},
+        "Telepata":{custo:"1",desc:"Você pode ler ou sentir os pensamentos de outras pessoas. Use um movimento e gaste 1PM para: ter Ganho em teste de perícia social, descobrir algo sobre um personagem com teste de H (9), ou prever movimentos de um adversário em combate (Ganho em defesa contra ele até a próxima rodada). Funciona apenas em criaturas vivas que você consiga ver."},
+        "Teleporte":{custo:"1",desc:"Use um movimento e gaste PM para se deslocar até qualquer lugar que possa ver. Cada movimento substituído por Teleporte custa 1PM (ex: Perto para Muito Longe = 2PM). Não é afetado por terreno difícil. Você também pode gastar 3PM para ter Ganho de defesa contra um ataque."},
+        "Torcida":{custo:"1",desc:"Quando uma torcida está presente, você tem um Ganho por rodada em qualquer teste. No início de cada cena, role 1D: com resultado 1, existe algum tipo de torcida favorável a você. Na falta de torcida, um aliado pode substituí-la usando uma ação para motivá-lo."},
+        "Transformação":{custo:"1-2",desc:"Faça outro personagem com o mesmo número de pontos (pode ser diferente em tudo, exceto que também deve ter esta vantagem). 1pt: todas as formas sofrem os efeitos de todas as desvantagens combinadas. 2pt: cada forma sofre apenas os efeitos de suas próprias desvantagens. Mudar de forma exige uma ação e restaura PM e PV. Pode se transformar uma vez por sessão, ou pagar 1PA por cada transformação extra."},
+        "+Vida":{custo:"1",desc:"Você tem mais Pontos de Vida, além daqueles oferecidos por sua Resistência. Cada vez que compra esta vantagem você recebe +10PV. Você pode comprar esta vantagem várias vezes, para novos aumentos de +10PV."},
+        "Vigoroso":{custo:"1",desc:"Você é robusto como um cavalo. Recebe R+2 em testes envolvendo saúde física, como resistir a fadiga, doenças e venenos (isso inclui testes de morte). Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
+        "Voo":{custo:"1",desc:"Você pode voar! Ao usar um movimento para ficar Longe ou mais distante pelo ar, apenas personagens que também possam voar poderão alcançá-lo com movimentos. Você ignora terrenos difíceis. Em combate, levantar voo do chão usa um movimento e gasta 2PM. Voar por muito tempo está sujeito a cansaço."}
+      };
+      window.LISTA_VANTAGENS = Object.keys(DB_VANTAGENS).sort();
+      window.DB_DESVANTAGENS = {
+        "Ambiente":{custo:"-1",desc:"Você é mais acostumado a certo ambiente. No início de cada cena, role 1D. Com resultado 1, nada relacionado a seu ambiente existe ali e você tem Perda em todos os testes. O mestre pode dispensar a rolagem em situações especiais."},
+        "Amnésia":{custo:"-2",desc:"Você não sabe quem é. O mestre faz sua ficha em segredo. Você pode tentar fazer coisas e o mestre diz se conseguiu ou não — sem jamais dizer se você tem mesmo a perícia ou vantagem. Suas capacidades e limitações devem permanecer um mistério."},
+        "Antipático":{custo:"-1",desc:"Você não consegue (ou não quer) se expressar bem. Quando faz um teste de Poder envolvendo interação social, você tem Perda e nunca tem acertos críticos. Você não pode ser Antipático e também Carismático."},
+        "Assombrado":{custo:"-1 ou -2",desc:"-1pt: Ao entrar em uma situação em que a assombração poderia afetá-lo, role 1D. Com resultado 1, todos os seus testes têm Perda até o fim da cena. -2pt: A assombração aparece com qualquer resultado ímpar."},
+        "Atrapalhado":{custo:"-1",desc:"Você se atrapalha com facilidade. Quando faz um teste de Habilidade envolvendo coordenação e agilidade, você tem Perda e nunca tem acertos críticos. Você não pode ser Atrapalhado e também Ágil."},
+        "Aura":{custo:"-1 ou -2",desc:"Você emana uma aura pesada de energia negativa que causa Perda em testes sociais. -1pt: Qualquer teste de outras pessoas realizado Perto de você tem Perda. -2pt: Qualquer teste Longe de você ou menos."},
+        "Bateria":{custo:"-1",desc:"Sempre que ficar com 0PM você 'desliga', ficando inconsciente e indefeso. Além disso, quando está com pouco PM (abaixo de sua H), sua bateria está fraca e todos os seus testes têm Perda."},
+        "Código":{custo:"-1",desc:"Você segue um código de conduta que o impede de fazer (ou deixar de fazer) alguma coisa. Sempre que violar seu código, a culpa o deixará com Perda em todos os testes, até que consiga se redimir. Exemplos: 1ª e 2ª Lei de Asimov, Código do Caçador, do Combate, da Derrota, da Gratidão, dos Heróis, da Honestidade, da Redenção."},
+        "Dependência":{custo:"-2",desc:"O personagem depende de algo raro, proibido ou desumano para viver. A Dependência deve ser satisfeita todos os dias. Se não o fizer, o personagem tem Perda em todos os testes."},
+        "Diferente":{custo:"-1",desc:"Seu corpo é muito diferente de um corpo humanoide comum. Você tem problemas para usar armas, roupas, equipamentos, máquinas e veículos disponíveis — pode usar apenas aqueles feitos especialmente para você. Você tem Perda ao usar itens feitos para outros."},
+        "Elo Vital":{custo:"-1",desc:"Escolha um aliado (que também deve ter esta desvantagem). Sempre que um de vocês sofre dano, o outro também perde PV na mesma quantidade. O contrário não é verdadeiro: curar um não cura o outro."},
+        "Fracote":{custo:"-1",desc:"Você é fraco. Ao fazer um teste de Poder envolvendo esforço físico, como para mover uma pedra ou derrubar uma porta, você tem Perda e nunca tem acertos críticos. Você não pode ser Fracote e também Forte."},
+        "Frágil":{custo:"-1",desc:"Você tem pouco vigor físico. Ao fazer um teste de Resistência envolvendo saúde física, como para resistir doenças, venenos e testes de morte, você tem Perda e nunca tem acertos críticos. Você não pode ser Frágil e também Vigoroso."},
+        "Fraqueza":{custo:"-1 ou -2",desc:"Existe um objeto, elemento ou condição à qual você é especialmente vulnerável. Enquanto estiver Perto dessa coisa, todos os seus testes têm Perda. -1pt: Incomum (aparece raramente, 1 em 1D). -2pt: Comum (aparece mais frequentemente, 1-3 em 1D)."},
+        "Fúria":{custo:"-2",desc:"Sempre que você sofre dano ou fica irritado (a critério do mestre), deve fazer um teste de R (9 ou igual ao dano, o que for maior). Se falhar, entra em frenesi e ataca imediatamente. Durante a Fúria todos os testes que não sejam de ataque têm Perda e todas as vantagens gastam o dobro de PM."},
+        "Inapto":{custo:"-1",desc:"Escolha uma perícia que não possua. Você é um completo incompetente nela. Sempre que o mestre pede um teste com essa perícia, você está em Perda e qualquer falha é considerada falha crítica."},
+        "Inculto":{custo:"-1",desc:"Você não tem familiaridade com a cultura local. Você não sabe ler a língua local, ou acha muito difícil. Testes sociais com personagens que não o entendem têm Perda."},
+        "Indeciso":{custo:"-1",desc:"Você tem pouca convicção. Em testes de Resistência envolvendo força de vontade, você tem Perda e nunca tem acertos críticos. Você não pode ser Indeciso e também Resoluto."},
+        "Infame":{custo:"-1",desc:"Você é muito conhecido, mas não por uma boa razão. Quando faz testes sociais relacionados a um NPC que o reconhece (normalmente 1-4 em 1D), você está sempre em Perda. Você não pode ser Infame e também Famoso."},
+        "Lento":{custo:"-1",desc:"Você se move devagar. Em testes de iniciativa, está sempre em Perda, e também gasta um movimento a mais para cruzar cada distância. Você não pode ser Lento e também ter Aceleração."},
+        "Maldição":{custo:"-1 ou -2",desc:"-1pt: A Maldição é suave, mais irritante ou constrangedora. Normalmente não tem efeito em regras, mas em alguns casos pode causar Perda. -2pt: A Maldição é muito grave e desafiadora, com efeito mecânico severo definido pelo mestre."},
+        "Monstruoso":{custo:"-1",desc:"Você tem uma aparência grotesca. Outros personagens estão sempre de prontidão contra você: exceto quando os pega de surpresa, você sempre tem Perda em testes de iniciativa. Você também tem Perda em testes sociais que envolvem aparência. Você não pode ser Monstruoso e também Inofensivo."},
+        "Munição":{custo:"-1",desc:"Sua arma ou técnica exige recarga cada vez que é utilizada. Sempre que você usa uma ação para atacar, precisa usar um movimento para recarregar. Se fizer um ataque sem recarregar, você não soma seu Poder ao teste de ataque."},
+        "Pacifista":{custo:"-1 ou -2",desc:"-1pt: Você não se envolve em combate violento. Quando atacado, pode se defender, mas não fazer testes de ataque. -2pt: Você não faz absolutamente nada que cause dano. Se violar seu pacifismo, a culpa o deixará em Perda até se redimir."},
+        "Pobreza":{custo:"-1",desc:"Você não tem recursos financeiros e tende a não consegui-los. Todos os seus testes de compra são feitos em Perda. Você não pode ter Pobreza e também Riqueza."},
+        "Ponto Fraco":{custo:"-1",desc:"Você tem uma característica que seu adversário pode explorar. Pode ser descoberto por quem já viu você em ação, Telepatia, ou se você é Famoso/Infame. Qualquer adversário que conhece seu Ponto Fraco pode gastar 1PM para ter Ganho contra você em um teste que explora esse problema."},
+        "Protegido":{custo:"-1",desc:"Existe alguém que você precisa proteger de qualquer maneira. Sempre que o Protegido está desaparecido, indefeso ou ferido, todos os seus testes têm Perda. Vilões podem usá-lo como chantagem contra você."},
+        "Restrição":{custo:"-1 ou -2",desc:"Certa condição torna mais difícil usar seus poderes. Quando ela acontece, você sempre gasta o dobro de PM para usar suas vantagens. -1pt: Incomum (acontece raramente). -2pt: Comum (acontece muito frequentemente)."},
+        "Sem Vida":{custo:"-2",desc:"Você não é um ser vivo. A boa notícia: em testes de morte, você nunca tem resultado pior que inconsciente. A má notícia: você não recupera PV de formas normais (nem descanso, nem itens, nem Cura/Regeneração). Pode ser consertado por outro personagem com a perícia adequada (Máquinas ou Mística) em 1 hora de trabalho com teste (9)."},
+        "Tapado":{custo:"-1",desc:"Você não é muito brilhante. Quando faz testes de Habilidade relacionado a inteligência e raciocínio, você tem Perda e nunca tem acertos críticos. Você não pode ser Tapado e também Gênio."},
+        "Transtorno":{custo:"-1",desc:"Você lida com um transtorno mental. Opções: Cleptomania (rouba coisas desnecessariamente), Compulsão (precisa fazer algo várias vezes por dia; Perda em todos os testes até cumprir), Distração (não consegue críticos em coisas que não o interessam), Fantasia (acredita ser algo que não é; Perda em testes sociais), Fobia (medo terrível de algo; não consegue fazer ações quando aquilo está Perto), Megalomania (nunca se rende), Mitomania (nunca diz a verdade), Paranoia (não confia em ninguém; recuperação de recursos com descanso é metade do normal)."},
+        "Utensílio":{custo:"-1 ou -2",desc:"-1pt: Você precisa de um item para usar adequadamente uma perícia. Quando não está com ele, não consegue acertos críticos. -2pt: Sem o Utensílio, você não pode usar vantagens ou técnicas que gastam PM. Se o Utensílio é destruído ou perdido, você consegue outro depois da cena ou gastando 1PA para improvisá-lo."}
+      };
+      window.LISTA_DESVANTAGENS = Object.keys(DB_DESVANTAGENS).sort();
+      window.DB_PERICIAS = {
+        "Animais": "Você sabe lidar com animais, sejam domésticos, selvagens ou monstros. Pode acalmá-los, treiná-los, montar, identificar espécies e até se comunicar rudimentarmente. Testes típicos: montar um animal, acalmar um bicho furioso, identificar uma criatura, treinar um animal para realizar truques.",
+        "Arte": "Você é talentoso em alguma forma de arte (música, pintura, dança, escultura, teatro, escrita etc.). Pode criar obras, performar e identificar estilos artísticos. Testes típicos: tocar um instrumento, pintar um quadro, dançar, escrever uma história, atuar em uma peça.",
+        "Esporte": "Você pratica e conhece diversos esportes (futebol, basquete, natação, lutas olímpicas etc.). Pode participar de competições e usar conhecimentos esportivos em situações práticas. Testes típicos: jogar uma partida, realizar manobras esportivas, conhecer regras de um esporte.",
+        "Influência": "Você sabe convencer, seduzir e liderar pessoas. Pode fazer com que gostem de você ou sigam suas ideias. Testes típicos: convencer alguém a fazer algo, seduzir, liderar um grupo, negociar.",
+        "Luta": "Você é treinado em combate corpo a corpo (soco, chute, armas brancas etc.). Testes típicos: atacar ou defender em combate físico.",
+        "Manha": "Você é esperto em truques, furtos e sobrevivência urbana. Testes típicos: roubar um objeto, abrir uma fechadura, escapar de uma prisão, encontrar atalhos na cidade.",
+        "Máquinas": "Você entende e conserta máquinas, veículos, robôs e dispositivos tecnológicos. Testes típicos: consertar um carro, pilotar um veículo, desativar uma armadilha tecnológica.",
+        "Medicina": "Você sabe tratar ferimentos, doenças e realizar primeiros socorros. Testes típicos: curar alguém, diagnosticar uma doença, realizar cirurgia simples.",
+        "Mística": "Você entende magia, rituais e fenômenos sobrenaturais. Testes típicos: identificar uma magia, realizar um ritual, resistir a efeitos mágicos.",
+        "Percepção": "Você nota detalhes, percebe armadilhas e detecta mentiras. Testes típicos: notar algo escondido, ouvir ruídos distantes, detectar uma mentira.",
+        "Saber": "Você possui conhecimento geral sobre história, ciências, culturas e fatos do mundo. Testes típicos: lembrar uma informação, identificar uma criatura rara, conhecer leis ou tradições.",
+        "Sobrevivência": "Você sabe sobreviver na natureza: caçar, pescar, acampar, orientar-se. Testes típicos: encontrar comida na floresta, fazer fogo, orientar-se em terreno selvagem."
+      };
+      window.OPCOES_POR_ITEM = {
+        "Arte":["Atuação","Culinária","Dança","Escrita","Ilustração","Música"],
+        "Esporte":["Acrobacia","Atletismo","Corrida","Natação","Pilotagem"],
+        "Saber":["Arcano","Ciências","Direito","Geografia","História","Idiomas","Natureza","Religião","Tecnologia"],
+        "Sobrevivência":["Florestas","Desertos","Gelo","Urbano","Mar"],
+        "Ajudante":["Curandeiro","Especialista","Familiar","Lutador","Montaria"],
+        "Ataque Especial":["Área","Choque","Distante","Espiritual","Investida","Múltiplo","Penetrante","Perigoso","Poderoso","Potente","Preciso","Titânico"],
+        "Defesa Especial":["Blindada","Bloqueio","Esquiva","Proteção","Provocação","Reflexão","Robusta","Tenaz","Titânica"],
+        "Imune":["Abiótico","Anfíbio","Doenças","Resiliente","Sem Mente"],
+        "Inimigo":["Humanos","Humanoides","Construtos","Espíritos","Monstros"],
+        "Arena":["Água","Céu","Cidades","Ermos","Subterrâneo"],
+        "Sentido":["Aguçado","Infravisão","Intuição","Radar","Raio X"],
+        "Maestria":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],
+        "Mentor":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],
+        "Ambiente":["Água","Céu","Cidades","Desertos","Florestas","Subterrâneo","Frio","Calor"],
+        "Código":["1ª Lei de Asimov","2ª Lei de Asimov","Código do Caçador","Código do Combate","Código da Derrota","Código da Gratidão","Código dos Heróis","Código da Honestidade","Código da Redenção"],
+        "Dependência":["Remédio","Ambiente Específico","Item Mágico"],
+        "Fraqueza":["Incomum (-1pt)","Comum (-2pt)"],
+        "Inapto":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],
+        "Transtorno":["Cleptomania","Compulsão","Distração","Fantasia","Fobia","Megalomania","Mitomania","Paranoia"]
+      };
+
+      window.DB_SUBOPCOES = {
+        "Ajudante": {
+          "Curandeiro": "Cura 2D PV em você ou outro personagem Perto, ou permite repetir um teste de Resistência contra algum efeito negativo após ter falhado. Custo: 2PM.",
+          "Especialista": "Escolha uma perícia. Concede Ganho em um teste com esta perícia, exceto para defender ou atacar. Custo: 2PM.",
+          "Familiar": "Este ajudante sobrenatural gasta apenas 1PM para ser invocado (em vez de 2) e diminui à metade o custo em PM para usar outra vantagem na rodada. Custo: 1PM.",
+          "Lutador": "Concede Ganho em um teste de ataque, ou em testes de defesa por uma rodada. Custo: 2PM.",
+          "Montaria": "Concede um movimento extra, ou Ganho em um teste de iniciativa ou para correr ou perseguir um oponente. Custo: 1PM."
+        },
+        "Ataque Especial": {
+          "Área": "Todos os personagens Perto do alvo também recebem o ataque. Custo: 3PM.",
+          "Choque": "Você ataca usando Resistência em vez de Poder. Qualquer bônus ou penalidade que afetaria seu Poder passa a afetar a Resistência. Custo: 1PM.",
+          "Distante": "Você pode atingir um passo de distância além. Cumulativo com a vantagem Alcance. Custo: 1PM.",
+          "Espiritual": "O alvo perde PM em vez de PV com este ataque. Custo: 1PM.",
+          "Investida": "Quando ataca um alvo Longe ou mais distante, você também se move até o alvo com a mesma ação. Custo: 1PM.",
+          "Múltiplo": "Você atinge mais alvos ao alcance. 1PM por alvo extra, até máximo igual à Habilidade. Cada alvo faz defesa separada, mas usa o mesmo teste de ataque. Custo: 1PM por alvo extra.",
+          "Penetrante": "O alvo tem Perda de defesa. Custo: 2PM.",
+          "Perigoso": "O ataque causa um acerto crítico com 5 ou 6. Custo: 1PM.",
+          "Poderoso": "Quando consegue um crítico no ataque, você pode gastar 2PM para somar o Poder mais uma vez. Custo: 2PM.",
+          "Potente": "Aumenta o Poder do ataque em P+2. Pode ser comprado mais vezes para P+4, P+6, etc. Custo: 1PM por P+2.",
+          "Preciso": "Você ataca usando Habilidade em vez de Poder. Qualquer bônus ou penalidade que afetaria seu Poder passa a afetar sua Habilidade. Custo: 1PM.",
+          "Titânico": "Você supera seus limites! Você tem um crítico automático no ataque. Custo: 3PM."
+        },
+        "Defesa Especial": {
+          "Blindada": "A defesa consegue acerto crítico com 5 ou 6. Custo: 1PM.",
+          "Bloqueio": "Você defende usando Poder em vez de Resistência. Qualquer bônus ou penalidade que afetaria sua Resistência passa a afetar Poder. Custo: 1PM.",
+          "Esquiva": "Você defende usando Habilidade em vez de Resistência. Qualquer bônus ou penalidade que afetaria sua Resistência passa a afetar Habilidade. Custo: 1PM.",
+          "Proteção": "Se um personagem Perto de você é atacado, você pode usar sua defesa em vez da dele. Se mesmo assim o ataque causa dano, é o aliado que o recebe. Custo: 1PM por aliado.",
+          "Provocação": "Se um personagem Perto de você é atacado, você recebe esse ataque no lugar dele e usa sua defesa normalmente. Se o ataque causa dano, é você que o recebe. Custo: 1PM.",
+          "Reflexão": "Caso sua defesa seja maior que o ataque do adversário, ele sofre dano igual à diferença. Custo: 1PM.",
+          "Robusta": "Quando consegue um crítico na defesa, você pode gastar 2PM para somar sua Resistência mais uma vez. Custo: 2PM.",
+          "Tenaz": "Aumenta a Resistência em +2 na defesa. Pode ser comprado mais vezes. Custo: 1PM por +2.",
+          "Titânica": "Você supera seus limites! Você tem um crítico automático na defesa e ela será considerada perfeita com qualquer resultado. Custo: 3PM."
+        },
+        "Imune": {
+          "Abiótico": "Você não tem necessidades biológicas básicas, como comer, beber, respirar ou dormir (mas ainda precisa de descanso para recuperar recursos).",
+          "Anfíbio": "Você respira e se move normalmente embaixo d'água, sem ser afetado por terreno difícil, nem sofrer pressão submarina.",
+          "Doenças": "Você é imune a doenças naturais ou mágicas.",
+          "Resiliente": "Você não se cansa por realizar esforço intenso por muito tempo. Além disso, qualquer lugar de descanso é considerado ideal.",
+          "Sem Mente": "Você é imune a magias e efeitos que afetam a mente, como telepatia e outros efeitos mentais que só funcionam em criaturas vivas."
+        },
+        "Inimigo": {
+          "Humanos": "Em todos os testes contra Humanos, você consegue acerto crítico com 5 ou 6. Custo: 2pt (grupo abundante).",
+          "Humanoides": "Em todos os testes contra Humanoides (anfíbios, anões, centauros, elfos, goblins, hynne, kemono...), você consegue acerto crítico com 5 ou 6. Custo: 1pt.",
+          "Construtos": "Em todos os testes contra Construtos (androides, ciborgues, golems, mechas...), você consegue acerto crítico com 5 ou 6. Custo: 1pt.",
+          "Espíritos": "Em todos os testes contra Espíritos (abissais, celestiais, dahllan, fadas, fantasmas, osteon, qareen, vampiros...), você consegue acerto crítico com 5 ou 6. Custo: 1pt.",
+          "Monstros": "Em todos os testes contra Monstros (aberrantes, aliens, kallyanach, kaiju...), você consegue acerto crítico com 5 ou 6. Custo: 1pt."
+        },
+        "Arena": {
+          "Água": "Você se dá melhor em ambientes aquáticos: praia, barcos, chuva, superfície da água, embaixo d'água. Pode gastar 2PM para ter Ganho em um teste nesse ambiente.",
+          "Céu": "Você se dá melhor no ar. Em testes no céu, pode gastar 2PM para ter Ganho (só vale se o oponente também está voando).",
+          "Cidades": "Você se dá melhor em ambientes urbanos: ruas, telhados, topo de prédio, aposentos, corredores, escadas. Pode gastar 2PM para ter Ganho em um teste.",
+          "Ermos": "Você se dá melhor em ambientes selvagens: desertos, florestas, montanhas, pântanos, geleiras. Pode gastar 2PM para ter Ganho em um teste.",
+          "Subterrâneo": "Você se dá melhor em ambientes subterrâneos: cavernas, arcas, esgotos. Pode gastar 2PM para ter Ganho em um teste."
+        },
+        "Sentido": {
+          "Aguçado": "Escolha entre audição, faro, paladar, tato ou visão. Em testes de Percepção usando esse sentido, você sempre tem Ganho.",
+          "Infravisão": "Você percebe seres de sangue quente e enxerga no escuro, exceto perto de calor intenso (chamas, grandes motores, disparos de armas...).",
+          "Intuição": "Você percebe intenções ocultas de outras pessoas, como quando estão mentindo, escondendo emoções, guardando segredos, pretendendo atacá-lo ou traí-lo.",
+          "Radar": "Você percebe tudo em volta, mesmo de costas ou no escuro. Você também pode 'ouvir' rádio, tevê, celular, wi-fi e outros.",
+          "Raio X": "Você pode ver através de portas e paredes, exceto quando feitos de materiais muito densos (como metal) ou mágicos."
+        },
+        "Maestria": {
+          "Animais": "Você é mestre em Animais. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Arte": "Você é mestre em Arte. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Esporte": "Você é mestre em Esporte. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Influência": "Você é mestre em Influência. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Luta": "Você é mestre em Luta. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Manha": "Você é mestre em Manha. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Máquinas": "Você é mestre em Máquinas. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Medicina": "Você é mestre em Medicina. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Mística": "Você é mestre em Mística. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Percepção": "Você é mestre em Percepção. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Saber": "Você é mestre em Saber. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia.",
+          "Sobrevivência": "Você é mestre em Sobrevivência. Pode gastar 1PM para ter acerto crítico com 5 ou 6 em testes dessa perícia."
+        },
+        "Mentor": {
+          "Animais": "Você aprendeu Animais com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Animais como pré-requisito gastam -1PM.",
+          "Arte": "Você aprendeu Arte com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Arte como pré-requisito gastam -1PM.",
+          "Esporte": "Você aprendeu Esporte com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Esporte como pré-requisito gastam -1PM.",
+          "Influência": "Você aprendeu Influência com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Influência como pré-requisito gastam -1PM.",
+          "Luta": "Você aprendeu Luta com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Luta como pré-requisito gastam -1PM.",
+          "Manha": "Você aprendeu Manha com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Manha como pré-requisito gastam -1PM.",
+          "Máquinas": "Você aprendeu Máquinas com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Máquinas como pré-requisito gastam -1PM.",
+          "Medicina": "Você aprendeu Medicina com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Medicina como pré-requisito gastam -1PM.",
+          "Mística": "Você aprendeu Mística com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Mística como pré-requisito gastam -1PM.",
+          "Percepção": "Você aprendeu Percepção com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Percepção como pré-requisito gastam -1PM.",
+          "Saber": "Você aprendeu Saber com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Saber como pré-requisito gastam -1PM.",
+          "Sobrevivência": "Você aprendeu Sobrevivência com um mestre. Uma vez por cena, tem Ganho em um teste dessa perícia. Técnicas com Sobrevivência como pré-requisito gastam -1PM."
+        },
+        "Código": {
+          "1ª Lei de Asimov": "Jamais causar mal a um ser humano ou, por omissão, permitir que um humano sofra qualquer mal.",
+          "2ª Lei de Asimov": "Sempre obedecer a seres humanos, exceto quando suas ordens violam outro Código que você tenha.",
+          "Código do Caçador": "Nunca matar filhotes ou gestantes. Nunca abandonar uma caça abatida. Sempre escolher o inimigo mais perigoso. Nunca permitir a fuga de um oponente.",
+          "Código do Combate": "Nunca atacar um oponente em condição desfavorável (em Perda) ou de escala inferior.",
+          "Código da Derrota": "Nunca seguir lutando depois de derrotado. Aceitar qualquer condição do vitorioso.",
+          "Código da Gratidão": "Sempre que alguém presta um grande favor a você ou ente querido, você fica a serviço dessa pessoa até conseguir devolver o favor.",
+          "Código dos Heróis": "Sempre cumprir sua palavra, sempre proteger qualquer pessoa mais fraca que você, jamais recusar um pedido de ajuda.",
+          "Código da Honestidade": "Nunca mentir, roubar, trapacear ou desobedecer às leis locais, nem permitir que seus companheiros o façam.",
+          "Código da Redenção": "Nunca atacar primeiro, sempre aceitar um pedido de rendição, sempre poupar oponentes derrotados."
+        },
+        "Transtorno": {
+          "Cleptomania": "Você rouba coisas de que não precisa, não por seu valor, apenas por serem interessantes. Sempre que surgir a chance de roubar algo, deve fazer um teste para evitar. Nunca devolve o produto de seus roubos.",
+          "Compulsão": "Existe algo que você precisa fazer várias vezes por dia. Cada vez que uma cena começa, você tem Perda em todos os testes até gastar uma rodada cumprindo sua compulsão.",
+          "Distração": "Você não consegue se concentrar em algo que não o interessa. Nessas situações você não consegue acertos críticos.",
+          "Fantasia": "Você acredita ser alguém ou alguma coisa que não é. Você fala de si mesmo o tempo todo para anunciar sua fantasia. Perda em todos os testes sociais.",
+          "Fobia": "Você tem medo terrível de alguma coisa específica. Sempre que essa coisa está Perto, você não consegue fazer ações, apenas movimentos. Só consegue agir se passar em um teste de R (9).",
+          "Megalomania": "Você acredita ser invencível e destinado a realizar um grande objetivo. Você nunca se rende e segue lutando mesmo após ser derrotado.",
+          "Mitomania": "Você nunca diz a verdade sobre coisa alguma, mesmo quando quer. Precisa de um teste para dizer algo verdadeiro, até para seus aliados.",
+          "Paranoia": "Você não confia em ninguém, nem em seus aliados. Precisa de um teste para aceitar qualquer ajuda. Além disso, sua recuperação de recursos com descanso é metade do normal."
+        },
+        "Fraqueza": {
+          "Incomum (-1pt)": "A Fraqueza é algo que aparece raramente (1 em 1D). Enquanto você estiver Perto dessa coisa, todos os seus testes têm Perda. Exemplos: livros, espelhos, gatos, objetos de bronze, cor roxa.",
+          "Comum (-2pt)": "A Fraqueza é algo que aparece mais frequentemente (1-3 em 1D). Enquanto você estiver Perto dessa coisa, todos os seus testes têm Perda. Exemplos: lugares escuros, vento, água, plantas, cor vermelha."
+        }
+      };
+    </script>
+    <script type="text/babel">
+      const { useState, useEffect, useRef, useMemo, useLayoutEffect } = React;
+      const LISTA_PERICIAS = ["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"];
+      const DB_ARQUETIPOS = window.DB_ARQUETIPOS;
+      const LISTA_ARQUETIPOS = window.LISTA_ARQUETIPOS;
+      const DB_KITS = window.DB_KITS;
+      const LISTA_KITS = window.LISTA_KITS;
+      const DB_VANTAGENS = window.DB_VANTAGENS;
+      const LISTA_VANTAGENS = window.LISTA_VANTAGENS;
+      const DB_DESVANTAGENS = window.DB_DESVANTAGENS;
+      const LISTA_DESVANTAGENS = window.LISTA_DESVANTAGENS;
+      const DB_PERICIAS = window.DB_PERICIAS;
+      const OPCOES_POR_ITEM = window.OPCOES_POR_ITEM;
+      const DB_SUBOPCOES = window.DB_SUBOPCOES;
+      const LucideIcon = ({ name, className = "", ...props }) => {
+        const spanRef = useRef(null);
+        useLayoutEffect(() => {
+          if (spanRef.current && window.lucide) {
+            spanRef.current.innerHTML = `<i data-lucide="${name}" class="${className}"></i>`;
+            window.lucide.createIcons({ root: spanRef.current });
+          }
+        });
+        return <span ref={spanRef} {...props} className="inline-flex items-center justify-center"></span>;
+      };
+
+      const Shield = (p) => <LucideIcon name="shield" {...p} />;
+      const Sword = (p) => <LucideIcon name="sword" {...p} />;
+      const Zap = (p) => <LucideIcon name="zap" {...p} />;
+      const Heart = (p) => <LucideIcon name="heart" {...p} />;
+      const Star = (p) => <LucideIcon name="star" {...p} />;
+      const Skull = (p) => <LucideIcon name="skull" {...p} />;
+      const BookOpen = (p) => <LucideIcon name="book-open" {...p} />;
+      const Save = (p) => <LucideIcon name="save" {...p} />;
+      const Trash2 = (p) => <LucideIcon name="trash-2" {...p} />;
+      const Plus = (p) => <LucideIcon name="plus" {...p} />;
+      const Minus = (p) => <LucideIcon name="minus" {...p} />;
+      const Info = (p) => <LucideIcon name="info" {...p} />;
+      const Wand2 = (p) => <LucideIcon name="wand-2" {...p} />;
+      const Backpack = (p) => <LucideIcon name="backpack" {...p} />;
+      const Upload = (p) => <LucideIcon name="upload" {...p} />;
+      const ImageIcon = (p) => <LucideIcon name="image" {...p} />;
+      const Printer = (p) => <LucideIcon name="printer" {...p} />;
+      const FileJson = (p) => <LucideIcon name="file-json" {...p} />;
+      const Crown = (p) => <LucideIcon name="crown" {...p} />;
+      const AlertCircle = (p) => <LucideIcon name="alert-circle" {...p} />;
+      const ArrowRightLeft = (p) => <LucideIcon name="arrow-right-left" {...p} />;
+      const ArrowUp = (p) => <LucideIcon name="arrow-up" {...p} />;
+      const ArrowDown = (p) => <LucideIcon name="arrow-down" {...p} />;
+      const Menu = (p) => <LucideIcon name="menu" {...p} />;
+      const X = (p) => <LucideIcon name="x" {...p} />;
+      const FileText = (p) => <LucideIcon name="file-text" {...p} />;
+      const PlusCircle = (p) => <LucideIcon name="plus-circle" {...p} />;
+      const Dice = (p) => <LucideIcon name="dice-5" {...p} />;
+      const FolderPlus = (p) => <LucideIcon name="folder-plus" {...p} />;
+      const Folder = (p) => <LucideIcon name="folder" {...p} />;
+      const FolderOpen = (p) => <LucideIcon name="folder-open" {...p} />;
+      const ChevronRight = (p) => <LucideIcon name="chevron-right" {...p} />;
+      const ChevronDown = (p) => <LucideIcon name="chevron-down" {...p} />;
+      const Users = (p) => <LucideIcon name="users" {...p} />;
+      const Copy = (p) => <LucideIcon name="copy" {...p} />;
+      const CloudUpload = (p) => <LucideIcon name="cloud-upload" {...p} />;
+      const CloudDownload = (p) => <LucideIcon name="cloud-download" {...p} />;
+
+      const emptyCharacter = {
+        id: null, nome: '', arquetipo: '', arquetipoCusto: 0, pontos: 10, experiencia: 0,
+        escala: 'Ningen', marco: 'Iniciante', foto: null,
+        atributos: { poder: 0, habilidade: 0, resistencia: 0 },
+        recursos: { pa_atual: 0, pm_atual: 5, pv_atual: 5 },
+        pericias: [], vantagens: [], desvantagens: [], kits: [], tecnicas: [],
+        nivelInventario: 0,
+        trocas: { comumParaIncomum: 0, incomumParaRaro: 0, raroParaLendario: 0 },
+        inventario: { comuns: [], incomuns: [], raros: [], lendarios: [] },
+        anotacoes: '', historia: ''
+      };
+
+      const AttributeRow = ({ icon, label, value, onChange, color }) => {
+        const borderColors = { red: 'border-red-500', blue: 'border-blue-500', green: 'border-green-500' };
+        return (
+          <div className={`flex items-center justify-between p-4 rounded-lg group print:bg-transparent print:border print:border-black print:py-2 ${color === "red" ? "neon-border-red" : color === "blue" ? "neon-border" : "neon-border-green"}`} style={{background:"rgba(0,0,0,0.5)",borderLeft:"3px solid"}}>
+            <div className="flex items-center gap-3">{icon}<span className="font-bold print:text-black">{label}</span></div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => onChange(parseInt(value||0)-1)} className="w-8 h-8 flex items-center justify-center rounded no-print cyber-btn"><Minus className="w-4 h-4" /></button>
+              <input type="number" className="w-12 text-center bg-transparent text-2xl font-black outline-none print:text-black" value={value} onChange={(e) => onChange(e.target.value)} />
+              <button onClick={() => onChange(parseInt(value||0)+1)} className="w-8 h-8 flex items-center justify-center rounded no-print cyber-btn"><Plus className="w-4 h-4" /></button>
+            </div>
+          </div>
+        );
+      };
+
+      const ResourceBar = ({ label, current, max, color, icon, onChange }) => {
+        const gradientColors = { red: 'from-red-600 to-red-400', blue: 'from-blue-600 to-blue-400' };
+        const focusBorder = { red: 'focus:border-red-500', blue: 'focus:border-blue-500' };
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-end">
+              <span className="flex items-center gap-2 font-bold print:text-black" style={{color: color==='red'?'#ff5252':'#00e5ff', textShadow: `0 0 8px ${color==='red'?'rgba(255,82,82,0.5)':' rgba(0,229,255,0.5)'}`, fontFamily:"Orbitron,sans-serif", fontSize:"12px"}}>{icon} {label}</span>
+              <div className="flex items-center gap-2">
+                <input type="number" className={`w-12 bg-slate-900 rounded text-center border border-slate-700 ${focusBorder[color]} outline-none font-bold print:bg-transparent print:text-black print:border-black`} value={current} onChange={(e) => onChange(parseInt(e.target.value)||0)} />
+                <span className="text-slate-500 print:text-black">/ {max}</span>
+              </div>
+            </div>
+            <div className="h-3 rounded-full overflow-hidden cyber-bar-bg print:border-black print:h-2">
+              <div className="h-full transition-all duration-300 print:bg-black" style={{background: color==='red'?'linear-gradient(90deg,#ff1744,#ff5252)':'linear-gradient(90deg,#00b8d4,#00e5ff)', boxShadow: color==='red'?'0 0 10px rgba(255,23,68,0.6)':'0 0 10px rgba(0,229,255,0.6)', width:`${Math.min(100,(current/max)*100)}%`}}></div>
+            </div>
+          </div>
+        );
+      };
+
+      const Section = ({ title, icon, items, suggestionList, onAdd, onUpdate, onRemove, color }) => {
+        const list = title.toLowerCase();
+        const colorMap = { cyan: 'border-cyan-500/30', emerald: 'border-emerald-500/30', rose: 'border-rose-500/30' };
+        const listId = `list-${title.toLowerCase().replace(/\s/g,'-')}`;
+        const totalPoints = items.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
+        const totalLabel = totalPoints > 0 ? `+${totalPoints}` : totalPoints;
+        return (
+          <div className={`cyber-panel cyber-corner p-4 rounded-lg space-y-4 print:bg-transparent print:border-black print:break-inside-avoid`}>
+            <div className="flex justify-between items-center pb-2 print:border-black" style={{borderBottom:"1px solid rgba(0,229,255,0.2)"}}>
+              <div className="flex items-baseline gap-2 orbitron">
+                <h3 className="flex items-center gap-2 font-bold uppercase tracking-tighter text-sm print:text-black" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",textShadow:"0 0 8px rgba(0,229,255,0.4)"}}>{icon} {title}</h3>
+                <span className="text-xs font-normal text-slate-400 print:text-black">({totalLabel} pts)</span>
+              </div>
+              <button onClick={onAdd} className="p-1 hover:bg-slate-700 rounded-lg transition-colors no-print"><Plus className="w-4 h-4" /></button>
+            </div>
+            {suggestionList && suggestionList.length > 0 && (
+              <datalist id={listId}>{suggestionList.map((opt) => <option key={opt} value={opt} />)}</datalist>
+            )}
+            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+              {items.map(item => {
+                const subOptions = OPCOES_POR_ITEM[item.nome];
+                const subListId = `sublist-${item.id}`;
+                return (
+                  <div key={item.id} className="group relative p-2 rounded-lg print:bg-transparent print:border-black" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.15)"}}>
+                    <div className="flex gap-1 items-center flex-wrap md:flex-nowrap mb-1">
+                      <input placeholder={suggestionList && suggestionList.length > 0 ? "Selecione..." : "Nome"} list={suggestionList && suggestionList.length > 0 ? listId : undefined}
+                        className="flex-1 min-w-[120px] bg-slate-900 border border-slate-700 rounded p-1 px-2 text-sm text-white outline-none focus:border-blue-500 print:bg-transparent print:border-none print:p-0 print:text-black print:border-b print:border-dotted print:border-slate-400 font-bold"
+                        value={item.nome} onChange={(e) => onUpdate(item.id,'nome',e.target.value)} />
+                      {subOptions && <datalist id={subListId}>{subOptions.map(opt => <option key={opt} value={opt} />)}</datalist>}
+                      <input placeholder="Detalhes / Opção" list={subOptions ? subListId : undefined}
+                        className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded p-1 px-2 text-xs text-slate-300 outline-none focus:border-blue-500 print:bg-transparent print:border-none print:p-0 print:text-black italic"
+                        value={item.detalhe||''} onChange={(e) => onUpdate(item.id,'detalhe',e.target.value)} />
+                      <input type="number" placeholder="Pts"
+                        className="w-10 bg-slate-900 border border-slate-700 rounded p-1 text-sm text-white text-center outline-none print:bg-transparent print:border-none print:p-0 print:text-black font-bold"
+                        value={item.custo} onChange={(e) => onUpdate(item.id,'custo',e.target.value)} />
+                      <button onClick={() => onRemove(item.id)} className="p-1 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity no-print rounded hover:bg-rose-500/10"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                    <textarea placeholder="Descrição completa do efeito ou poder..."
+                      className="w-full mt-1 bg-slate-950/80 border border-slate-700/50 rounded p-2 text-[11px] text-slate-300 outline-none resize-none min-h-[2.5rem] leading-relaxed auto-expand focus:ring-1 focus:ring-blue-500 print:text-black print:text-xs print:bg-transparent print:border-none print:p-0"
+                      rows={2} onInput={(e) => { e.target.style.height="auto"; e.target.style.height=e.target.scrollHeight+"px" }}
+                      value={item.descricao||''} onChange={(e) => onUpdate(item.id,'descricao',e.target.value)} />
+                  </div>
+                );
+              })}
+              {items.length === 0 && <p className="text-center text-slate-600 text-xs py-4 italic print:hidden">Vazio</p>}
+            </div>
+          </div>
+        );
+      };
+
+      const TradePanel = ({ from, to, type, limitFrom, limitTo, tradeCount, onTrade, fromColor, toColor }) => (
+        <div className="flex items-center justify-between bg-slate-800 p-2 rounded-lg border border-slate-700">
+          <div className="text-xs text-slate-400 text-center flex-1">
+            <div className={`font-bold ${fromColor}`}>{from}</div>
+            <div className="text-[10px] my-1">para</div>
+            <div className={`font-bold ${toColor}`}>{to}</div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <button onClick={() => onTrade(type,1)} className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-green-400 disabled:opacity-30 disabled:cursor-not-allowed" disabled={limitFrom<3}><ArrowUp className="w-3 h-3" /></button>
+            <button onClick={() => onTrade(type,-1)} className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-rose-400 disabled:opacity-30 disabled:cursor-not-allowed" disabled={(tradeCount||0)<=0}><ArrowDown className="w-3 h-3" /></button>
+          </div>
+        </div>
+      );
+
+      const InventoryColumn = ({ title, items, limit, onAdd, onUpdate, onRemove, color }) => {
+        const isFull = items.length >= limit && limit > 0;
+        const colors = { slate:'text-slate-300 border-slate-600', blue:'text-blue-400 border-blue-500/50', yellow:'text-yellow-400 border-yellow-500/50', purple:'text-purple-400 border-purple-500/50' };
+        const barColors = { slate:'bg-slate-500', blue:'bg-blue-500', yellow:'bg-yellow-500', purple:'bg-purple-500' };
+        return (
+          <div className="flex flex-col h-full rounded-lg p-3 print:bg-transparent print:border-black print:border" style={{background:"rgba(0,0,0,0.4)",border:"1px solid rgba(0,229,255,0.2)"}}>
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <h4 className="text-sm font-bold uppercase print:text-black" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",letterSpacing:"1px"}}>{title}</h4>
+                {limit > 0 ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{background:"rgba(0,0,0,0.8)",border:"1px solid rgba(0,229,255,0.15)"}}><div className={`h-full ${barColors[color]} transition-all`} style={{width:`${Math.min(100,(items.length/limit)*100)}%`}}></div></div>
+                    <span className={`text-[10px] font-bold ${items.length>limit?'text-rose-500':'text-slate-500'} print:text-black`}>{items.length}/{limit}</span>
+                  </div>
+                ) : (<span className="text-[10px] text-slate-600 uppercase font-bold mt-1 block print:hidden">Indisponível</span>)}
+              </div>
+              <button onClick={onAdd} className={`p-1.5 rounded transition-colors no-print ${limit===0?'opacity-50 cursor-not-allowed bg-slate-800':'bg-slate-700 hover:bg-slate-600'}`} disabled={limit===0}><Plus className="w-3 h-3" /></button>
+            </div>
+            <div className="space-y-2 flex-1">
+              {items.map(item => (
+                <div key={item.id} className="group p-1.5 rounded flex flex-col gap-1 relative print:bg-transparent print:border-black" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.15)"}}>
+                  <div className="flex justify-between gap-2">
+                    <input placeholder="Item" className="w-full bg-transparent text-xs font-bold outline-none print:text-black text-white" value={item.nome} onChange={(e) => onUpdate(item.id,'nome',e.target.value)} />
+                    <input placeholder="Qtd" className="w-8 bg-slate-800 text-center text-[10px] rounded outline-none print:bg-transparent print:text-black text-white" value={item.qtd} onChange={(e) => onUpdate(item.id,'qtd',e.target.value)} />
+                  </div>
+                  <input placeholder="Efeito" className="w-full bg-transparent text-[10px] text-slate-400 outline-none print:text-black" value={item.desc} onChange={(e) => onUpdate(item.id,'desc',e.target.value)} />
+                  <button onClick={() => onRemove(item.id)} className="absolute top-1 right-1 p-1 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity no-print"><Trash2 className="w-3 h-3" /></button>
+                </div>
+              ))}
+              {limit > 0 && Array.from({length:Math.max(0,limit-items.length)}).map((_,i) => (
+                <div key={`empty-${i}`} className="border-2 border-dashed border-slate-800 rounded p-1.5 text-center print:border-black">
+                  <span className="text-[10px] text-slate-700 uppercase font-bold print:text-slate-400">Vazio</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
+
+      const DiceModal = ({ onClose, attributes, onRollBroadcast }) => {
+        const [selectedAttribute, setSelectedAttribute] = useState('poder');
+        const [hasSkill, setHasSkill] = useState(false);
+        const [gainCount, setGainCount] = useState(0);
+        const [lossCount, setLossCount] = useState(0);
+        const [critRange, setCritRange] = useState(6);
+        const [modifier, setModifier] = useState(0);
+        const [history, setHistory] = useState([]);
+        const [currentRoll, setCurrentRoll] = useState(null);
+        const [isRolling, setIsRolling] = useState(false);
+
+        const diceCount = useMemo(() => {
+          let count = 1;
+          if (hasSkill) count++;
+          count += gainCount;
+          count -= lossCount;
+          return Math.max(1, Math.min(3, count));
+        }, [hasSkill, gainCount, lossCount]);
+
+        const roll = () => {
+          if (isRolling) return;
+          setIsRolling(true);
+          setTimeout(() => {
+            const results = Array.from({length: diceCount}, () => Math.floor(Math.random()*6)+1);
+            const attrValue = attributes[selectedAttribute] || 0;
+            const diceSum = results.reduce((a,b) => a+b, 0);
+            const criticalHits = results.filter(r => r >= critRange).length;
+            const criticalBonus = criticalHits * attrValue;
+            const isCriticalFailure = results.every(r => r === 1);
+            const total = diceSum + attrValue + criticalBonus + modifier;
+            const newRoll = { id: Date.now(), attribute: selectedAttribute, diceCount, results, total, attrValue, criticalBonus, isCriticalFailure, criticalHits, modifier };
+            setCurrentRoll(newRoll);
+            setHistory(prev => [newRoll, ...prev].slice(0, 10));
+            setIsRolling(false);
+            if (onRollBroadcast) onRollBroadcast(newRoll);
+          }, 600);
+        };
+
+        return (
+          <div id="dice-modal" className="fixed inset-0 backdrop-blur-md z-50 flex items-center justify-center p-4" style={{background:"rgba(0,5,15,0.92)"}}>
+            <div className="w-full max-w-lg rounded-lg overflow-hidden flex flex-col max-h-[90vh] cyber-corner" style={{background:"var(--cyber-panel)",border:"1px solid var(--cyber-border)",boxShadow:"0 0 40px var(--cyber-glow)"}}>
+              <div className="p-4 flex justify-between items-center" style={{background:"rgba(0,0,0,0.8)",borderBottom:"1px solid rgba(0,229,255,0.3)"}}>
+                <h2 className="text-lg font-bold flex items-center gap-2 text-white"><Dice className="w-6 h-6 text-indigo-400" /> Teste 3DeT</h2>
+                <button onClick={onClose} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"><X className="w-6 h-6" /></button>
+              </div>
+              <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">1. Escolha o Atributo</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button onClick={() => setSelectedAttribute('poder')} className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all ${selectedAttribute==='poder'?'':' '}`} style={{background: selectedAttribute==='poder'?'rgba(255,23,68,0.2)':"rgba(0,0,0,0.5)", border: selectedAttribute==='poder'?'1px solid #ff1744':'1px solid rgba(0,229,255,0.2)', color: selectedAttribute==='poder'?'#ff1744':'rgba(0,229,255,0.6)'}}>
+                      <Sword className="w-5 h-5" /><span className="text-xs font-bold uppercase">Poder ({attributes.poder})</span>
+                    </button>
+                    <button onClick={() => setSelectedAttribute('habilidade')} className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all`} style={{background: selectedAttribute==='habilidade'?'rgba(0,229,255,0.2)':"rgba(0,0,0,0.5)", border: selectedAttribute==='habilidade'?'1px solid #00e5ff':'1px solid rgba(0,229,255,0.2)', color: selectedAttribute==='habilidade'?'#00e5ff':'rgba(0,229,255,0.6)'}}>
+                      <Zap className="w-5 h-5" /><span className="text-xs font-bold uppercase">Habilidade ({attributes.habilidade})</span>
+                    </button>
+                    <button onClick={() => setSelectedAttribute('resistencia')} className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all`} style={{background: selectedAttribute==='resistencia'?'rgba(0,230,118,0.2)':"rgba(0,0,0,0.5)", border: selectedAttribute==='resistencia'?'1px solid #00e676':'1px solid rgba(0,229,255,0.2)', color: selectedAttribute==='resistencia'?'#00e676':'rgba(0,229,255,0.6)'}}>
+                      <Shield className="w-5 h-5" /><span className="text-xs font-bold uppercase">Resistência ({attributes.resistencia})</span>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="block text-xs font-bold text-slate-500 uppercase">2. Modificadores</label>
+                    <span className="text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/30">Total: {diceCount}D</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setHasSkill(!hasSkill)} className={`p-2 rounded-lg border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${hasSkill?'bg-indigo-600 border-indigo-500 text-white':'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                      {hasSkill ? 'Com Perícia' : 'Sem Perícia'}
+                    </button>
+                    <div className="p-2 rounded-lg flex flex-col items-center justify-between" style={{background: modifier!==0?'rgba(0,229,255,0.1)':"rgba(0,0,0,0.5)", border: modifier!==0?'1px solid rgba(0,229,255,0.5)':"1px solid rgba(0,229,255,0.2)"}}>
+                      <span className={`text-[10px] font-bold uppercase mb-1 ${modifier!==0?'text-blue-400':'text-slate-500'}`}>Modificador</span>
+                      <div className="flex items-center gap-2 w-full justify-center">
+                        <button onClick={() => setModifier(modifier-1)} className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold">-</button>
+                        <span className={`font-mono font-bold text-lg w-6 text-center ${modifier!==0?'text-blue-400':'text-slate-500'}`}>{modifier>0?`+${modifier}`:modifier}</span>
+                        <button onClick={() => setModifier(modifier+1)} className="w-6 h-6 flex items-center justify-center rounded bg-blue-600 hover:bg-blue-500 text-white font-bold">+</button>
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg flex flex-col items-center justify-between" style={{background: gainCount>0?'rgba(0,230,118,0.1)':"rgba(0,0,0,0.5)", border: gainCount>0?'1px solid rgba(0,230,118,0.5)':"1px solid rgba(0,229,255,0.2)"}}>
+                      <span className={`text-[10px] font-bold uppercase mb-1 ${gainCount>0?'text-emerald-400':'text-slate-500'}`}>Ganhos (+1D)</span>
+                      <div className="flex items-center gap-2 w-full justify-center">
+                        <button onClick={() => setGainCount(Math.max(0,gainCount-1))} className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold">-</button>
+                        <span className={`font-mono font-bold text-lg w-4 text-center ${gainCount>0?'text-emerald-400':'text-slate-500'}`}>{gainCount}</span>
+                        <button onClick={() => setGainCount(gainCount+1)} className="w-6 h-6 flex items-center justify-center rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold">+</button>
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg flex flex-col items-center justify-between" style={{background: lossCount>0?'rgba(255,23,68,0.1)':"rgba(0,0,0,0.5)", border: lossCount>0?'1px solid rgba(255,23,68,0.5)':"1px solid rgba(0,229,255,0.2)"}}>
+                      <span className={`text-[10px] font-bold uppercase mb-1 ${lossCount>0?'text-rose-400':'text-slate-500'}`}>Perdas (-1D)</span>
+                      <div className="flex items-center gap-2 w-full justify-center">
+                        <button onClick={() => setLossCount(Math.max(0,lossCount-1))} className="w-6 h-6 flex items-center justify-center rounded bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold">-</button>
+                        <span className={`font-mono font-bold text-lg w-4 text-center ${lossCount>0?'text-rose-400':'text-slate-500'}`}>{lossCount}</span>
+                        <button onClick={() => setLossCount(lossCount+1)} className="w-6 h-6 flex items-center justify-center rounded bg-rose-600 hover:bg-rose-500 text-white font-bold">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <input type="checkbox" id="crit5" checked={critRange===5} onChange={() => setCritRange(critRange===6?5:6)} className="w-4 h-4 rounded" />
+                    <label htmlFor="crit5" className="text-xs text-slate-400 select-none cursor-pointer">Crítico também com 5 (Maestria/Vantagem)</label>
+                  </div>
+                </div>
+                <button onClick={roll} disabled={isRolling} className="cyber-btn w-full py-4 rounded font-black text-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50" style={{fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>
+                  {isRolling ? 'Rolando...' : `Rolar ${diceCount}D + ${attributes[selectedAttribute]}`}
+                </button>
+                <div className="min-h-[140px] rounded-lg p-4 flex flex-col items-center justify-center relative overflow-hidden" style={{background:"rgba(0,0,0,0.8)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                  {isRolling ? (
+                    <Dice className="w-16 h-16 text-indigo-500 rolling opacity-50" />
+                  ) : currentRoll ? (
+                    <div className="w-full text-center">
+                      {currentRoll.isCriticalFailure && <div className="absolute top-0 left-0 w-full bg-rose-600 text-white text-xs font-bold uppercase py-1">Falha Crítica!</div>}
+                      <div className="flex flex-wrap justify-center gap-3 mb-4 mt-2">
+                        {currentRoll.results.map((val,idx) => {
+                          const isCrit = val >= critRange;
+                          let style = "bg-slate-800 border-slate-600 text-slate-300";
+                          if (isCrit) style = "bg-yellow-500 text-slate-900 border-yellow-400 scale-110";
+                          if (currentRoll.isCriticalFailure) style = "bg-rose-900 text-rose-200 border-rose-700";
+                          return <div key={idx} className={`w-14 h-14 flex items-center justify-center rounded-xl border-2 text-3xl font-black ${style}`}>{val}</div>;
+                        })}
+                      </div>
+                      <div className="text-sm text-slate-400 font-mono mb-2">
+                        {currentRoll.isCriticalFailure ? <span className="text-rose-400 font-bold">Erro Automático</span> : (
+                          <>{currentRoll.results.reduce((a,b)=>a+b,0)} (Dados) + {currentRoll.attrValue} (Atributo)
+                            {currentRoll.criticalBonus>0 && <span className="text-yellow-400"> + {currentRoll.criticalBonus} (Crítico)</span>}
+                            {currentRoll.modifier!==0 && <span className={currentRoll.modifier>0?"text-blue-400":"text-rose-400"}>{currentRoll.modifier>0?` + ${currentRoll.modifier}`:` - ${Math.abs(currentRoll.modifier)}`} (Mod)</span>}
+                          </>
+                        )}
+                      </div>
+                      {!currentRoll.isCriticalFailure && (
+                        <div className="inline-block bg-indigo-600 px-6 py-2 rounded-full shadow-lg">
+                          <span className="text-indigo-200 text-xs font-bold uppercase mr-2">Resultado Final</span>
+                          <span className="text-2xl font-black text-white">{currentRoll.total}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (<p className="text-slate-600 italic text-sm">Configure e role os dados...</p>)}
+                </div>
+                {history.length > 0 && (
+                  <div className="border-t border-slate-700 pt-4">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Últimas Rolagens</h4>
+                    <div className="space-y-2 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
+                      {history.map(h => (
+                        <div key={h.id} className="flex justify-between items-center text-xs p-2 rounded" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.15)"}}>
+                          <span className="text-slate-400 uppercase font-bold">{h.attribute.substr(0,3)} ({h.diceCount}D)</span>
+                          <div className="flex gap-2">
+                            <span className="font-mono text-slate-500">[{h.results.join(', ')}]</span>
+                            {h.isCriticalFailure ? <span className="font-bold text-rose-500">Falha</span> : <span className="font-bold text-indigo-400">= {h.total}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const App = () => {
+        const fileInputRef = useRef(null);
+        const importInputRef = useRef(null);
+        const [showSidebar, setShowSidebar] = useState(false);
+        const [showDiceModal, setShowDiceModal] = useState(false);
+        const [showLobbySidebar, setShowLobbySidebar] = useState(false);
+        const [savedSheets, setSavedSheets] = useState([]);
+        const [kitInput, setKitInput] = useState('');
+        const [character, setCharacter] = useState({ ...emptyCharacter, id: Date.now() });
+
+        // Lobby state
+        const [lobbyMode, setLobbyMode] = useState(null);
+        const [lobbyId, setLobbyId] = useState('');
+        const [joinInputId, setJoinInputId] = useState('');
+        const [connectionStatus, setConnectionStatus] = useState('disconnected');
+        const [sharedRolls, setSharedRolls] = useState([]);
+        const [initiatives, setInitiatives] = useState([]);
+        const peerRef = useRef(null);
+        const connectionsRef = useRef([]);
+        const clientConnectionRef = useRef(null);
+
+        const addSharedRoll = (payload) => setSharedRolls(prev => [payload, ...prev].slice(0, 50));
+
+        const broadcastInitiative = (newList) => {
+          setInitiatives(newList);
+          const msg = { type: 'SYNC_INITIATIVE', payload: newList };
+          if (lobbyMode === 'host') connectionsRef.current.forEach(c => c.send(msg));
+          else if (lobbyMode === 'client' && clientConnectionRef.current) clientConnectionRef.current.send(msg);
+        };
+
+        const startHosting = () => {
+          setConnectionStatus('connecting');
+          const peer = new Peer();
+          peer.on('open', (id) => { setLobbyId(id); setLobbyMode('host'); setConnectionStatus('connected'); });
+          peer.on('connection', (conn) => {
+            connectionsRef.current.push(conn);
+            conn.on('data', (data) => {
+              if (data.type === 'ROLL') { addSharedRoll(data.payload); connectionsRef.current.forEach(c => { if (c.peer !== conn.peer) c.send(data); }); }
+              if (data.type === 'SYNC_INITIATIVE') { setInitiatives(data.payload); connectionsRef.current.forEach(c => { if (c.peer !== conn.peer) c.send(data); }); }
+            });
+            conn.on('close', () => { connectionsRef.current = connectionsRef.current.filter(c => c.peer !== conn.peer); });
+          });
+          peer.on('error', (err) => { alert("Erro P2P: " + err.type); setConnectionStatus('disconnected'); });
+          peerRef.current = peer;
+        };
+
+        const joinLobby = () => {
+          if (!joinInputId.trim()) return;
+          setConnectionStatus('connecting');
+          const peer = new Peer();
+          peer.on('open', () => {
+            const conn = peer.connect(joinInputId.trim());
+            conn.on('open', () => { setLobbyMode('client'); setLobbyId(joinInputId.trim()); setConnectionStatus('connected'); clientConnectionRef.current = conn; });
+            conn.on('data', (data) => {
+              if (data.type === 'ROLL') addSharedRoll(data.payload);
+              if (data.type === 'SYNC_INITIATIVE') setInitiatives(data.payload);
+            });
+            conn.on('close', () => { alert("Conexão com o Host perdida."); leaveLobby(); });
+          });
+          peer.on('error', (err) => { alert("Erro ao conectar: " + err.type); setConnectionStatus('disconnected'); });
+          peerRef.current = peer;
+        };
+
+        const leaveLobby = () => {
+          if (peerRef.current) peerRef.current.destroy();
+          peerRef.current = null; connectionsRef.current = []; clientConnectionRef.current = null;
+          setLobbyMode(null); setLobbyId(''); setConnectionStatus('disconnected'); setSharedRolls([]);
+        };
+
+        const handleBroadcastRoll = (rollData) => {
+          const payload = { id: Date.now()+Math.random(), playerName: character.nome||'Jogador', rollData, time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) };
+          if (connectionStatus === 'connected') addSharedRoll(payload);
+          const msg = { type: 'ROLL', payload };
+          if (lobbyMode === 'host') connectionsRef.current.forEach(c => c.send(msg));
+          else if (lobbyMode === 'client' && clientConnectionRef.current) clientConnectionRef.current.send(msg);
+        };
+
+        const copyLobbyId = () => { navigator.clipboard.writeText(lobbyId); alert("ID da Sala copiado!"); };
+
+        const FIREBASE_URL = "https://ficha-editavel-3det-default-rtdb.firebaseio.com";
+        const syncToCloud = async () => {
+          try {
+            let syncId = character.syncId;
+            if (!syncId) { syncId = Math.random().toString(36).substring(2,7).toUpperCase(); setCharacter(prev => ({...prev, syncId})); }
+            const dataToSave = { ...character, syncId };
+            await fetch(`${FIREBASE_URL}/fichas/${syncId}.json`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(dataToSave) });
+            navigator.clipboard.writeText(syncId);
+            alert(`☁️ Ficha salva na nuvem!\n\nCódigo: ${syncId}\n\nJá copiado! Envie para o Mestre.`);
+          } catch(e) { alert("❌ Erro ao salvar na nuvem."); }
+        };
+
+        const importFromCloud = async () => {
+          const code = prompt("Digite o código de 5 letras da ficha (ex: 8F2A1):");
+          if (!code) return;
+          try {
+            const res = await fetch(`${FIREBASE_URL}/fichas/${code.trim().toUpperCase()}.json`);
+            const parsed = await res.json();
+            if (parsed && parsed.id) {
+              const safe = { ...emptyCharacter, ...parsed, pericias:parsed.pericias||[], vantagens:parsed.vantagens||[], desvantagens:parsed.desvantagens||[], kits:parsed.kits||[], tecnicas:parsed.tecnicas||[], atributos:{...emptyCharacter.atributos,...(parsed.atributos||{})}, recursos:{...emptyCharacter.recursos,...(parsed.recursos||{})}, inventario:{...emptyCharacter.inventario,...(parsed.inventario||{})}, trocas:{...emptyCharacter.trocas,...(parsed.trocas||{})} };
+              setSavedSheets(prev => { const f = prev.filter(s=>s.id!==safe.id); return [...f, safe]; });
+              alert(`☁️ Ficha de "${safe.nome||'Jogador'}" importada!\n\nJá está na sua Biblioteca.`);
+            } else { alert("❌ Nenhuma ficha encontrada com esse código."); }
+          } catch(e) { alert("❌ Erro ao buscar da nuvem."); }
+        };
+
+        useLayoutEffect(() => {
+          const textareas = document.querySelectorAll('.auto-expand');
+          textareas.forEach(t => { t.style.height='auto'; t.style.height=t.scrollHeight+'px'; });
+        });
+
+        useEffect(() => {
+          const saved = localStorage.getItem('3det_sheets');
+          if (saved) { try { setSavedSheets(JSON.parse(saved)); } catch(e) {} }
+        }, []);
+
+        const calculatedTotalPoints = useMemo(() => {
+          const attrPoints = (character.atributos.poder||0)+(character.atributos.habilidade||0)+(character.atributos.resistencia||0);
+          const advPoints = character.vantagens.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
+          const disadvPoints = character.desvantagens.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
+          const skillPoints = character.pericias.reduce((acc,item) => acc+(parseInt(item.custo)||0),0);
+          const nKits = (character.kits||[]).length;
+          const kitsPoints = (nKits*(nKits+1))/2;
+          const archPoints = parseInt(character.arquetipoCusto)||0;
+          return attrPoints+advPoints+disadvPoints+skillPoints+archPoints+kitsPoints;
+        }, [character.atributos,character.vantagens,character.desvantagens,character.pericias,character.kits,character.arquetipoCusto]);
+
+        const handleAddKit = () => {
+          if (!kitInput.trim()) return;
+          const kitName = kitInput.trim();
+          const newKit = { id: Date.now(), nome: kitName };
+          const newKits = [...(character.kits||[]), newKit];
+          let newVantagens = [...character.vantagens];
+          const kitData = DB_KITS[kitName];
+          if (kitData && kitData.poderes) {
+            kitData.poderes.forEach((p,idx) => {
+              newVantagens.push({ id: Date.now()+idx+Math.random(), nome: p.nome, detalhe:`(Kit: ${kitName})`, descricao:"", custo:"0" });
+            });
+          }
+          setCharacter({ ...character, kits: newKits, vantagens: newVantagens });
+          setKitInput('');
+        };
+
+        const handleArquetipoChange = (e) => {
+          const novoNome = e.target.value;
+          const novoCusto = DB_ARQUETIPOS[novoNome] ? DB_ARQUETIPOS[novoNome].custo : character.arquetipoCusto;
+          setCharacter({ ...character, arquetipo: novoNome, arquetipoCusto: novoCusto });
+        };
+
+        const updateAttr = (attr, val) => setCharacter(prev => ({ ...prev, atributos: { ...prev.atributos, [attr]: Math.max(0, parseInt(val)||0) } }));
+
+        const addListItem = (list) => setCharacter(prev => ({
+          ...prev, [list]: [...(prev[list]||[]), { id: Date.now(), nome:'', detalhe:'', descricao:'', custo: list==='pericias'?'1':'' }]
+        }));
+
+        const updateListItem = (list, id, field, value) => {
+          setCharacter(prev => {
+            const newList = prev[list].map(item => {
+              if (item.id === id) {
+                const updated = { ...item, [field]: value };
+
+                if (field === 'nome') {
+                  // Ao mudar o nome, busca descrição geral
+                  const info = list==='vantagens' ? DB_VANTAGENS[value] : list==='desvantagens' ? DB_DESVANTAGENS[value] : null;
+                  if (info) {
+                    if (!updated.custo) { updated.custo = (info.custo.match(/-?\d+/)||[""])[0]; }
+                    updated.descricao = info.desc;
+                  }
+                  if (list==='pericias' && DB_PERICIAS[value]) {
+                    updated.descricao = DB_PERICIAS[value];
+                  }
+                  // Limpa o detalhe ao trocar de nome
+                  updated.detalhe = '';
+                }
+
+                if (field === 'detalhe' && value) {
+                  // Ao escolher uma opção/detalhe, busca a sub-descrição específica
+                  const subDesc = DB_SUBOPCOES[item.nome]?.[value];
+                  if (subDesc) {
+                    updated.descricao = subDesc;
+                  }
+                }
+
+                return updated;
+              }
+              return item;
+            });
+            return { ...prev, [list]: newList };
+          });
+        };
+
+        const removeListItem = (list, id) => setCharacter(prev => ({ ...prev, [list]: prev[list].filter(item => item.id !== id) }));
+        const addInventoryItem = (cat) => setCharacter(prev => ({ ...prev, inventario: { ...prev.inventario, [cat]: [...prev.inventario[cat], { id: Date.now(), nome:'', qtd:1, desc:'' }] } }));
+        const updateInventoryItem = (cat, id, field, value) => setCharacter(prev => ({ ...prev, inventario: { ...prev.inventario, [cat]: prev.inventario[cat].map(item => item.id===id ? { ...item, [field]:value } : item) } }));
+        const removeInventoryItem = (cat, id) => setCharacter(prev => ({ ...prev, inventario: { ...prev.inventario, [cat]: prev.inventario[cat].filter(item => item.id!==id) } }));
+
+        const saveToLibrary = () => {
+          const newSheet = { ...character, id: character.id||Date.now(), lastModified: new Date().toISOString() };
+          try {
+            const existingIndex = savedSheets.findIndex(s => s.id === newSheet.id);
+            let newSaved = [...savedSheets];
+            if (existingIndex >= 0) newSaved[existingIndex] = newSheet; else newSaved.push(newSheet);
+            localStorage.setItem('3det_sheets', JSON.stringify(newSaved));
+            setSavedSheets(newSaved);
+            setCharacter(newSheet);
+            alert('Ficha salva na biblioteca!');
+          } catch(e) { alert('Erro ao salvar. Tente remover a foto.'); }
+        };
+
+        const loadFromLibrary = (sheet) => { setCharacter({ ...emptyCharacter, ...sheet, kits: sheet.kits||[], escala: sheet.escala||'Ningen', marco: sheet.marco||'Iniciante' }); setShowSidebar(false); };
+        const deleteFromLibrary = (e, id) => { e.stopPropagation(); if(window.confirm('Remover ficha?')) { const n=savedSheets.filter(s=>s.id!==id); localStorage.setItem('3det_sheets',JSON.stringify(n)); setSavedSheets(n); } };
+        const createNewSheet = () => { if(window.confirm('Criar nova ficha?')) { setCharacter({ ...emptyCharacter, id: Date.now() }); setShowSidebar(false); } };
+        const exportFile = () => { const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(character)); const a=document.createElement('a'); a.setAttribute('href',d); a.setAttribute('download',`${character.nome||'personagem'}_3det.json`); document.body.appendChild(a); a.click(); a.remove(); };
+        const importFile = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              try {
+                const loaded = JSON.parse(ev.target.result);
+                if (!loaded.inventario) loaded.inventario = emptyCharacter.inventario;
+                if (!loaded.kits) loaded.kits = [];
+                if (!loaded.id) loaded.id = Date.now();
+                setCharacter({ ...emptyCharacter, ...loaded });
+                alert('Ficha carregada!');
+              } catch(err) { alert('Erro ao ler arquivo.'); }
+              e.target.value = null;
+            };
+            reader.readAsText(file);
+          }
+        };
+        const handleImageUpload = (e) => { const file=e.target.files[0]; if(file) { const r=new FileReader(); r.onloadend=()=>setCharacter(p=>({...p,foto:r.result})); r.readAsDataURL(file); } };
+
+        const hasPatrono = character.vantagens.some(v => v.nome.toLowerCase().includes('patrono'));
+        const getInventoryLimits = (level, trades) => {
+          let limits = { comuns:2, incomuns:0, raros:0, lendarios:0 };
+          if (level>=1) { limits.comuns=3; limits.incomuns=1; }
+          if (level>=2) { limits.comuns=5; limits.incomuns=2; }
+          if (level>=3) { limits.incomuns=4; limits.raros=1; limits.lendarios=1; }
+          if (hasPatrono) { if(limits.comuns>0)limits.comuns+=1; if(limits.incomuns>0)limits.incomuns+=1; if(limits.raros>0)limits.raros+=1; if(limits.lendarios>0)limits.lendarios+=1; }
+          limits.comuns -= trades.comumParaIncomum*3; limits.incomuns += trades.comumParaIncomum;
+          limits.incomuns -= trades.incomumParaRaro*3; limits.raros += trades.incomumParaRaro;
+          limits.raros -= trades.raroParaLendario*3; limits.lendarios += trades.raroParaLendario;
+          return limits;
+        };
+        const limits = getInventoryLimits(character.nivelInventario, character.trocas||{comumParaIncomum:0,incomumParaRaro:0,raroParaLendario:0});
+        const performTrade = (type, dir) => setCharacter(prev => { const t=prev.trocas||{comumParaIncomum:0,incomumParaRaro:0,raroParaLendario:0}; const nv=t[type]+dir; if(nv<0)return prev; return {...prev,trocas:{...t,[type]:nv}}; });
+
+        const maxPA = character.atributos.poder||1;
+        const maxPM = character.atributos.habilidade === 0 ? 1 : character.atributos.habilidade * 5;
+        const maxPV = character.atributos.resistencia === 0 ? 1 : character.atributos.resistencia * 5;
+
+        return (
+          <div className="min-h-screen w-full print:bg-white print:text-black" style={{background:"var(--cyber-bg)",color:"var(--cyber-text)",position:"relative",zIndex:1}}>
+            {/* TOP BAR CYBERPUNK */}
+            <div className="cyber-header sticky top-0 left-0 w-full p-3 flex justify-between items-center z-40 no-print" style={{position:'relative',zIndex:40}}>
+              <div style={{position:'absolute',inset:0,background:'linear-gradient(90deg, transparent, rgba(0,229,255,0.03), transparent)',pointerEvents:'none'}}></div>
+              <button onClick={() => setShowSidebar(true)} className="cyber-btn p-2 rounded flex items-center gap-2 text-xs">
+                <Menu className="w-5 h-5" /><span className="hidden md:inline">FICHAS</span>
+              </button>
+              <div className="text-center">
+                <div className="flicker" style={{fontFamily:"'Orbitron',sans-serif",fontSize:'clamp(12px,3vw,20px)',fontWeight:900,color:'#00e5ff',textShadow:'0 0 10px rgba(0,229,255,0.8), 0 0 20px rgba(0,229,255,0.4)',letterSpacing:'4px',textTransform:'uppercase'}}>
+                  PLUS DISTOPHYA
+                </div>
+                <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:'9px',color:'rgba(0,229,255,0.5)',letterSpacing:'3px',textTransform:'uppercase'}}>
+                  ◆ FICHA 3DeT VICTORY ◆
+                </div>
+              </div>
+              <div className="flex gap-1 md:gap-2">
+                <button onClick={syncToCloud} className="p-2 rounded flex items-center gap-1 text-xs font-bold no-print" style={{background:"rgba(168,85,247,0.15)",border:"1px solid rgba(168,85,247,0.4)",color:"#a855f7"}} title="Sincronizar na Nuvem">
+                  <CloudUpload className="w-4 h-4" /><span className="hidden md:inline" style={{fontFamily:"Orbitron,sans-serif",fontSize:"10px"}}>SINCRONIZAR</span>
+                </button>
+                <button onClick={importFromCloud} className="p-2 rounded flex items-center gap-1 text-xs font-bold no-print" style={{background:"rgba(236,72,153,0.15)",border:"1px solid rgba(236,72,153,0.4)",color:"#ec4899"}} title="Baixar Ficha da Nuvem">
+                  <CloudDownload className="w-4 h-4" /><span className="hidden md:inline" style={{fontFamily:"Orbitron,sans-serif",fontSize:"10px"}}>BAIXAR FICHA</span>
+                </button>
+                <button onClick={() => setShowLobbySidebar(!showLobbySidebar)} className="p-2 rounded flex items-center gap-1 text-xs font-bold no-print" style={{background: connectionStatus==='connected' ? "rgba(0,230,118,0.15)" : "rgba(245,158,11,0.15)", border: connectionStatus==='connected' ? "1px solid rgba(0,230,118,0.4)" : "1px solid rgba(245,158,11,0.4)", color: connectionStatus==='connected' ? "#00e676" : "#f59e0b"}} title="Ver Sala">
+                  <Users className="w-4 h-4" /><span className="hidden md:inline" style={{fontFamily:"Orbitron,sans-serif",fontSize:"10px"}}>{connectionStatus==='connected'?'NA SALA':'VER SALA'}</span>
+                </button>
+                <button onClick={saveToLibrary} className="cyber-btn p-2 rounded flex items-center gap-1 text-xs">
+                  <Save className="w-4 h-4" /><span className="hidden md:inline">SALVAR</span>
+                </button>
+              </div>
+            </div>
+
+            {/* DICE BUTTON */}
+            <button onClick={() => setShowDiceModal(true)} className="cyber-dice fixed bottom-8 right-8 z-[100] p-4 rounded-full flex items-center justify-center cursor-pointer no-print" title="Rolar Dados" style={{color:'#00e5ff'}}>
+              <Dice className="w-8 h-8" />
+            </button>
+
+            {showDiceModal && <DiceModal onClose={() => setShowDiceModal(false)} attributes={character.atributos} onRollBroadcast={handleBroadcastRoll} />}
+
+            {/* SIDEBAR */}
+            {showSidebar && (
+              <>
+                <div className="fixed inset-0 z-40 backdrop-blur-sm no-print" style={{background:"rgba(0,5,15,0.85)"}} onClick={() => setShowSidebar(false)}></div>
+                <div className="fixed inset-y-0 left-0 w-80 shadow-2xl z-50 no-print flex flex-col" style={{background:"var(--cyber-panel)",borderRight:"1px solid var(--cyber-border)",boxShadow:"0 0 40px var(--cyber-glow)"}}>
+                  <div className="p-4 flex justify-between items-center" style={{borderBottom:"1px solid rgba(0,229,255,0.3)",background:"rgba(0,0,0,0.8)"}}>
+                    <h2 className="font-bold text-lg flex items-center gap-2" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif"}}><BookOpen className="w-5 h-5 text-indigo-400" /> Biblioteca</h2>
+                    <button onClick={() => setShowSidebar(false)} className="text-slate-400 hover:text-white"><X className="w-6 h-6" /></button>
+                  </div>
+                  <div className="p-4 border-b border-slate-800 grid grid-cols-2 gap-2">
+                    <button onClick={createNewSheet} className="cyber-btn flex flex-col items-center justify-center p-2 rounded text-[10px] font-bold gap-1"><PlusCircle className="w-5 h-5 text-green-400" /> Nova Ficha</button>
+                    <button onClick={() => importInputRef.current.click()} className="cyber-btn flex flex-col items-center justify-center p-2 rounded text-[10px] font-bold gap-1"><Upload className="w-5 h-5 text-blue-400" /> Importar</button>
+                    <input type="file" ref={importInputRef} onChange={importFile} accept=".json" className="hidden" />
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                    {savedSheets.length === 0 ? (
+                      <div className="text-center py-8 text-slate-600 text-sm">Nenhuma ficha salva.</div>
+                    ) : (
+                      savedSheets.map(sheet => (
+                        <div key={sheet.id} onClick={() => loadFromLibrary(sheet)} className="group p-3 rounded-lg cursor-pointer transition-all relative" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 border border-slate-700">
+                              {sheet.foto ? <img src={sheet.foto} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-600"><FileText className="w-5 h-5" /></div>}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-slate-200 truncate">{sheet.nome||'Sem Nome'}</h4>
+                              <p className="text-xs text-slate-500 truncate">{sheet.arquetipo||'Sem Arquétipo'} • {sheet.pontos}pts</p>
+                            </div>
+                          </div>
+                          <button onClick={(e) => deleteFromLibrary(e,sheet.id)} className="absolute top-2 right-2 p-1.5 text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-md opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="p-3 text-[10px] text-center" style={{background:"rgba(0,0,0,0.8)",borderTop:"1px solid rgba(0,229,255,0.2)",color:"rgba(0,229,255,0.3)",fontFamily:"Share Tech Mono,monospace"}}>Armazenado no navegador</div>
+                </div>
+              </>
+            )}
+
+            {/* MAIN CONTENT */}
+            <div className="pt-6 pb-10 px-4 md:px-8 print:pt-0 print:pb-0">
+              <div className="max-w-6xl mx-auto space-y-6 print:space-y-4">
+
+                {/* HEADER */}
+                <div className="cyber-panel cyber-corner p-6 rounded-lg print:border-black print:shadow-none print:bg-transparent">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-shrink-0 flex flex-col items-center gap-2 mx-auto md:mx-0">
+                      <div className="w-40 h-40 rounded-lg flex items-center justify-center overflow-hidden relative group cursor-pointer print:border-black" style={{background:"rgba(0,0,0,0.7)",border:"2px dashed rgba(0,229,255,0.3)",boxShadow:"0 0 15px rgba(0,229,255,0.1)"}} onClick={() => fileInputRef.current?.click()}>
+                        {character.foto ? <img src={character.foto} alt="Personagem" className="w-full h-full object-cover" /> : (
+                          <div className="text-center p-4 transition-colors" style={{color:"rgba(0,229,255,0.3)"}}><ImageIcon className="w-8 h-8 mx-auto mb-2" /><span className="text-xs font-bold uppercase">Adicionar Foto</span></div>
+                        )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center no-print"><Upload className="text-white w-6 h-6" /></div>
+                      </div>
+                      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                      {character.foto && <button onClick={(e) => { e.stopPropagation(); setCharacter(p=>({...p,foto:null})); }} className="text-xs text-rose-400 hover:text-rose-300 no-print flex items-center gap-1"><Trash2 className="w-3 h-3" /> Remover</button>}
+                    </div>
+
+                    <div className="flex-1 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-1 lg:col-span-2">
+                          <label className="text-xs font-bold uppercase tracking-wider print:text-black" style={{color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>Nome</label>
+                          <input className="w-full rounded-lg p-3 text-2xl font-bold outline-none print:bg-transparent print:border-b print:border-black print:rounded-none print:p-1" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.2)",color:"#e8f4f8",fontFamily:"Orbitron,sans-serif"}} placeholder="Nome do Personagem" value={character.nome} onChange={(e) => setCharacter({ ...character, nome: e.target.value })} />
+                        </div>
+                        <div className="space-y-1 lg:col-span-2">
+                          <label className="text-xs font-bold uppercase tracking-wider print:text-black" style={{color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>Arquétipo</label>
+                          <div className="flex gap-2">
+                            <input list="lista-arquetipos" className="flex-1 rounded-lg p-3 text-xl font-bold outline-none print:bg-transparent print:border-b print:border-black print:rounded-none print:p-1" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.2)",color:"#e8f4f8",fontFamily:"Orbitron,sans-serif"}} placeholder="Selecione ou digite..." value={character.arquetipo} onChange={handleArquetipoChange} />
+                            <div className="flex flex-col items-center justify-center bg-slate-900 rounded-lg p-1 w-16 border border-slate-700">
+                              <span className="text-[10px] text-slate-500 uppercase print:hidden">Pts</span>
+                              <input type="number" className="w-full bg-transparent text-center font-bold text-lg outline-none text-white" value={character.arquetipoCusto} onChange={(e) => setCharacter({ ...character, arquetipoCusto: parseInt(e.target.value)||0 })} />
+                            </div>
+                          </div>
+                          <datalist id="lista-arquetipos">{LISTA_ARQUETIPOS.map(arq => <option key={arq} value={arq}>{arq} ({DB_ARQUETIPOS[arq].custo}pt)</option>)}</datalist>
+                        </div>
+                        <div className="space-y-1 lg:col-span-2">
+                          <label className="text-xs font-bold uppercase tracking-wider print:text-black" style={{color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>Marco</label>
+                          <select className="w-full rounded-lg p-3 text-xl font-bold outline-none print:bg-transparent print:border-b print:border-black cursor-pointer appearance-none" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.2)",color:"#00e5ff",fontFamily:"Orbitron,sans-serif"}} value={character.marco} onChange={(e) => setCharacter({ ...character, marco: e.target.value })}>
+                            <option className="bg-slate-900" value="Iniciante">Iniciante</option>
+                            <option className="bg-slate-900" value="Herói">Herói</option>
+                            <option className="bg-slate-900" value="Veterano">Veterano</option>
+                            <option className="bg-slate-900" value="Lenda">Lenda</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1 lg:col-span-2">
+                          <label className="text-xs font-bold uppercase tracking-wider print:text-black" style={{color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>Escala</label>
+                          <select className="w-full rounded-lg p-3 text-xl font-bold outline-none print:bg-transparent print:border-b print:border-black cursor-pointer appearance-none" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.2)",color:"#00e5ff",fontFamily:"Orbitron,sans-serif"}} value={character.escala} onChange={(e) => setCharacter({ ...character, escala: e.target.value })}>
+                            <option className="bg-slate-900" value="Ningen">Ningen</option>
+                            <option className="bg-slate-900" value="Sugoi">Sugoi</option>
+                            <option className="bg-slate-900" value="Kiodai">Kiodai</option>
+                            <option className="bg-slate-900" value="Kami">Kami</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* KITS */}
+                      <div className="p-4 rounded-lg mt-4" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                        <label className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}><Crown className="w-4 h-4" /> Kits ({character.kits?.length||0})</label>
+                        <div className="flex gap-2 items-center mb-3 no-print">
+                          <input list="lista-kits" value={kitInput} onChange={(e) => setKitInput(e.target.value)} className="flex-1 rounded-lg p-2 text-base outline-none font-bold" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.2)",color:"#e8f4f8"}} placeholder="Digite ou selecione um Kit..." />
+                          <button onClick={handleAddKit} className="cyber-btn p-2 rounded font-bold text-sm transition-colors flex items-center gap-1"><Plus className="w-4 h-4" /> Adicionar</button>
+                          <datalist id="lista-kits">{LISTA_KITS.map(k => <option key={k} value={k} />)}</datalist>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(character.kits||[]).map(kit => (
+                            <span key={kit.id} className="cyber-chip px-3 py-1.5 rounded text-sm font-bold flex items-center gap-2">
+                              {kit.nome}
+                              <button onClick={() => setCharacter({ ...character, kits: character.kits.filter(k => k.id !== kit.id) })} className="text-amber-500 hover:text-amber-200 no-print"><X className="w-4 h-4" /></button>
+                            </span>
+                          ))}
+                          {(!character.kits||character.kits.length===0) && <span className="text-xs text-slate-500 italic print:hidden">Nenhum kit selecionado.</span>}
+                        </div>
+                        <p className="text-[10px] mt-2 print:hidden italic" style={{color:"rgba(0,229,255,0.4)",fontFamily:"Share Tech Mono,monospace"}}>*O custo é calculado automaticamente (1º=1pt, 2º=2pt, etc).</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="p-3 rounded-lg text-center print:border-black print:bg-transparent flex flex-col justify-center" style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(0,229,255,0.3)"}}>
+                          <span className="block text-xs uppercase print:text-black mb-1" style={{color:"rgba(0,229,255,0.6)",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>Pontos Totais</span>
+                          <span className="text-3xl font-black print:text-black block" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",textShadow:"0 0 15px rgba(0,229,255,0.6)"}}>{calculatedTotalPoints}</span>
+                        </div>
+                        <div className="p-3 rounded-lg text-center print:border-black print:bg-transparent flex flex-col justify-center" style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(0,229,255,0.3)"}}>
+                          <span className="block text-xs uppercase print:text-black mb-1" style={{color:"rgba(0,229,255,0.6)",fontFamily:"Orbitron,sans-serif",letterSpacing:"2px"}}>XP (Experiência)</span>
+                          <input type="number" className="bg-transparent text-center text-3xl font-black w-full outline-none print:text-black" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif"}} value={character.experiencia} onChange={(e) => setCharacter({ ...character, experiencia: parseInt(e.target.value)||0 })} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ATTRIBUTES */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:gap-4">
+                  <div className="cyber-panel cyber-corner p-6 rounded-lg space-y-6 print:bg-transparent print:border-black print:p-4">
+                    <h3 className="flex items-center gap-2 text-lg font-bold pb-2 uppercase tracking-tighter print:border-black" style={{borderBottom:"1px solid rgba(0,229,255,0.2)",color:"#00e5ff",fontFamily:"Orbitron,sans-serif",textShadow:"0 0 10px rgba(0,229,255,0.5)"}}><Star className="w-5 h-5 text-yellow-400 print:text-black" /> Atributos</h3>
+                    <div className="space-y-4">
+                      <AttributeRow icon={<Sword className="text-red-500 print:text-black" />} label="Poder" color="red" value={character.atributos.poder} onChange={(v) => updateAttr('poder',v)} />
+                      <AttributeRow icon={<Zap className="text-blue-500 print:text-black" />} label="Habilidade" color="blue" value={character.atributos.habilidade} onChange={(v) => updateAttr('habilidade',v)} />
+                      <AttributeRow icon={<Shield className="text-green-500 print:text-black" />} label="Resistência" color="green" value={character.atributos.resistencia} onChange={(v) => updateAttr('resistencia',v)} />
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-2 cyber-panel cyber-corner p-6 rounded-lg space-y-6 print:bg-transparent print:border-black print:p-4">
+                    <h3 className="flex items-center gap-2 text-lg font-bold pb-2 uppercase tracking-tighter print:text-black print:border-black" style={{borderBottom:"1px solid rgba(0,229,255,0.2)",color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif"}}>Estado Atual</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4">
+                      <ResourceBar label="Vida (Rx5)" current={character.recursos.pv_atual} max={maxPV} color="red" icon={<Heart className="w-4 h-4" />} onChange={(val) => setCharacter({ ...character, recursos: { ...character.recursos, pv_atual: val } })} />
+                      <ResourceBar label="Mana (Hx5)" current={character.recursos.pm_atual} max={maxPM} color="blue" icon={<Zap className="w-4 h-4" />} onChange={(val) => setCharacter({ ...character, recursos: { ...character.recursos, pm_atual: val } })} />
+                    </div>
+                    <div className="mt-4 flex items-center justify-between p-4 rounded-lg print:bg-transparent print:border-black" style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(255,214,0,0.4)",boxShadow:"0 0 10px rgba(255,214,0,0.1)"}}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg" style={{background:"rgba(255,214,0,0.15)",border:"1px solid rgba(255,214,0,0.5)",color:"#ffd600"}}><Star className="w-6 h-6 fill-current" /></div>
+                        <span className="font-bold uppercase print:text-black" style={{color:"#ffd600",fontFamily:"Orbitron,sans-serif",textShadow:"0 0 10px rgba(255,214,0,0.5)"}}>Pontos de Ação</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setCharacter({ ...character, recursos: { ...character.recursos, pa_atual: Math.max(0,(character.recursos.pa_atual||0)-1) } })} className="w-8 h-8 flex items-center justify-center rounded no-print cyber-btn"><Minus className="w-4 h-4" /></button>
+                        <div className="flex items-center gap-2">
+                          <input type="number" className="w-16 text-center rounded text-3xl font-black outline-none print:bg-transparent print:text-black" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(255,214,0,0.4)",color:"#ffd600",fontFamily:"Orbitron,sans-serif"}} value={character.recursos.pa_atual} onChange={(e) => setCharacter({ ...character, recursos: { ...character.recursos, pa_atual: parseInt(e.target.value)||0 } })} />
+                          <span className="text-slate-500 font-bold text-xl print:text-black">/ {maxPA}</span>
+                        </div>
+                        <button onClick={() => setCharacter({ ...character, recursos: { ...character.recursos, pa_atual: (character.recursos.pa_atual||0)+1 } })} className="w-8 h-8 flex items-center justify-center rounded no-print cyber-btn"><Plus className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* LISTS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:gap-4 print:block print:space-y-4">
+                  <Section title="Perícias" icon={<BookOpen className="text-cyan-400 print:text-black" />} items={character.pericias} suggestionList={LISTA_PERICIAS} onAdd={() => addListItem('pericias')} onUpdate={(id,f,v) => updateListItem('pericias',id,f,v)} onRemove={(id) => removeListItem('pericias',id)} color="cyan" />
+                  <Section title="Vantagens" icon={<Plus className="text-emerald-400 print:text-black" />} items={character.vantagens} suggestionList={LISTA_VANTAGENS} onAdd={() => addListItem('vantagens')} onUpdate={(id,f,v) => updateListItem('vantagens',id,f,v)} onRemove={(id) => removeListItem('vantagens',id)} color="emerald" />
+                  <Section title="Desvantagens" icon={<Skull className="text-rose-400 print:text-black" />} items={character.desvantagens} suggestionList={LISTA_DESVANTAGENS} onAdd={() => addListItem('desvantagens')} onUpdate={(id,f,v) => updateListItem('desvantagens',id,f,v)} onRemove={(id) => removeListItem('desvantagens',id)} color="rose" />
+                </div>
+
+                {/* TECHNIQUES */}
+                <div className="cyber-panel cyber-corner p-6 rounded-lg print:bg-transparent print:border-black print:p-4 print:break-inside-avoid" style={{borderColor:"rgba(0,229,255,0.3)"}}>
+                  <div className="flex justify-between items-center pb-2 mb-4 print:border-black" style={{borderBottom:"1px solid rgba(0,229,255,0.2)"}}>
+                    <h3 className="flex items-center gap-2 text-lg font-bold uppercase tracking-tighter print:text-black" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",textShadow:"0 0 10px rgba(0,229,255,0.5)"}}><Wand2 className="w-5 h-5 text-indigo-400 print:text-black" /> Técnicas</h3>
+                    <button onClick={() => addListItem('tecnicas')} className="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors no-print flex items-center gap-1 text-xs"><Plus className="w-4 h-4" /> Adicionar</button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {character.tecnicas.map(tecnica => (
+                      <div key={tecnica.id} className="group p-2 rounded-lg relative print:bg-transparent print:border-black" style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                        <div className="flex-1 space-y-1">
+                          <input placeholder="Nome da Técnica" className="w-full bg-transparent border-b border-slate-800 focus:border-indigo-500 outline-none font-bold text-sm print:text-black text-white" value={tecnica.nome} onChange={(e) => updateListItem('tecnicas',tecnica.id,'nome',e.target.value)} />
+                          <input placeholder="Custo / Alcance / Duração" className="w-full bg-transparent text-[10px] text-slate-400 outline-none print:text-black uppercase font-bold tracking-wide" value={tecnica.custo} onChange={(e) => updateListItem('tecnicas',tecnica.id,'custo',e.target.value)} />
+                          <textarea placeholder="Descrição do efeito..." className="w-full bg-transparent text-[11px] text-slate-300 outline-none resize-none min-h-[2rem] leading-relaxed auto-expand print:text-black mt-1" rows={1} onInput={(e) => { e.target.style.height="auto"; e.target.style.height=e.target.scrollHeight+"px" }} value={tecnica.descricao||''} onChange={(e) => updateListItem('tecnicas',tecnica.id,'descricao',e.target.value)} />
+                        </div>
+                        <button onClick={() => removeListItem('tecnicas',tecnica.id)} className="absolute top-2 right-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity no-print"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    {character.tecnicas.length === 0 && <p className="col-span-full text-center text-slate-600 text-xs py-2 italic print:hidden">Nenhuma técnica aprendida.</p>}
+                  </div>
+                </div>
+
+                {/* INVENTORY */}
+                <div className="cyber-panel cyber-corner p-6 rounded-lg print:bg-transparent print:border-black print:p-4 print:break-inside-avoid" style={{borderColor:"rgba(0,229,255,0.25)"}}>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-slate-700 pb-4 print:border-black">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-500/10 rounded-lg"><Backpack className="w-6 h-6 text-orange-400 print:text-black" /></div>
+                      <div>
+                        <h3 className="text-xl font-bold uppercase tracking-tighter print:text-black" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",textShadow:"0 0 10px rgba(0,229,255,0.5)"}}>Inventário</h3>
+                        {hasPatrono && <span className="text-yellow-400 flex items-center gap-1 text-xs"><Crown className="w-3 h-3" /> Bônus de Patrono Ativo</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 print:border-black print:bg-transparent">
+                      <span className="text-xs font-bold uppercase print:text-black" style={{color:"rgba(0,229,255,0.6)",fontFamily:"Orbitron,sans-serif",letterSpacing:"1px"}}>Nível da Vantagem:</span>
+                      <select className="text-sm font-bold rounded px-2 py-1 outline-none print:bg-transparent print:text-black cursor-pointer" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.3)",color:"#00e5ff",fontFamily:"Rajdhani,sans-serif"}} value={character.nivelInventario} onChange={(e) => setCharacter({ ...character, nivelInventario: parseInt(e.target.value) })}>
+                        <option value={0}>0 Pontos (Padrão)</option>
+                        <option value={1}>1 Ponto (Pequeno)</option>
+                        <option value={2}>2 Pontos (Grande)</option>
+                        <option value={3}>3 Pontos (Supremo)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <InventoryColumn title="Comuns" items={character.inventario.comuns} limit={limits.comuns} onAdd={() => addInventoryItem('comuns')} onUpdate={(id,f,v) => updateInventoryItem('comuns',id,f,v)} onRemove={(id) => removeInventoryItem('comuns',id)} color="slate" />
+                    <InventoryColumn title="Incomuns" items={character.inventario.incomuns} limit={limits.incomuns} onAdd={() => addInventoryItem('incomuns')} onUpdate={(id,f,v) => updateInventoryItem('incomuns',id,f,v)} onRemove={(id) => removeInventoryItem('incomuns',id)} color="blue" />
+                    <InventoryColumn title="Raros" items={character.inventario.raros} limit={limits.raros} onAdd={() => addInventoryItem('raros')} onUpdate={(id,f,v) => updateInventoryItem('raros',id,f,v)} onRemove={(id) => removeInventoryItem('raros',id)} color="yellow" />
+                    <InventoryColumn title="Lendários" items={character.inventario.lendarios} limit={limits.lendarios} onAdd={() => addInventoryItem('lendarios')} onUpdate={(id,f,v) => updateInventoryItem('lendarios',id,f,v)} onRemove={(id) => removeInventoryItem('lendarios',id)} color="purple" />
+                  </div>
+                  <div className="mt-6 p-4 rounded-lg print:hidden" style={{background:"rgba(0,0,0,0.4)",border:"1px solid rgba(0,229,255,0.15)"}}>
+                    <div className="flex items-center gap-2 mb-3 text-sm font-bold uppercase tracking-wider" style={{color:"rgba(0,229,255,0.6)",fontFamily:"Orbitron,sans-serif"}}><ArrowRightLeft className="w-4 h-4" /> Troca de Itens</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <TradePanel from="3 Comuns" to="1 Incomum" type="comumParaIncomum" limitFrom={limits.comuns} limitTo={limits.incomuns} tradeCount={character.trocas?.comumParaIncomum} onTrade={performTrade} fromColor="text-slate-200" toColor="text-blue-400" />
+                      <TradePanel from="3 Incomuns" to="1 Raro" type="incomumParaRaro" limitFrom={limits.incomuns} limitTo={limits.raros} tradeCount={character.trocas?.incomumParaRaro} onTrade={performTrade} fromColor="text-blue-400" toColor="text-yellow-400" />
+                      <TradePanel from="3 Raros" to="1 Lendário" type="raroParaLendario" limitFrom={limits.raros} limitTo={limits.lendarios} tradeCount={character.trocas?.raroParaLendario} onTrade={performTrade} fromColor="text-yellow-400" toColor="text-purple-400" />
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 rounded-lg text-xs flex items-start gap-2 print:hidden" style={{background:"rgba(0,0,0,0.4)",border:"1px solid rgba(0,229,255,0.1)",color:"rgba(0,229,255,0.5)",fontFamily:"Share Tech Mono,monospace"}}>
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <p><strong>Regra "Na Hora":</strong> Slots vazios podem ser preenchidos durante a aventura.</p>
+                  </div>
+                </div>
+
+                {/* NOTES */}
+                <div className="grid grid-cols-1 gap-6 print:break-inside-avoid">
+                  <div className="cyber-panel cyber-corner p-6 rounded-lg print:bg-transparent print:border-black print:p-4">
+                    <h3 className="flex items-center gap-2 text-lg font-bold pb-2 uppercase mb-4 print:text-black print:border-black" style={{borderBottom:"1px solid rgba(0,229,255,0.2)",color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif"}}><Info className="w-5 h-5" /> Anotações Rápidas</h3>
+                    <textarea className="w-full rounded-lg p-4 min-h-[100px] outline-none resize-none print:bg-transparent print:border print:border-black print:text-black auto-expand" style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(0,229,255,0.2)",color:"var(--cyber-text)",fontFamily:"Rajdhani,sans-serif"}} placeholder="Notas gerais, lembretes..." value={character.anotacoes} onChange={(e) => setCharacter({ ...character, anotacoes: e.target.value })}></textarea>
+                  </div>
+                  <div className="cyber-panel cyber-corner p-6 rounded-lg print:bg-transparent print:border-black print:p-4">
+                    <h3 className="flex items-center gap-2 text-lg font-bold pb-2 uppercase mb-4 print:text-black print:border-black" style={{borderBottom:"1px solid rgba(0,229,255,0.2)",color:"rgba(0,229,255,0.7)",fontFamily:"Orbitron,sans-serif"}}><BookOpen className="w-5 h-5" /> História do Personagem</h3>
+                    <textarea className="w-full rounded-lg p-4 min-h-[200px] outline-none resize-y print:bg-transparent print:border print:border-black print:text-black auto-expand" style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(0,229,255,0.2)",color:"var(--cyber-text)",fontFamily:"Rajdhani,sans-serif"}} placeholder="Escreva aqui a biografia, origens e objetivos do seu herói..." value={character.historia} onChange={(e) => setCharacter({ ...character, historia: e.target.value })}></textarea>
+                  </div>
+                </div>
+
+                {/* FOOTER */}
+                <div className="flex flex-wrap justify-center gap-4 py-8 no-print mt-8" style={{borderTop:"1px solid rgba(0,229,255,0.2)"}}>
+                  <button onClick={exportFile} className="cyber-btn flex items-center gap-2 px-6 py-3 rounded font-bold transition-all"><FileJson className="w-5 h-5" /> Baixar Arquivo (.JSON)</button>
+                  <button onClick={saveToLibrary} className="cyber-btn flex items-center gap-2 px-6 py-3 rounded font-bold transition-all" style={{background:"rgba(0,229,255,0.1)",boxShadow:"0 0 20px var(--cyber-glow)"}}><Save className="w-5 h-5" /> Salvar na Biblioteca</button>
+                  <button onClick={() => window.print()} className="cyber-btn flex items-center gap-2 px-6 py-3 rounded font-bold transition-all"><Printer className="w-5 h-5" /> Imprimir / PDF</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* LOBBY SIDEBAR */}
+          {showLobbySidebar && (
+            <div className="fixed inset-y-0 right-0 w-80 z-50 no-print flex flex-col" style={{background:"var(--cyber-panel)",borderLeft:"1px solid var(--cyber-border)",boxShadow:"0 0 40px var(--cyber-glow)"}}>
+              <div className="p-4 flex justify-between items-center" style={{borderBottom:"1px solid rgba(0,229,255,0.3)",background:"rgba(0,0,0,0.8)"}}>
+                <h2 className="font-bold text-lg flex items-center gap-2" style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",fontSize:"14px"}}><Users className="w-5 h-5" /> SALA DE ROLAGENS</h2>
+                <button onClick={() => setShowLobbySidebar(false)} className="cyber-btn p-1 rounded"><X className="w-5 h-5" /></button>
+              </div>
+
+              <div className="p-4 flex flex-col flex-1 overflow-hidden">
+                {connectionStatus === 'disconnected' && (
+                  <div className="space-y-4">
+                    <p style={{color:"rgba(0,229,255,0.6)",fontSize:"12px",fontFamily:"Rajdhani,sans-serif"}}>Conecte-se com seus amigos para ver as rolagens em tempo real.</p>
+                    <div className="p-4 rounded-lg space-y-3" style={{background:"rgba(0,0,0,0.4)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                      <h3 style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",fontSize:"11px",letterSpacing:"1px"}}>CRIAR SALA (MESTRE)</h3>
+                      <button onClick={startHosting} className="cyber-btn w-full py-2 rounded font-bold flex items-center justify-center gap-2 text-xs" style={{fontFamily:"Orbitron,sans-serif"}}><Crown className="w-4 h-4" /> CRIAR NOVA SALA</button>
+                    </div>
+                    <div style={{textAlign:"center",color:"rgba(0,229,255,0.3)",fontSize:"11px",fontFamily:"Share Tech Mono,monospace"}}>— OU —</div>
+                    <div className="p-4 rounded-lg space-y-3" style={{background:"rgba(0,0,0,0.4)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                      <h3 style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",fontSize:"11px",letterSpacing:"1px"}}>ENTRAR (JOGADOR)</h3>
+                      <input type="text" placeholder="Cole o ID da Sala aqui..." className="w-full rounded-lg p-2 text-sm outline-none" style={{background:"rgba(0,0,0,0.7)",border:"1px solid rgba(0,229,255,0.3)",color:"#e8f4f8",fontFamily:"Share Tech Mono,monospace"}} value={joinInputId} onChange={e=>setJoinInputId(e.target.value)} />
+                      <button onClick={joinLobby} className="w-full py-2 rounded font-bold flex items-center justify-center gap-2 text-xs" style={{background:"rgba(0,230,118,0.15)",border:"1px solid rgba(0,230,118,0.4)",color:"#00e676",fontFamily:"Orbitron,sans-serif"}}><Zap className="w-4 h-4" /> CONECTAR</button>
+                    </div>
+                  </div>
+                )}
+
+                {connectionStatus === 'connecting' && (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-4" style={{color:"rgba(0,229,255,0.6)"}}>
+                    <div style={{width:"40px",height:"40px",border:"3px solid rgba(0,229,255,0.3)",borderTop:"3px solid #00e5ff",borderRadius:"50%",animation:"roll 0.8s linear infinite"}}></div>
+                    <p style={{fontFamily:"Share Tech Mono,monospace",fontSize:"12px"}}>Estabelecendo conexão...</p>
+                  </div>
+                )}
+
+                {connectionStatus === 'connected' && (
+                  <div className="flex flex-col h-full">
+                    <div className="p-3 rounded-lg mb-3 space-y-2" style={{background:"rgba(0,230,118,0.08)",border:"1px solid rgba(0,230,118,0.3)"}}>
+                      <div className="flex justify-between items-center">
+                        <span style={{color:"#00e676",fontFamily:"Orbitron,sans-serif",fontSize:"10px",display:"flex",alignItems:"center",gap:"4px"}}>
+                          <span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#00e676",display:"inline-block",animation:"pulse-border 1.5s infinite"}}></span>
+                          {lobbyMode === 'host' ? 'HOST DA SALA' : 'CONECTADO'}
+                        </span>
+                        <button onClick={leaveLobby} style={{color:"#ff1744",fontSize:"11px",fontFamily:"Orbitron,sans-serif",background:"none",border:"none",cursor:"pointer"}}>SAIR</button>
+                      </div>
+                      <div className="flex justify-between items-center rounded p-2" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                        <span style={{fontFamily:"Share Tech Mono,monospace",fontSize:"11px",color:"#e8f4f8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:"8px"}}>{lobbyId}</span>
+                        <button onClick={copyLobbyId} className="cyber-btn p-1 rounded" style={{flexShrink:0}} title="Copiar ID"><Copy className="w-3 h-3" /></button>
+                      </div>
+                    </div>
+
+                    <h3 className="text-xs font-bold uppercase mb-2 pb-1" style={{borderBottom:"1px solid rgba(0,229,255,0.2)",color:"rgba(0,229,255,0.5)",fontFamily:"Orbitron,sans-serif",letterSpacing:"1px"}}>Log de Rolagens</h3>
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4" style={{scrollbarWidth:"thin"}}>
+                      {sharedRolls.length === 0 ? (
+                        <p style={{textAlign:"center",color:"rgba(0,229,255,0.3)",fontSize:"11px",fontFamily:"Share Tech Mono,monospace",marginTop:"20px"}}>Faça uma rolagem para aparecer aqui.</p>
+                      ) : (
+                        sharedRolls.map(rollItem => (
+                          <div key={rollItem.id} className="p-3 rounded-lg" style={{background:"rgba(0,0,0,0.5)",border:"1px solid rgba(0,229,255,0.2)"}}>
+                            <div className="flex justify-between items-end mb-2">
+                              <span style={{color:"#00e5ff",fontFamily:"Orbitron,sans-serif",fontSize:"11px"}}>{rollItem.playerName}</span>
+                              <span style={{color:"rgba(0,229,255,0.4)",fontSize:"10px",fontFamily:"Share Tech Mono,monospace"}}>{rollItem.time}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div style={{fontSize:"22px",fontWeight:900,fontFamily:"Orbitron,sans-serif",color: rollItem.rollData.isCriticalFailure?'#ff1744':'#00e5ff',textShadow: rollItem.rollData.isCriticalFailure?'0 0 10px rgba(255,23,68,0.6)':'0 0 10px rgba(0,229,255,0.6)'}}>
+                                {rollItem.rollData.isCriticalFailure ? 'FALHA!' : rollItem.rollData.total}
+                              </div>
+                              <div>
+                                <div style={{fontSize:"10px",color:"rgba(0,229,255,0.5)",fontFamily:"Orbitron,sans-serif",textTransform:"uppercase"}}>{rollItem.rollData.attribute} ({rollItem.rollData.diceCount}D)</div>
+                                <div style={{display:"flex",gap:"3px",flexWrap:"wrap",marginTop:"3px"}}>
+                                  {rollItem.rollData.results.map((r,i) => (
+                                    <span key={i} style={{display:"inline-block",width:"18px",height:"18px",textAlign:"center",lineHeight:"18px",fontSize:"10px",fontWeight:"bold",borderRadius:"3px",background: r>=6?'rgba(255,214,0,0.3)':r===1&&rollItem.rollData.isCriticalFailure?'rgba(255,23,68,0.3)':'rgba(0,229,255,0.1)',color: r>=6?'#ffd600':r===1&&rollItem.rollData.isCriticalFailure?'#ff1744':'#00e5ff',border: r>=6?"1px solid rgba(255,214,0,0.5)":"1px solid rgba(0,229,255,0.2)"}}>{r}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
