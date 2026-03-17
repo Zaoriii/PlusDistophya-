@@ -429,8 +429,8 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const [fbErro, setFbErro] = useState(false);
   const [showSheetSelector, setShowSheetSelector] = useState(false);
 
-  // ── NOVO: estado de edição inline dos recursos na ficha da campanha ──
-  const [editingFicha, setEditingFicha] = useState(null); // { fichaId, campo, valor }
+  // estado local dos recursos para feedback imediato antes de salvar no Firebase
+  const [recursosLocal, setRecursosLocal] = useState({}); // { [fichaId]: { pv, pm, pa } }
 
   useEffect(() => {
     try {
@@ -609,16 +609,35 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     try { await fbDelete(`campanhas/${campCode}/fichas/${fichaId}`); buscarTudo(campCode); } catch(e){}
   };
 
-  // ── NOVO: Editar recurso inline (PV, PM, PA) na ficha da campanha ──
-  const salvarRecursoFicha = async (fichaId, campo, valor) => {
+  // ── Ajustar recurso com +1 / -1, com feedback local imediato ──
+  const ajustarRecurso = async (fichaId, campo, delta) => {
+    const fichaAtual = fichas[fichaId];
+    if(!fichaAtual) return;
+    const base = recursosLocal[fichaId]?.[campo] ?? fichaAtual.recursos?.[campo] ?? 0;
+    const novoVal = Math.max(0, base + delta);
+    // atualiza local imediatamente
+    setRecursosLocal(prev => ({
+      ...prev,
+      [fichaId]: { ...(prev[fichaId] || fichaAtual.recursos || {}), [campo]: novoVal }
+    }));
     try {
-      const fichaAtual = fichas[fichaId];
-      if(!fichaAtual) return;
-      const novosRecursos = {...(fichaAtual.recursos||{}), [campo]: parseInt(valor)||0};
+      const novosRecursos = {...(fichaAtual.recursos||{}), ...(recursosLocal[fichaId]||{}), [campo]: novoVal};
       await fbSet(`campanhas/${campCode}/fichas/${fichaId}/recursos`, novosRecursos);
-      buscarTudo(campCode);
     } catch(e){}
-    setEditingFicha(null);
+  };
+
+  const setRecursoExato = async (fichaId, campo, valor) => {
+    const fichaAtual = fichas[fichaId];
+    if(!fichaAtual) return;
+    const novoVal = Math.max(0, parseInt(valor)||0);
+    setRecursosLocal(prev => ({
+      ...prev,
+      [fichaId]: { ...(prev[fichaId] || fichaAtual.recursos || {}), [campo]: novoVal }
+    }));
+    try {
+      const novosRecursos = {...(fichaAtual.recursos||{}), ...(recursosLocal[fichaId]||{}), [campo]: novoVal};
+      await fbSet(`campanhas/${campCode}/fichas/${fichaId}/recursos`, novosRecursos);
+    } catch(e){}
   };
 
   const sairCampanha = () => {
@@ -741,37 +760,53 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                       <div style={{fontFamily:'Orbitron',fontSize:11,color:'#e8f4f8',fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.nome||'Sem nome'}</div>
                       <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1}}>{f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}</div>
                     </div>
-                    {/* ── MUDANÇA: PV/PM/PA maiores e editáveis ── */}
-                    <div style={{display:'flex',gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                    {/* ── Recursos: layout [− LABEL val/base +] com barra ── */}
+                    <div style={{display:'flex',flexDirection:'column',gap:5,flexShrink:0,minWidth:130}} onClick={e=>e.stopPropagation()}>
                       {[
-                        {campo:'pv', label:'♥', color:'#ff5252', bg:'rgba(255,23,68,0.12)', border:'rgba(255,23,68,0.3)'},
-                        {campo:'pm', label:'⚡', color:'#00e5ff', bg:'rgba(0,229,255,0.08)', border:'rgba(0,229,255,0.25)'},
-                        {campo:'pa', label:'★', color:'#ffd600', bg:'rgba(255,214,0,0.08)', border:'rgba(255,214,0,0.3)'},
-                      ].map(({campo,label,color,bg,border})=>{
-                        const isEditing = editingFicha && editingFicha.fichaId===f.id && editingFicha.campo===campo;
-                        const val = f.recursos?.[campo]??0;
+                        {campo:'pv', label:'PV', icon:'♥', color:'#ff5252', border:'rgba(255,23,68,0.35)', bg:'rgba(255,23,68,0.08)',
+                          base: (f.atributos?.resistencia||0)*5 || 1},
+                        {campo:'pm', label:'PM', icon:'⚡', color:'#00e5ff', border:'rgba(0,229,255,0.3)', bg:'rgba(0,229,255,0.06)',
+                          base: (f.atributos?.habilidade||0)*5 || 1},
+                        {campo:'pa', label:'PA', icon:'★', color:'#ffd600', border:'rgba(255,214,0,0.3)', bg:'rgba(255,214,0,0.06)',
+                          base: f.atributos?.poder || 1},
+                      ].map(({campo,label,icon,color,border,bg,base})=>{
+                        const val = recursosLocal[f.id]?.[campo] ?? f.recursos?.[campo] ?? 0;
+                        const pct = base > 0 ? Math.min(100,(val/base)*100) : 0;
                         return (
-                          <div key={campo} style={{background:bg,border:'1px solid '+border,borderRadius:6,padding:'4px 8px',minWidth:52,textAlign:'center',cursor:'pointer'}}
-                            title={'Clique para editar '+campo.toUpperCase()}>
-                            <div style={{fontSize:9,color:color,fontFamily:'Orbitron',marginBottom:2}}>{label} {campo.toUpperCase()}</div>
-                            {isEditing ? (
-                              <input
-                                autoFocus
-                                type="number"
-                                defaultValue={val}
-                                style={{width:40,textAlign:'center',fontSize:18,fontWeight:900,fontFamily:'Orbitron',color,background:'transparent',border:'none',borderBottom:'1px solid '+color,outline:'none',padding:0}}
-                                onBlur={e=>salvarRecursoFicha(f.id,campo,e.target.value)}
-                                onKeyDown={e=>{
-                                  if(e.key==='Enter') salvarRecursoFicha(f.id,campo,e.target.value);
-                                  if(e.key==='Escape') setEditingFicha(null);
-                                }}
-                              />
-                            ) : (
-                              <div
-                                style={{fontSize:18,fontWeight:900,fontFamily:'Orbitron',color,lineHeight:1}}
-                                onClick={()=>setEditingFicha({fichaId:f.id,campo,valor:val})}
-                              >{val}</div>
-                            )}
+                          <div key={campo} style={{background:bg,border:'1px solid '+border,borderRadius:7,overflow:'hidden'}}>
+                            {/* Linha principal: − | label val/base | + */}
+                            <div style={{display:'flex',alignItems:'center',gap:0}}>
+                              {/* Botão − */}
+                              <button
+                                onClick={()=>ajustarRecurso(f.id,campo,-1)}
+                                style={{width:26,height:28,background:'rgba(0,0,0,0.35)',border:'none',borderRight:'1px solid '+border,color:color,cursor:'pointer',fontSize:15,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'background 0.15s'}}
+                                onMouseEnter={e=>e.currentTarget.style.background='rgba(255,23,68,0.18)'}
+                                onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.35)'}
+                              >−</button>
+                              {/* Centro: ícone + label + valor/base */}
+                              <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'0 4px'}}>
+                                <span style={{fontSize:9,color:color}}>{icon}</span>
+                                <span style={{fontFamily:'Orbitron',fontSize:8,color:color,textTransform:'uppercase',letterSpacing:0.5}}>{label}</span>
+                                <input
+                                  type="number"
+                                  value={val}
+                                  onChange={e=>setRecursoExato(f.id,campo,e.target.value)}
+                                  style={{width:28,textAlign:'center',fontSize:13,fontWeight:900,fontFamily:'Orbitron',color:color,background:'transparent',border:'none',outline:'none',padding:0}}
+                                />
+                                <span style={{fontSize:9,color:'rgba(255,255,255,0.25)',fontFamily:'Share Tech Mono'}}>/{base}</span>
+                              </div>
+                              {/* Botão + */}
+                              <button
+                                onClick={()=>ajustarRecurso(f.id,campo,+1)}
+                                style={{width:26,height:28,background:'rgba(0,0,0,0.35)',border:'none',borderLeft:'1px solid '+border,color:color,cursor:'pointer',fontSize:15,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'background 0.15s'}}
+                                onMouseEnter={e=>e.currentTarget.style.background='rgba(0,229,255,0.15)'}
+                                onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.35)'}
+                              >+</button>
+                            </div>
+                            {/* Barra de progresso */}
+                            <div style={{height:3,background:'rgba(0,0,0,0.5)'}}>
+                              <div style={{height:'100%',width:pct+'%',background:color,transition:'width 0.2s',opacity:0.7}}/>
+                            </div>
                           </div>
                         );
                       })}
@@ -884,10 +919,9 @@ const CampaignPanel = ({char, sheets, onClose}) => {
               textTransform:'uppercase',letterSpacing:1
             }}>🎲 Rolar Minha Iniciativa ({char.nome||'Meu Personagem'})</button>
 
-            {/* ── MUDANÇA: NPC sempre visível para o mestre ── */}
-            {ehMestre && (
-              <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:6,padding:8}}>
-                <div style={{fontFamily:'Orbitron',fontSize:8,color:'#a855f7',marginBottom:5,textTransform:'uppercase'}}>👾 Adicionar NPC (Mestre)</div>
+            {/* NPC — todos podem adicionar ── */}
+            <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:6,padding:8}}>
+                <div style={{fontFamily:'Orbitron',fontSize:8,color:'#a855f7',marginBottom:5,textTransform:'uppercase'}}>👾 Adicionar NPC</div>
                 <div style={{display:'flex',gap:5,marginBottom:5}}>
                   <input value={npcNome} onChange={e=>setNpcNome(e.target.value)} placeholder="Nome do NPC..."
                     style={{flex:1,fontSize:11,padding:'4px 7px'}} onKeyDown={e=>e.key==='Enter'&&rolarIniciativaNpc()} />
@@ -905,8 +939,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                     ✕ Limpar Tudo
                   </button>
                 </div>
-              </div>
-            )}
+            </div>
 
             {iniciativas.length===0
               ? <p style={{color:'rgba(255,214,0,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>Nenhuma iniciativa rolada ainda.</p>
