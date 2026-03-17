@@ -64,6 +64,39 @@
 </head>
 <body>
 <div id="root"></div>
+
+<!-- Scripts do Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// Configuração do Firebase fornecida
+const firebaseConfig = {
+  apiKey: "AIzaSyBerZufocp6T2_7qUQiNqsxhtGjHDidSsg",
+  authDomain: "plusdistophya.firebaseapp.com",
+  databaseURL: "https://plusdistophya-default-rtdb.firebaseio.com",
+  projectId: "plusdistophya",
+  storageBucket: "plusdistophya.firebasestorage.app",
+  messagingSenderId: "329881170074",
+  appId: "1:329881170074:web:28e5bd77587250cfd5ef23"
+};
+
+// Inicializa o Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Teste de conexão: escreve um nó "teste" no banco
+db.ref("teste").set({
+  status: "funcionando",
+  timestamp: Date.now()
+})
+.then(() => console.log("✅ Firebase conectado e teste escrito com sucesso!"))
+.catch((error) => console.error("❌ Erro ao escrever no Firebase:", error));
+
+// Atualiza a constante usada nas funções fbGet/fbSet para o novo projeto
+window.FIREBASE_URL = "https://plusdistophya-default-rtdb.firebaseio.com";
+</script>
+
 <script>
 window.PERICIAS = ["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"];
 window.ARQUETIPOS_DATA = {
@@ -117,7 +150,8 @@ const DESVANTAGENS = window.DESVANTAGENS;
 const LISTA_DESV = window.LISTA_DESV;
 const OPCOES = window.OPCOES;
 
-const FIREBASE = "https://ficha-editavel-3det-default-rtdb.firebaseio.com";
+// URL do Firebase (agora usando a variável definida globalmente)
+const FIREBASE = window.FIREBASE_URL || "https://plusdistophya-default-rtdb.firebaseio.com";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).substring(2, 9);
@@ -154,7 +188,7 @@ async function fbDelete(path) {
   if (r.status === 401) throw new Error('REGRAS_FIREBASE');
 }
 
-const MSG_REGRAS = `🔒 Banco de dados bloqueado (erro 401).\n\nPara usar a campanha, abra as regras do Firebase:\n\n1. Acesse console.firebase.google.com\n2. Projeto: ficha-editavel-3det\n3. Realtime Database → Regras\n4. Cole isso e publique:\n\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}`;
+const MSG_REGRAS = `🔒 Banco de dados bloqueado (erro 401).\n\nPara usar a campanha, abra as regras do Firebase:\n\n1. Acesse console.firebase.google.com\n2. Projeto: plusdistophya\n3. Realtime Database → Regras\n4. Cole isso e publique:\n\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}`;
 
 const EMPTY = {
   id:null,nome:'',arquetipo:'',arquetipoCusto:0,experiencia:0,
@@ -704,7 +738,7 @@ const CampaignPanel = ({char, onClose}) => {
           </div>
           <ol style={{fontSize:10,color:'rgba(255,82,82,0.7)',lineHeight:1.7,paddingLeft:16,margin:0}}>
             <li>Abra <strong style={{color:'#ff5252'}}>console.firebase.google.com</strong></li>
-            <li>Projeto <strong style={{color:'#ff5252'}}>ficha-editavel-3det</strong> → Realtime Database → Regras</li>
+            <li>Projeto <strong style={{color:'#ff5252'}}>plusdistophya</strong> → Realtime Database → Regras</li>
             <li>Substitua o conteúdo por: <code style={{background:'rgba(0,0,0,0.4)',padding:'1px 5px',borderRadius:3,color:'#ffd600',fontSize:9}}>{"{ \"rules\": { \".read\": true, \".write\": true } }"}</code></li>
             <li>Clique em <strong style={{color:'#ff5252'}}>Publicar</strong></li>
           </ol>
