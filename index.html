@@ -218,7 +218,7 @@ window.DB_ARQUETIPOS = {
         "Vampiro":{custo:1,desc:""},"Centauro":{custo:2,desc:""},"Ciborgue":{custo:2,desc:""},"Fantasma":{custo:2,desc:""},
         "Kallyanach":{custo:2,desc:""},"Osteon":{custo:2,desc:""},"Qareen":{custo:2,desc:""},"Sauroide":{custo:2,desc:""}
       };
-      window.LISTA_ARQUETIPOS = Object.keys(DB_ARQUETIPOS).sort();
+      window.LISTA_ARQUETIPOS = Object.keys(window.DB_ARQUETIPOS).sort();
       window.DB_KITS = {
         "Abastado":{desc:"",poderes:[{nome:"Meritocracia",desc:"",custo:"1"},{nome:"Poder aquisitivo",desc:"",custo:"1"},{nome:"Tempo é dinheiro!",desc:"",custo:"1"}]},
         "Agente Secreto":{desc:"",poderes:[{nome:"Identidade secreta",desc:"",custo:"1"},{nome:"Olho clínico",desc:"",custo:"1"},{nome:"Plano de ação",desc:"",custo:"1"}]},
@@ -238,7 +238,7 @@ window.DB_ARQUETIPOS = {
         "DPS":{desc:"",poderes:[{nome:"Estilo de combate",desc:"",custo:"1"},{nome:"Ataque gratuito",desc:"",custo:"1"},{nome:"Último recurso",desc:"",custo:"1"}]},
         "Super-Herói":{desc:"",poderes:[{nome:"Sobrehumano",desc:"",custo:"1"},{nome:"Façanha épica",desc:"",custo:"1"},{nome:"Herói de ação",desc:"",custo:"1"}]}
       };
-      window.LISTA_KITS = Object.keys(DB_KITS).sort();
+      window.LISTA_KITS = Object.keys(window.DB_KITS).sort();
       window.DB_VANTAGENS = {
         "Aceleração":{custo:"1",desc:"Você se move muito rápido. Pode gastar 1PM para realizar um movimento extra em seu turno. Você também pode gastar 1PM antes de rolar os dados para receber um Ganho na iniciativa, ou em testes de Habilidade para correr, fugir ou perseguir um oponente."},
         "+Ação":{custo:"1",desc:"Você tem mais Pontos de Ação, além daqueles oferecidos por seu Poder. Cada vez que compra esta vantagem você recebe +2PA. Você pode comprar esta vantagem várias vezes, para novos aumentos de +2PA."},
@@ -301,7 +301,7 @@ window.DB_ARQUETIPOS = {
         "Vigoroso":{custo:"1",desc:"Você é robusto como um cavalo. Recebe R+2 em testes envolvendo saúde física, como resistir a fadiga, doenças e venenos (isso inclui testes de morte). Este bônus é incluído em acertos críticos. Você também pode gastar 2PM antes de fazer um desses testes para conseguir acerto crítico com 5 ou 6."},
         "Voo":{custo:"1",desc:"Você pode voar! Ao usar um movimento para ficar Longe ou mais distante pelo ar, apenas personagens que também possam voar poderão alcançá-lo com movimentos. Você ignora terrenos difíceis. Em combate, levantar voo do chão usa um movimento e gasta 2PM. Voar por muito tempo está sujeito a cansaço."}
       };
-      window.LISTA_VANTAGENS = Object.keys(DB_VANTAGENS).sort();
+      window.LISTA_VANTAGENS = Object.keys(window.DB_VANTAGENS).sort();
       window.DB_DESVANTAGENS = {
         "Ambiente":{custo:"-1",desc:"Você é mais acostumado a certo ambiente. No início de cada cena, role 1D. Com resultado 1, nada relacionado a seu ambiente existe ali e você tem Perda em todos os testes. O mestre pode dispensar a rolagem em situações especiais."},
         "Amnésia":{custo:"-2",desc:"Você não sabe quem é. O mestre faz sua ficha em segredo. Você pode tentar fazer coisas e o mestre diz se conseguiu ou não — sem jamais dizer se você tem mesmo a perícia ou vantagem. Suas capacidades e limitações devem permanecer um mistério."},
@@ -336,7 +336,7 @@ window.DB_ARQUETIPOS = {
         "Transtorno":{custo:"-1",desc:"Você lida com um transtorno mental. Opções: Cleptomania (rouba coisas desnecessariamente), Compulsão (precisa fazer algo várias vezes por dia; Perda em todos os testes até cumprir), Distração (não consegue críticos em coisas que não o interessam), Fantasia (acredita ser algo que não é; Perda em testes sociais), Fobia (medo terrível de algo; não consegue fazer ações quando aquilo está Perto), Megalomania (nunca se rende), Mitomania (nunca diz a verdade), Paranoia (não confia em ninguém; recuperação de recursos com descanso é metade do normal)."},
         "Utensílio":{custo:"-1 ou -2",desc:"-1pt: Você precisa de um item para usar adequadamente uma perícia. Quando não está com ele, não consegue acertos críticos. -2pt: Sem o Utensílio, você não pode usar vantagens ou técnicas que gastam PM. Se o Utensílio é destruído ou perdido, você consegue outro depois da cena ou gastando 1PA para improvisá-lo."}
       };
-      window.LISTA_DESVANTAGENS = Object.keys(DB_DESVANTAGENS).sort();
+      window.LISTA_DESVANTAGENS = Object.keys(window.DB_DESVANTAGENS).sort();
       window.DB_PERICIAS = {
         "Animais": "Você sabe lidar com animais, sejam domésticos, selvagens ou monstros. Pode acalmá-los, treiná-los, montar, identificar espécies e até se comunicar rudimentarmente. Testes típicos: montar um animal, acalmar um bicho furioso, identificar uma criatura, treinar um animal para realizar truques.",
         "Arte": "Você é talentoso em alguma forma de arte (música, pintura, dança, escultura, teatro, escrita etc.). Pode criar obras, performar e identificar estilos artísticos. Testes típicos: tocar um instrumento, pintar um quadro, dançar, escrever uma história, atuar em uma peça.",
@@ -584,7 +584,7 @@ window.DB_ARQUETIPOS = {
         return (
           <div className="space-y-2">
             <div className="flex justify-between items-end">
-              <span className="flex items-center gap-2 font-bold print:text-black" style={{color: color==='red'?'#ff5252':'#00e5ff', textShadow: `0 0 8px ${color==='red'?'rgba(255,82,82,0.5)':' rgba(0,229,255,0.5)'}`, fontFamily:"Orbitron,sans-serif", fontSize:"12px"}}>{icon} {label}</span>
+              <span className="flex items-center gap-2 font-bold print:text-black" style={{color: color==='red'?'#ff5252':'#00e5ff', textShadow: color==='red'?'0 0 8px rgba(255,82,82,0.5)':'0 0 8px rgba(0,229,255,0.5)', fontFamily:"Orbitron,sans-serif", fontSize:"12px"}}>{icon} {label}</span>
               <div className="flex items-center gap-2">
                 <input type="number" className={`w-12 bg-slate-900 rounded text-center border border-slate-700 ${focusBorder[color]} outline-none font-bold print:bg-transparent print:text-black print:border-black`} value={current} onChange={(e) => onChange(parseInt(e.target.value)||0)} />
                 <span className="text-slate-500 print:text-black">/ {max}</span>
