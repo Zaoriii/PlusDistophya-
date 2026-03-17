@@ -8,8 +8,6 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -64,6 +62,7 @@
 <body>
 <div id="root"></div>
 <script>
+// ── DATA (outside Babel for performance) ──────────────────────────
 window.PERICIAS = ["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"];
 window.ARQUETIPOS = {"Humano":0,"Aberrante":1,"Abissal":1,"Alien":1,"Anfíbio":1,"Celestial":1,"Construto":1,"Dahllan":1,"Elfo":1,"Fada":1,"Goblin":1,"Hynne":1,"Kemono":1,"Medusa":1,"Minotauro":1,"Ogro":1,"Vampiro":1,"Centauro":2,"Ciborgue":2,"Fantasma":2,"Kallyanach":2,"Osteon":2,"Qareen":2,"Sauroide":2};
 window.LISTA_ARQ = Object.keys(window.ARQUETIPOS).sort();
@@ -74,7 +73,20 @@ window.LISTA_VANT = Object.keys(window.VANTAGENS).sort();
 window.DESVANTAGENS = {"Ambiente":{c:"-1",d:"Role 1D no início de cada cena: com 1, seu ambiente não existe ali e você tem Perda em todos os testes."},"Amnésia":{c:"-2",d:"Você não sabe quem é. O Mestre faz sua ficha em segredo."},"Antipático":{c:"-1",d:"Perda e sem críticos em testes de Poder social. Incompatível com Carismático."},"Assombrado":{c:"-1 ou -2",d:"-1pt: role 1D ao entrar em situação de risco: com 1, Perda em todos os testes. -2pt: ativa com resultado ímpar."},"Atrapalhado":{c:"-1",d:"Perda e sem críticos em testes de Habilidade envolvendo coordenação. Incompatível com Ágil."},"Aura":{c:"-1 ou -2",d:"-1pt: todos Perto de você têm Perda em testes. -2pt: todos Longe ou menos."},"Bateria":{c:"-1",d:"Com 0PM você desliga (inconsciente). Com PM abaixo de H, todos os testes têm Perda."},"Código":{c:"-1",d:"Você segue um código de conduta. Ao violar, Perda em todos os testes até se redimir."},"Dependência":{c:"-2",d:"Precisa de algo raro/proibido todo dia. Sem satisfazê-la, Perda em todos os testes."},"Diferente":{c:"-1",d:"Seu corpo é muito diferente. Perda ao usar itens feitos para outros."},"Elo Vital":{c:"-1",d:"Aliado (que também deve ter) sofre o mesmo dano que você. Curar um não cura o outro."},"Fracote":{c:"-1",d:"Perda e sem críticos em testes de Poder físico. Incompatível com Forte."},"Frágil":{c:"-1",d:"Perda e sem críticos em testes de Resistência físicos. Incompatível com Vigoroso."},"Fraqueza":{c:"-1 ou -2",d:"-1pt: Incomum (1 em 1D). -2pt: Comum (1-3 em 1D). Perto dela, todos os testes têm Perda."},"Fúria":{c:"-2",d:"Ao sofrer dano, teste R(9 ou dano). Se falhar, entra em frenesi e ataca o mais próximo."},"Inapto":{c:"-1",d:"Perda e falhas críticas em uma perícia específica que você não tem."},"Inculto":{c:"-1",d:"Não lê a língua local. Testes sociais com quem não te entende têm Perda."},"Indeciso":{c:"-1",d:"Perda e sem críticos em testes de Resistência de força de vontade. Incompatível com Resoluto."},"Infame":{c:"-1",d:"Perda em testes sociais com NPCs que te reconhecem. Incompatível com Famoso."},"Lento":{c:"-1",d:"Perda na iniciativa. Gasta 1 movimento extra por distância. Incompatível com Aceleração."},"Maldição":{c:"-1 ou -2",d:"-1pt: maldição suave/constrangedora. -2pt: maldição grave com efeito mecânico severo."},"Monstruoso":{c:"-1",d:"Perda na iniciativa (exceto surpresa). Perda em testes sociais de aparência. Incompatível com Inofensivo."},"Munição":{c:"-1",d:"Ao atacar, precisa gastar 1 movimento para recarregar. Sem recarregar, não soma Poder."},"Pacifista":{c:"-1 ou -2",d:"-1pt: pode se defender mas não atacar. -2pt: não faz nada que cause dano."},"Pobreza":{c:"-1",d:"Todos os testes de compra têm Perda. Incompatível com Riqueza."},"Ponto Fraco":{c:"-1",d:"Adversário que descobre pode gastar 1PM para Ganho contra você."},"Protegido":{c:"-1",d:"Deve proteger alguém. Se estiver ferido/indefeso, Perda em todos os testes."},"Restrição":{c:"-1 ou -2",d:"-1pt: Incomum. -2pt: Comum. Quando acontece, gasta o dobro de PM para usar vantagens."},"Sem Vida":{c:"-2",d:"Não recupera PV normalmente. Pode ser consertado (Máquinas ou Mística, 1h, teste 9). Testes de morte nunca piores que inconsciente."},"Tapado":{c:"-1",d:"Perda e sem críticos em testes de Habilidade intelectuais. Incompatível com Gênio."},"Transtorno":{c:"-1",d:"Transtorno mental: Cleptomania, Compulsão, Distração, Fantasia, Fobia, Megalomania, Mitomania ou Paranoia."},"Utensílio":{c:"-1 ou -2",d:"-1pt: sem item, sem críticos na perícia. -2pt: sem item, não pode usar vantagens/técnicas com PM."}};
 window.LISTA_DESV = Object.keys(window.DESVANTAGENS).sort();
 window.OPCOES = {"Ajudante":["Curandeiro","Especialista","Familiar","Lutador","Montaria"],"Ataque Especial":["Área","Choque","Distante","Espiritual","Múltiplo","Penetrante","Perigoso","Potente","Preciso","Titânico"],"Defesa Especial":["Blindada","Bloqueio","Esquiva","Proteção","Provocação","Reflexão","Tenaz","Titânica"],"Imune":["Abiótico","Anfíbio","Doenças","Resiliente","Sem Mente"],"Inimigo":["Humanos","Humanoides","Construtos","Espíritos","Monstros"],"Arena":["Água","Céu","Cidades","Ermos","Subterrâneo"],"Sentido":["Aguçado","Infravisão","Intuição","Radar","Raio X"],"Maestria":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Mentor":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Código":["Asimov 1ª","Asimov 2ª","Caçador","Combate","Derrota","Gratidão","Heróis","Honestidade","Redenção"],"Transtorno":["Cleptomania","Compulsão","Distração","Fantasia","Fobia","Megalomania","Mitomania","Paranoia"],"Inapto":["Animais","Arte","Esporte","Influência","Luta","Manha","Máquinas","Medicina","Mística","Percepção","Saber","Sobrevivência"],"Arte":["Atuação","Culinária","Dança","Escrita","Ilustração","Música"],"Esporte":["Acrobacia","Atletismo","Corrida","Natação","Pilotagem"],"Saber":["Arcano","Ciências","Direito","Geografia","História","Idiomas","Natureza","Religião","Tecnologia"]};
-window.SUBOPCOES = {"Ajudante":{"Curandeiro":"Cura 2D PV ou permite repetir teste de R contra efeito negativo. Custo: 2PM.","Especialista":"Ganho em um teste de uma perícia escolhida (exceto atacar/defender). Custo: 2PM.","Familiar":"Gasta 1PM para ser invocado e reduz à metade o custo de outra vantagem na rodada. Custo: 1PM.","Lutador":"Ganho em um teste de ataque, ou em testes de defesa por uma rodada. Custo: 2PM.","Montaria":"Movimento extra, ou Ganho em iniciativa ou perseguição. Custo: 1PM."},"Ataque Especial":{"Área":"Todos Perto do alvo também recebem o ataque. Custo: 3PM.","Choque":"Ataca com R em vez de P. Custo: 1PM.","Distante":"Alcança um passo de distância além. Custo: 1PM.","Espiritual":"Alvo perde PM em vez de PV. Custo: 1PM.","Múltiplo":"Atinge mais alvos ao alcance. 1PM por alvo extra. Custo: 1PM/alvo.","Penetrante":"Alvo tem Perda de defesa. Custo: 2PM.","Perigoso":"Crítico com 5 ou 6. Custo: 1PM.","Potente":"P+2 no ataque. Custo: 1PM por P+2.","Preciso":"Ataca com H em vez de P. Custo: 1PM.","Titânico":"Crítico automático no ataque. Custo: 3PM."},"Defesa Especial":{"Blindada":"Defesa consegue crítico com 5 ou 6. Custo: 1PM.","Bloqueio":"Defende com P em vez de R. Custo: 1PM.","Esquiva":"Defende com H em vez de R. Custo: 1PM.","Proteção":"Usa sua defesa por um aliado Perto. Custo: 1PM.","Provocação":"Recebe ataque destinado a aliado Perto. Custo: 1PM.","Reflexão":"Se sua defesa maior que o ataque, oponente sofre a diferença. Custo: 1PM.","Tenaz":"R+2 na defesa. Custo: 1PM por +2.","Titânica":"Crítico automático na defesa. Custo: 3PM."},"Imune":{"Abiótico":"Sem necessidades biológicas básicas: comer, beber, respirar ou dormir.","Anfíbio":"Respira e se move normalmente embaixo da água.","Doenças":"Imune a doenças naturais ou mágicas.","Resiliente":"Não se cansa por esforço intenso. Qualquer lugar de descanso é ideal.","Sem Mente":"Imune a magias e efeitos que afetam a mente."},"Inimigo":{"Humanos":"Crítico com 5 ou 6 contra Humanos. Custo: 2pt.","Humanoides":"Crítico com 5 ou 6 contra Humanoides. Custo: 1pt.","Construtos":"Crítico com 5 ou 6 contra Construtos. Custo: 1pt.","Espíritos":"Crítico com 5 ou 6 contra Espíritos. Custo: 1pt.","Monstros":"Crítico com 5 ou 6 contra Monstros. Custo: 1pt."},"Arena":{"Água":"Gaste 2PM para Ganho em testes em ambientes aquáticos.","Céu":"Gaste 2PM para Ganho em testes no ar.","Cidades":"Gaste 2PM para Ganho em testes em ambientes urbanos.","Ermos":"Gaste 2PM para Ganho em testes em ambientes selvagens.","Subterrâneo":"Gaste 2PM para Ganho em testes em ambientes subterrâneos."},"Sentido":{"Aguçado":"Ganho em Percepção com o sentido escolhido.","Infravisão":"Percebe seres de sangue quente e enxerga no escuro.","Intuição":"Percebe intenções ocultas: mentiras, segredos, intenção de ataque.","Radar":"Percebe tudo em volta mesmo de costas ou no escuro.","Raio X":"Vê através de portas e paredes (exceto metal ou mágico)."},"Maestria":{"Animais":"Gaste 1PM para crítico com 5 ou 6 em testes de Animais.","Arte":"Gaste 1PM para crítico com 5 ou 6 em testes de Arte.","Esporte":"Gaste 1PM para crítico com 5 ou 6 em testes de Esporte.","Influência":"Gaste 1PM para crítico com 5 ou 6 em testes de Influência.","Luta":"Gaste 1PM para crítico com 5 ou 6 em testes de Luta.","Manha":"Gaste 1PM para crítico com 5 ou 6 em testes de Manha.","Máquinas":"Gaste 1PM para crítico com 5 ou 6 em testes de Máquinas.","Medicina":"Gaste 1PM para crítico com 5 ou 6 em testes de Medicina.","Mística":"Gaste 1PM para crítico com 5 ou 6 em testes de Mística.","Percepção":"Gaste 1PM para crítico com 5 ou 6 em testes de Percepção.","Saber":"Gaste 1PM para crítico com 5 ou 6 em testes de Saber.","Sobrevivência":"Gaste 1PM para crítico com 5 ou 6 em testes de Sobrevivência."},"Mentor":{"Animais":"1x por cena: Ganho em Animais. Técnicas com Animais gastam -1PM.","Arte":"1x por cena: Ganho em Arte. Técnicas com Arte gastam -1PM.","Esporte":"1x por cena: Ganho em Esporte. Técnicas com Esporte gastam -1PM.","Influência":"1x por cena: Ganho em Influência. Técnicas com Influência gastam -1PM.","Luta":"1x por cena: Ganho em Luta. Técnicas com Luta gastam -1PM.","Manha":"1x por cena: Ganho em Manha. Técnicas com Manha gastam -1PM.","Máquinas":"1x por cena: Ganho em Máquinas. Técnicas com Máquinas gastam -1PM.","Medicina":"1x por cena: Ganho em Medicina. Técnicas com Medicina gastam -1PM.","Mística":"1x por cena: Ganho em Mística. Técnicas com Mística gastam -1PM.","Percepção":"1x por cena: Ganho em Percepção. Técnicas com Percepção gastam -1PM.","Saber":"1x por cena: Ganho em Saber. Técnicas com Saber gastam -1PM.","Sobrevivência":"1x por cena: Ganho em Sobrevivência. Técnicas com Sobrevivência gastam -1PM."},"Código":{"Asimov 1ª":"Jamais causar mal a um ser humano ou permitir que sofra qualquer mal.","Asimov 2ª":"Sempre obedecer a seres humanos, exceto quando viola outro Código.","Caçador":"Nunca matar filhotes ou gestantes. Nunca abandonar uma caça. Nunca permitir fuga.","Combate":"Nunca atacar oponente em condição desfavorável ou de escala inferior.","Derrota":"Nunca seguir lutando depois de derrotado. Aceitar qualquer condição do vitorioso.","Gratidão":"Ao receber um grande favor, fica a serviço da pessoa até devolver o favor.","Heróis":"Sempre cumprir sua palavra, proteger os mais fracos, jamais recusar ajuda.","Honestidade":"Nunca mentir, roubar, trapacear ou desobedecer às leis locais.","Redenção":"Nunca atacar primeiro, sempre aceitar rendição, sempre poupar oponentes derrotados."},"Transtorno":{"Cleptomania":"Rouba coisas desnecessariamente. Teste para resistir à chance de roubar.","Compulsão":"Precisa fazer algo várias vezes por dia. Perda em todos os testes até cumprir.","Distração":"Não consegue críticos em algo que não o interessa.","Fantasia":"Acredita ser algo que não é. Perda em testes sociais.","Fobia":"Medo terrível de algo. Quando Perto, só pode fazer movimentos. Teste R(9) para agir.","Megalomania":"Acredita ser invencível. Nunca se rende mesmo após ser derrotado.","Mitomania":"Nunca diz a verdade. Precisa de um teste para dizer algo verdadeiro.","Paranoia":"Não confia em ninguém. Descanso recupera metade dos recursos."},"Inapto":{"Animais":"Perda e falhas críticas em testes de Animais.","Arte":"Perda e falhas críticas em testes de Arte.","Esporte":"Perda e falhas críticas em testes de Esporte.","Influência":"Perda e falhas críticas em testes de Influência.","Luta":"Perda e falhas críticas em testes de Luta.","Manha":"Perda e falhas críticas em testes de Manha.","Máquinas":"Perda e falhas críticas em testes de Máquinas.","Medicina":"Perda e falhas críticas em testes de Medicina.","Mística":"Perda e falhas críticas em testes de Mística.","Percepção":"Perda e falhas críticas em testes de Percepção.","Saber":"Perda e falhas críticas em testes de Saber.","Sobrevivência":"Perda e falhas críticas em testes de Sobrevivência."}};
+window.SUBOPCOES = {
+"Ajudante":{"Curandeiro":"Cura 2D PV ou permite repetir teste de R contra efeito negativo. Custo: 2PM.","Especialista":"Ganho em um teste de uma perícia escolhida (exceto atacar/defender). Custo: 2PM.","Familiar":"Gasta 1PM para ser invocado e reduz à metade o custo de outra vantagem na rodada. Custo: 1PM.","Lutador":"Ganho em um teste de ataque, ou em testes de defesa por uma rodada. Custo: 2PM.","Montaria":"Movimento extra, ou Ganho em iniciativa ou perseguição. Custo: 1PM."},
+  "Ataque Especial":{"Área":"Todos Perto do alvo também recebem o ataque. Custo: 3PM.","Choque":"Ataca com R em vez de P. Bônus/penalidades de P passam para R. Custo: 1PM.","Distante":"Alcança um passo de distância além (cumulativo com Alcance). Custo: 1PM.","Espiritual":"Alvo perde PM em vez de PV. Custo: 1PM.","Múltiplo":"Atinge mais alvos ao alcance. 1PM por alvo extra (máx = H). Custo: 1PM/alvo.","Penetrante":"Alvo tem Perda de defesa. Custo: 2PM.","Perigoso":"Crítico com 5 ou 6. Custo: 1PM.","Potente":"P+2 no ataque. Pode comprar mais vezes para P+4, P+6... Custo: 1PM por P+2.","Preciso":"Ataca com H em vez de P. Bônus/penalidades de P passam para H. Custo: 1PM.","Titânico":"Crítico automático no ataque. Custo: 3PM."},
+  "Defesa Especial":{"Blindada":"Defesa consegue crítico com 5 ou 6. Custo: 1PM.","Bloqueio":"Defende com P em vez de R. Custo: 1PM.","Esquiva":"Defende com H em vez de R. Custo: 1PM.","Proteção":"Usa sua defesa por um aliado Perto. Se o ataque causa dano, o aliado o recebe. Custo: 1PM.","Provocação":"Recebe ataque destinado a aliado Perto. Você defende e recebe o dano. Custo: 1PM.","Reflexão":"Se sua defesa > ataque do adversário, ele sofre a diferença como dano. Custo: 1PM.","Tenaz":"R+2 na defesa. Pode comprar mais vezes. Custo: 1PM por +2.","Titânica":"Crítico automático na defesa, considerada perfeita com qualquer resultado. Custo: 3PM."},
+  "Imune":{"Abiótico":"Você não tem necessidades biológicas básicas: comer, beber, respirar ou dormir (mas ainda precisa descansar para recuperar recursos).","Anfíbio":"Você respira e se move normalmente embaixo d'água, sem terreno difícil nem pressão submarina.","Doenças":"Você é imune a doenças naturais ou mágicas.","Resiliente":"Você não se cansa por esforço intenso prolongado. Qualquer lugar de descanso é considerado ideal.","Sem Mente":"Você é imune a magias e efeitos que afetam a mente, como telepatia."},
+  "Inimigo":{"Humanos":"Crítico com 5 ou 6 contra Humanos. Custo: 2pt (grupo abundante).","Humanoides":"Crítico com 5 ou 6 contra Humanoides (elfos, goblins, anões, kemono...). Custo: 1pt.","Construtos":"Crítico com 5 ou 6 contra Construtos (androides, ciborgues, golems...). Custo: 1pt.","Espíritos":"Crítico com 5 ou 6 contra Espíritos (abissais, celestiais, fantasmas, vampiros...). Custo: 1pt.","Monstros":"Crítico com 5 ou 6 contra Monstros (aberrantes, aliens, kaiju...). Custo: 1pt."},
+  "Arena":{"Água":"Gaste 2PM para Ganho em testes em ambientes aquáticos (praia, barcos, chuva, embaixo d'água).","Céu":"Gaste 2PM para Ganho em testes no ar (só vale se oponente também está voando).","Cidades":"Gaste 2PM para Ganho em testes em ambientes urbanos (ruas, telhados, prédios, corredores).","Ermos":"Gaste 2PM para Ganho em testes em ambientes selvagens (desertos, florestas, montanhas).","Subterrâneo":"Gaste 2PM para Ganho em testes em ambientes subterrâneos (cavernas, arcas, esgotos)."},
+  "Sentido":{"Aguçado":"Escolha um sentido (audição, faro, paladar, tato ou visão). Ganho em Percepção usando esse sentido.","Infravisão":"Percebe seres de sangue quente e enxerga no escuro (exceto perto de calor intenso).","Intuição":"Percebe intenções ocultas: mentiras, segredos, intenção de ataque ou traição.","Radar":"Percebe tudo em volta mesmo de costas ou no escuro. Pode 'ouvir' rádio, TV, celular e wi-fi.","Raio X":"Vê através de portas e paredes, exceto materiais muito densos (metal) ou mágicos."},
+  "Maestria":{"Animais":"Mestre em Animais. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Arte":"Mestre em Arte. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Esporte":"Mestre em Esporte. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Influência":"Mestre em Influência. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Luta":"Mestre em Luta. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Manha":"Mestre em Manha. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Máquinas":"Mestre em Máquinas. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Medicina":"Mestre em Medicina. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Mística":"Mestre em Mística. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Percepção":"Mestre em Percepção. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Saber":"Mestre em Saber. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia.","Sobrevivência":"Mestre em Sobrevivência. Gaste 1PM para crítico com 5 ou 6 em testes dessa perícia."},
+  "Mentor":{"Animais":"Aprendeu Animais com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Animais gastam -1PM.","Arte":"Aprendeu Arte com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Arte gastam -1PM.","Esporte":"Aprendeu Esporte com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Esporte gastam -1PM.","Influência":"Aprendeu Influência com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Influência gastam -1PM.","Luta":"Aprendeu Luta com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Luta gastam -1PM.","Manha":"Aprendeu Manha com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Manha gastam -1PM.","Máquinas":"Aprendeu Máquinas com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Máquinas gastam -1PM.","Medicina":"Aprendeu Medicina com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Medicina gastam -1PM.","Mística":"Aprendeu Mística com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Mística gastam -1PM.","Percepção":"Aprendeu Percepção com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Percepção gastam -1PM.","Saber":"Aprendeu Saber com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Saber gastam -1PM.","Sobrevivência":"Aprendeu Sobrevivência com um mestre. 1x por cena: Ganho em teste dessa perícia. Técnicas com Sobrevivência gastam -1PM."},
+  "Código":{"Asimov 1ª":"Jamais causar mal a um ser humano ou, por omissão, permitir que um humano sofra qualquer mal.","Asimov 2ª":"Sempre obedecer a seres humanos, exceto quando suas ordens violam outro Código que você tenha.","Caçador":"Nunca matar filhotes ou gestantes. Nunca abandonar uma caça. Sempre escolher o inimigo mais perigoso. Nunca permitir fuga.","Combate":"Nunca atacar um oponente em condição desfavorável (em Perda) ou de escala inferior.","Derrota":"Nunca seguir lutando depois de derrotado. Aceitar qualquer condição do vitorioso.","Gratidão":"Sempre que alguém presta um grande favor a você ou ente querido, fica a serviço dessa pessoa até devolver o favor.","Heróis":"Sempre cumprir sua palavra, proteger os mais fracos, jamais recusar um pedido de ajuda.","Honestidade":"Nunca mentir, roubar, trapacear ou desobedecer às leis locais.","Redenção":"Nunca atacar primeiro, sempre aceitar rendição, sempre poupar oponentes derrotados."},
+  "Transtorno":{"Cleptomania":"Rouba coisas desnecessariamente. Deve fazer teste para resistir à chance de roubar. Nunca devolve.","Compulsão":"Precisa fazer algo várias vezes por dia. Perda em todos os testes até cumprir a compulsão na cena.","Distração":"Não consegue críticos em algo que não o interessa.","Fantasia":"Acredita ser algo que não é. Fala sobre isso o tempo todo. Perda em testes sociais.","Fobia":"Medo terrível de algo. Quando está Perto, só pode fazer movimentos (não ações). Teste R(9) para agir.","Megalomania":"Acredita ser invencível. Nunca se rende, continua lutando mesmo após ser derrotado.","Mitomania":"Nunca diz a verdade. Precisa de um teste para dizer algo verdadeiro.","Paranoia":"Não confia em ninguém. Teste para aceitar qualquer ajuda. Descanso recupera metade dos recursos."},
+  "Inapto":{"Animais":"Perda e falhas críticas em testes de Animais.","Arte":"Perda e falhas críticas em testes de Arte.","Esporte":"Perda e falhas críticas em testes de Esporte.","Influência":"Perda e falhas críticas em testes de Influência.","Luta":"Perda e falhas críticas em testes de Luta.","Manha":"Perda e falhas críticas em testes de Manha.","Máquinas":"Perda e falhas críticas em testes de Máquinas.","Medicina":"Perda e falhas críticas em testes de Medicina.","Mística":"Perda e falhas críticas em testes de Mística.","Percepção":"Perda e falhas críticas em testes de Percepção.","Saber":"Perda e falhas críticas em testes de Saber.","Sobrevivência":"Perda e falhas críticas em testes de Sobrevivência."}
+};
 </script>
 <script type="text/babel">
 const {useState,useEffect,useRef,useMemo,useLayoutEffect} = React;
@@ -114,6 +126,11 @@ const Icon = ({n,s='16'}) => {
 
 const Btn = ({onClick,children,style={},className=''}) => (
   <button onClick={onClick} className={'cbtn '+className} style={style}>{children}</button>
+);
+
+const NumInput = ({value,onChange,style={}}) => (
+  <input type="number" value={value} onChange={e=>onChange(parseInt(e.target.value)||0)}
+    style={{width:60,textAlign:'center',fontSize:24,fontWeight:900,padding:'4px',...style}} />
 );
 
 const Stepper = ({value,onChange,min=0}) => (
@@ -174,7 +191,7 @@ const ListSection = ({title,color,items,suggestions,onAdd,onUpdate,onRemove}) =>
                   onChange={e=>onUpdate(item.id,'nome',e.target.value)}
                   style={{flex:'2 1 120px',fontSize:13,fontWeight:700,padding:'3px 6px'}} />
                 {subOpts && <datalist id={subId}>{subOpts.map(o=><option key={o} value={o}/>)}</datalist>}
-                <input list={subOpts?subId:undefined} placeholder="Detalhe/Opção" value={item.detalhe||''}
+                <input list={subId} placeholder="Detalhe/Opção" value={item.detalhe||''}
                   onChange={e=>onUpdate(item.id,'detalhe',e.target.value)}
                   style={{flex:'2 1 100px',fontSize:12,padding:'3px 6px',fontStyle:'italic'}} />
                 <input type="number" placeholder="Pts" value={item.custo}
@@ -277,7 +294,7 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:16}}>
           {['poder','habilidade','resistencia'].map(a=>(
             <button key={a} onClick={()=>setAttr(a)} style={{
-              background:attr===a?colors[a]+'22':'rgba(0,0,0,0.4)',
+              background:attr===a?`${colors[a]}22`:'rgba(0,0,0,0.4)',
               border:`1px solid ${attr===a?colors[a]:'rgba(0,229,255,0.2)'}`,
               color:attr===a?colors[a]:'rgba(0,229,255,0.5)',
               borderRadius:6,padding:'10px 4px',cursor:'pointer',
@@ -320,7 +337,7 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
           width:'100%',padding:14,background:'rgba(0,229,255,0.1)',border:'1px solid #00e5ff',
           color:'#00e5ff',fontFamily:'Orbitron',fontSize:12,letterSpacing:2,cursor:'pointer',
           borderRadius:6,marginBottom:12,textTransform:'uppercase'
-        }}>{rolling?'ROLANDO...':('ROLAR '+dice+'D + '+(attrs[attr]||0))}</button>
+        }}>{rolling?'ROLANDO...':('ROLAR '+dice+'D + '+( attrs[attr]||0))}</button>
         <div style={{background:'rgba(0,0,0,0.6)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,minHeight:100,padding:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
           {rolling && <div style={{width:32,height:32,border:'3px solid rgba(0,229,255,0.2)',borderTop:'3px solid #00e5ff',borderRadius:'50%',animation:'roll 0.6s linear infinite'}} />}
           {!rolling && roll && (
@@ -373,12 +390,12 @@ const App = () => {
   const [sidebar,setSidebar] = useState(false);
   const [dice,setDice] = useState(false);
   const [kitIn,setKitIn] = useState('');
-  const [lobby,setLobby] = useState(false);
-  const [lobbyMode,setLobbyMode] = useState(null);
-  const [lobbyId,setLobbyId] = useState('');
-  const [joinId,setJoinId] = useState('');
-  const [connected,setConnected] = useState(false);
-  const [rolls,setRolls] = useState([]);
+  const [lobby, setLobby] = useState(false);
+  const [lobbyMode, setLobbyMode] = useState(null);
+  const [lobbyId, setLobbyId] = useState('');
+  const [joinId, setJoinId] = useState('');
+  const [connected, setConnected] = useState(false);
+  const [rolls, setRolls] = useState([]);
   const peerRef = useRef(null);
   const connsRef = useRef([]);
   const clientRef = useRef(null);
@@ -404,7 +421,7 @@ const App = () => {
       if(data&&data.id){
         const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:{...EMPTY.inventario,...(data.inventario||{})}};
         setSheets(p=>{const f=p.filter(x=>x.id!==s.id);return [...f,s];});
-        alert('☁️ Ficha de "'+(s.nome||'Jogador')+'" importada!');
+        alert('☁️ Ficha de "'+( s.nome||'Jogador')+'" importada!');
       } else alert('❌ Nenhuma ficha encontrada.');
     } catch(e){alert('❌ Erro ao buscar da nuvem.');}
   };
@@ -492,9 +509,9 @@ const App = () => {
         if(info){if(!u.custo||u.custo==='')u.custo=(info.c.match(/-?\d+/)||[''])[0]; u.descricao=info.d;}
         u.detalhe='';
       }
-      if(f==='detalhe'&&v){
-        const sub = SUBOPCOES[item.nome]&&SUBOPCOES[item.nome][v];
-        if(sub) u.descricao=sub;
+      if(f==='detalhe' && v){
+        const sub = SUBOPCOES[item.nome]?.[v];
+        if(sub) u.descricao = sub;
       }
       return u;
     });
@@ -524,8 +541,9 @@ const App = () => {
   const exportJ = () => {const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(char));const a=document.createElement('a');a.href=d;a.download=(char.nome||'personagem')+'_3det.json';document.body.appendChild(a);a.click();a.remove();};
   const importJ = e => {const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{try{const l=JSON.parse(ev.target.result);if(!l.inventario)l.inventario=EMPTY.inventario;if(!l.kits)l.kits=[];if(!l.id)l.id=Date.now();setChar({...EMPTY,...l});alert('Ficha carregada!');}catch(err){alert('Erro ao ler arquivo.');}e.target.value=null;};r.readAsText(f);}};
 
+  const s = {position:'relative',zIndex:1};
   return (
-    <div style={{minHeight:'100vh',background:'var(--cb)',color:'var(--ct)',position:'relative',zIndex:1}}>
+    <div style={{...s,minHeight:'100vh',background:'var(--cb)',color:'var(--ct)'}}>
 
       {/* TOP BAR */}
       <div className="no-print" style={{position:'sticky',top:0,zIndex:100,background:'linear-gradient(90deg,var(--cb),var(--cp),var(--cb))',borderBottom:'1px solid var(--ca)',boxShadow:'0 0 20px var(--cg2)',padding:'10px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -535,10 +553,10 @@ const App = () => {
           <div className="mono" style={{color:'rgba(0,229,255,0.4)',fontSize:9,letterSpacing:3}}>◆ FICHA 3DeT VICTORY ◆</div>
         </div>
         <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-          <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>☁️ SYNC</button>
-          <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>📥 BAIXAR</button>
-          <button onClick={()=>setLobby(!lobby)} style={{background:connected?'rgba(0,230,118,0.15)':'rgba(245,158,11,0.15)',border:`1px solid ${connected?'rgba(0,230,118,0.4)':'rgba(245,158,11,0.4)'}`,color:connected?'#00e676':'#f59e0b',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>👥 {connected?'NA SALA':'VER SALA'}</button>
-          <Btn onClick={save} style={{padding:'6px 10px',fontSize:10}}>💾 SALVAR</Btn>
+          <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}} title="Sincronizar na Nuvem">☁️ <span className="hidden-xs">SINCRONIZAR</span></button>
+          <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}} title="Baixar Ficha da Nuvem">📥 <span className="hidden-xs">BAIXAR FICHA</span></button>
+          <button onClick={()=>setLobby(!lobby)} style={{background:connected?'rgba(0,230,118,0.15)':'rgba(245,158,11,0.15)',border:connected?'1px solid rgba(0,230,118,0.4)':'1px solid rgba(245,158,11,0.4)',color:connected?'#00e676':'#f59e0b',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}} title="Ver Sala">👥 <span className="hidden-xs">{connected?'NA SALA':'VER SALA'}</span></button>
+          <Btn onClick={save} style={{padding:'6px 10px',fontSize:10}}>💾 <span className="hidden-xs">SALVAR</span></Btn>
         </div>
       </div>
 
@@ -556,7 +574,7 @@ const App = () => {
           </div>
           <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
             {!connected ? (
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              <>
                 <p style={{color:'rgba(0,229,255,0.5)',fontSize:12}}>Conecte-se com seus amigos para compartilhar rolagens em tempo real.</p>
                 <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:12,display:'flex',flexDirection:'column',gap:8}}>
                   <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>CRIAR SALA (MESTRE)</div>
@@ -568,11 +586,11 @@ const App = () => {
                   <input value={joinId} onChange={e=>setJoinId(e.target.value)} placeholder="Cole o ID da sala..." style={{fontSize:12,padding:'6px 8px',fontFamily:'Share Tech Mono'}} />
                   <Btn onClick={joinLobby} style={{fontSize:10,borderColor:'rgba(0,230,118,0.4)',color:'#00e676'}}>⚡ CONECTAR</Btn>
                 </div>
-              </div>
+              </>
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                <div style={{background:'rgba(0,230,118,0.08)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:6,padding:10}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <>
+                <div style={{background:'rgba(0,230,118,0.08)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:6,padding:10,display:'flex',flexDirection:'column',gap:8}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e676'}}>● {lobbyMode==='host'?'HOST':'CONECTADO'}</span>
                     <button onClick={leaveLobby} style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:11,fontFamily:'Orbitron'}}>SAIR</button>
                   </div>
@@ -582,69 +600,61 @@ const App = () => {
                   </div>
                 </div>
                 <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',textTransform:'uppercase',borderBottom:'1px solid rgba(0,229,255,0.1)',paddingBottom:4}}>Log de Rolagens</div>
-                {rolls.length===0
-                  ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic'}}>Faça uma rolagem para aparecer aqui.</p>
-                  : rolls.map(r=>(
-                    <div key={r.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:10}}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-                        <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>{r.player}</span>
-                        <span style={{fontSize:9,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono'}}>{r.time}</span>
-                      </div>
-                      <div style={{display:'flex',alignItems:'center',gap:10}}>
-                        <span style={{fontFamily:'Orbitron',fontSize:22,fontWeight:900,color:r.roll.fail?'#ff1744':'#00e5ff'}}>{r.roll.fail?'FALHA':r.roll.total}</span>
-                        <div>
-                          <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textTransform:'uppercase'}}>{r.roll.attr} ({r.roll.dice}D)</div>
-                          <div style={{display:'flex',gap:3,marginTop:2}}>
-                            {r.roll.res.map((v,i)=>(
-                              <span key={i} style={{width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,borderRadius:2,background:v>=r.roll.crit?'rgba(255,214,0,0.2)':'rgba(0,229,255,0.08)',color:v>=r.roll.crit?'#ffd600':'#00e5ff',border:'1px solid rgba(0,229,255,0.15)'}}>{v}</span>
-                            ))}
-                          </div>
+                {rolls.length===0 ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic'}}>Faça uma rolagem para aparecer aqui.</p>
+                : rolls.map(r=>(
+                  <div key={r.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:10}}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                      <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff'}}>{r.player}</span>
+                      <span style={{fontSize:9,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono'}}>{r.time}</span>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <span style={{fontFamily:'Orbitron',fontSize:22,fontWeight:900,color:r.roll.fail?'#ff1744':'#00e5ff'}}>{r.roll.fail?'FALHA':r.roll.total}</span>
+                      <div>
+                        <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textTransform:'uppercase'}}>{r.roll.attr} ({r.roll.dice}D)</div>
+                        <div style={{display:'flex',gap:3,marginTop:2}}>
+                          {r.roll.res.map((v,i)=><span key={i} style={{width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,borderRadius:2,background:v>=r.roll.crit?'rgba(255,214,0,0.2)':'rgba(0,229,255,0.08)',color:v>=r.roll.crit?'#ffd600':'#00e5ff',border:'1px solid rgba(0,229,255,0.15)'}}>{v}</span>)}
                         </div>
                       </div>
                     </div>
-                  ))
-                }
-              </div>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </div>
-      )}
+      )}}
 
       {/* SIDEBAR */}
-      {sidebar && (
-        <div>
-          <div onClick={()=>setSidebar(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.85)',zIndex:200}} />
-          <div style={{position:'fixed',top:0,left:0,bottom:0,width:300,background:'var(--cp)',borderRight:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
-            <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:13}}>BIBLIOTECA</span>
-              <button onClick={()=>setSidebar(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
-            </div>
-            <div style={{padding:12,borderBottom:'1px solid rgba(0,229,255,0.1)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-              <Btn onClick={()=>{if(window.confirm('Nova ficha?')){setChar({...EMPTY,id:Date.now()});setSidebar(false);}}} style={{fontSize:10,padding:'6px 8px'}}>+ Nova Ficha</Btn>
-              <Btn onClick={()=>impRef.current.click()} style={{fontSize:10,padding:'6px 8px'}}>📂 Importar</Btn>
-              <input ref={impRef} type="file" accept=".json" onChange={importJ} style={{display:'none'}} />
-            </div>
-            <div style={{flex:1,overflowY:'auto',padding:12,display:'flex',flexDirection:'column',gap:8}}>
-              {sheets.length===0
-                ? <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center',fontSize:12,marginTop:20}}>Nenhuma ficha salva.</p>
-                : sheets.map(sh=>(
-                  <div key={sh.id} onClick={()=>{setChar({...EMPTY,...sh,kits:sh.kits||[]});setSidebar(false);}}
-                    style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:10,cursor:'pointer',display:'flex',alignItems:'center',gap:10,position:'relative'}}>
-                    {sh.foto && <img src={sh.foto} style={{width:36,height:36,borderRadius:4,objectFit:'cover'}} alt="" />}
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:700,fontSize:13,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sh.nome||'Sem Nome'}</div>
-                      <div style={{fontSize:10,color:'rgba(0,229,255,0.4)'}}>{sh.arquetipo||'—'}</div>
-                    </div>
-                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Remover?')){const n=sheets.filter(s=>s.id!==sh.id);localStorage.setItem('3det_v2',JSON.stringify(n));setSheets(n);}}}
-                      style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:14}}>×</button>
-                  </div>
-                ))
-              }
-            </div>
-            <div style={{padding:8,textAlign:'center',fontSize:9,color:'rgba(0,229,255,0.2)',fontFamily:'Share Tech Mono'}}>Armazenado no navegador</div>
+      {sidebar && <>
+        <div onClick={()=>setSidebar(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.85)',zIndex:200}} />
+        <div style={{position:'fixed',top:0,left:0,bottom:0,width:300,background:'var(--cp)',borderRight:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
+          <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:13}}>BIBLIOTECA</span>
+            <button onClick={()=>setSidebar(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
           </div>
+          <div style={{padding:12,borderBottom:'1px solid rgba(0,229,255,0.1)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <Btn onClick={()=>{if(window.confirm('Nova ficha?')){setChar({...EMPTY,id:Date.now()});setSidebar(false);}}} style={{fontSize:10,padding:'6px 8px'}}>+ Nova Ficha</Btn>
+            <Btn onClick={()=>impRef.current.click()} style={{fontSize:10,padding:'6px 8px'}}>📂 Importar</Btn>
+            <input ref={impRef} type="file" accept=".json" className="hidden" onChange={importJ} style={{display:'none'}} />
+          </div>
+          <div style={{flex:1,overflowY:'auto',padding:12,display:'flex',flexDirection:'column',gap:8}}>
+            {sheets.length===0 ? <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center',fontSize:12,marginTop:20}}>Nenhuma ficha salva.</p>
+            : sheets.map(sh=>(
+              <div key={sh.id} onClick={()=>{setChar({...EMPTY,...sh,kits:sh.kits||[]});setSidebar(false);}}
+                style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:10,cursor:'pointer',display:'flex',alignItems:'center',gap:10,position:'relative'}}>
+                {sh.foto && <img src={sh.foto} style={{width:36,height:36,borderRadius:4,objectFit:'cover'}} />}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sh.nome||'Sem Nome'}</div>
+                  <div style={{fontSize:10,color:'rgba(0,229,255,0.4)'}}>{sh.arquetipo||'—'}</div>
+                </div>
+                <button onClick={e=>{e.stopPropagation();if(window.confirm('Remover?')){const n=sheets.filter(s=>s.id!==sh.id);localStorage.setItem('3det_v2',JSON.stringify(n));setSheets(n);}}}
+                  style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:14}}>×</button>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:8,textAlign:'center',fontSize:9,color:'rgba(0,229,255,0.2)',fontFamily:'Share Tech Mono'}}>Armazenado no navegador</div>
         </div>
-      )}
+      </>}
 
       {/* MAIN */}
       <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 16px',position:'relative',zIndex:1}}>
@@ -652,22 +662,23 @@ const App = () => {
         {/* HEADER CARD */}
         <div className="panel" style={{padding:20,marginBottom:20}}>
           <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
-            <div onClick={()=>fileRef.current.click()} style={{width:140,height:140,borderRadius:8,background:'rgba(0,0,0,0.6)',border:'2px dashed rgba(0,229,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,overflow:'hidden'}}>
-              {char.foto
-                ? <img src={char.foto} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="" />
-                : <div style={{textAlign:'center',color:'rgba(0,229,255,0.3)'}}>
-                    <div style={{fontSize:28,marginBottom:4}}>📷</div>
-                    <div style={{fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>Foto</div>
-                  </div>
-              }
+            {/* FOTO */}
+            <div onClick={()=>fileRef.current.click()} style={{width:140,height:140,borderRadius:8,background:'rgba(0,0,0,0.6)',border:'2px dashed rgba(0,229,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,overflow:'hidden',position:'relative'}}>
+              {char.foto ? <img src={char.foto} style={{width:'100%',height:'100%',objectFit:'cover'}} /> :
+                <div style={{textAlign:'center',color:'rgba(0,229,255,0.3)'}}>
+                  <div style={{fontSize:28,marginBottom:4}}>📷</div>
+                  <div style={{fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>Foto</div>
+                </div>}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onloadend=()=>setChar(c=>({...c,foto:r.result}));r.readAsDataURL(f);}}} />
 
+            {/* FIELDS */}
             <div style={{flex:1,minWidth:260,display:'flex',flexDirection:'column',gap:12}}>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <div>
                   <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Nome</label>
-                  <input value={char.nome} onChange={e=>setChar(c=>({...c,nome:e.target.value}))} placeholder="Nome do Personagem" style={{width:'100%',fontSize:18,fontWeight:700,padding:'6px 10px',fontFamily:'Orbitron'}} />
+                  <input value={char.nome} onChange={e=>setChar(c=>({...c,nome:e.target.value}))}
+                    placeholder="Nome do Personagem" style={{width:'100%',fontSize:18,fontWeight:700,padding:'6px 10px',fontFamily:'Orbitron'}} />
                 </div>
                 <div>
                   <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.6)',display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Arquétipo</label>
@@ -691,6 +702,7 @@ const App = () => {
                 </div>
               </div>
 
+              {/* KITS */}
               <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:12}}>
                 <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff',marginBottom:8,textTransform:'uppercase'}}>👑 Kits ({(char.kits||[]).length})</div>
                 <div className="no-print" style={{display:'flex',gap:8,marginBottom:8}}>
@@ -728,7 +740,7 @@ const App = () => {
           <div className="panel" style={{padding:20}}>
             <div style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16,textTransform:'uppercase'}}>⭐ Atributos</div>
             {[['poder','#ff1744'],['habilidade','#00e5ff'],['resistencia','#00e676']].map(([a,c])=>(
-              <div key={a} style={{background:'rgba(0,0,0,0.4)',borderLeft:'3px solid '+c,borderRadius:6,padding:'10px 12px',marginBottom:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div key={a} style={{background:'rgba(0,0,0,0.4)',border:`2px solid ${c}22`,borderLeft:`3px solid ${c}`,borderRadius:6,padding:'10px 12px',marginBottom:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{fontFamily:'Orbitron',fontSize:11,color:c,textTransform:'uppercase'}}>{a.slice(0,1).toUpperCase()+a.slice(1)}</span>
                 <Stepper value={char.atributos[a]} onChange={v=>setChar(c=>({...c,atributos:{...c.atributos,[a]:Math.max(0,v)}}))} />
               </div>
@@ -752,7 +764,7 @@ const App = () => {
           </div>
         </div>
 
-        {/* LISTAS */}
+        {/* PERÍCIAS / VANTAGENS / DESVANTAGENS */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:20}}>
           <ListSection title="Perícias" color="blue" items={char.pericias} suggestions={PERICIAS} onAdd={()=>addItem('pericias')} onUpdate={(id,f,v)=>updItem('pericias',id,f,v)} onRemove={id=>remItem('pericias',id)} />
           <ListSection title="Vantagens" color="green" items={char.vantagens} suggestions={LISTA_VANT} onAdd={()=>addItem('vantagens')} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
@@ -769,7 +781,7 @@ const App = () => {
             {char.tecnicas.map(t=>(
               <div key={t.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:10,position:'relative'}}>
                 <input placeholder="Nome da Técnica" value={t.nome} onChange={e=>updItem('tecnicas',t.id,'nome',e.target.value)}
-                  style={{width:'100%',fontSize:13,fontWeight:700,padding:'3px 6px',marginBottom:6,background:'transparent',border:'none',borderBottom:'1px solid rgba(0,229,255,0.15)',color:'var(--ct)',outline:'none'}} />
+                  style={{width:'100%',fontSize:13,fontWeight:700,padding:'3px 6px',marginBottom:6,borderBottom:'1px solid rgba(0,229,255,0.15)',background:'transparent',border:'none',borderBottom:'1px solid rgba(0,229,255,0.15)'}} />
                 <input placeholder="Custo / Alcance / Duração" value={t.custo} onChange={e=>updItem('tecnicas',t.id,'custo',e.target.value)}
                   style={{width:'100%',fontSize:10,padding:'2px 6px',marginBottom:4}} />
                 <textarea placeholder="Descrição do efeito..." value={t.descricao||''} onChange={e=>updItem('tecnicas',t.id,'descricao',e.target.value)}
@@ -786,10 +798,8 @@ const App = () => {
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid rgba(0,229,255,0.15)',paddingBottom:8,marginBottom:16,flexWrap:'wrap',gap:8}}>
             <span style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',textTransform:'uppercase'}}>🎒 Inventário</span>
             <select value={char.nivelInv||0} onChange={e=>setChar(c=>({...c,nivelInv:parseInt(e.target.value)}))} style={{fontSize:12,padding:'4px 8px',fontFamily:'Orbitron'}}>
-              <option value={0}>0pt (Padrão)</option>
-              <option value={1}>1pt (Pequeno)</option>
-              <option value={2}>2pt (Grande)</option>
-              <option value={3}>3pt (Supremo)</option>
+              <option value={0}>0pt (Padrão)</option><option value={1}>1pt (Pequeno)</option>
+              <option value={2}>2pt (Grande)</option><option value={3}>3pt (Supremo)</option>
             </select>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
