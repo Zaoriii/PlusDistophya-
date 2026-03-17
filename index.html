@@ -947,17 +947,127 @@ const App = () => {
   const [lobby,setLobby] = useState(false);
   const [lobbyMode,setLobbyMode] = useState(null);
   const [lobbyId,setLobbyId] = useState('');
+  const [campanha,setCampanha] = useState(false);
+  const [campanhaData,setCampanhaData] = useState(null);
+  const [campanhaCode,setCampanhaCode] = useState('');
+  const [campanhaJoinCode,setCampanhaJoinCode] = useState('');
+  const [campanhaLoading,setCampanhaLoading] = useState(false);
+  const [campanhaFichas,setCampanhaFichas] = useState({});
+  const [campanhaFichaAberta,setCampanhaFichaAberta] = useState(null);
+  const campPollingRef = useRef(null);
   const [joinId,setJoinId] = useState('');
   const [connected,setConnected] = useState(false);
   const [rolls,setRolls] = useState([]);
   const [lobbyPlayers,setLobbyPlayers] = useState({});
   const [iniciativas,setIniciativas] = useState([]);
+  const [npcNome,setNpcNome] = useState('');
+  const [npcHabil,setNpcHabil] = useState(0);
   const [arqPreviewOpen,setArqPreviewOpen] = useState(false);
   const peerRef = useRef(null);
   const connsRef = useRef([]);
   const clientRef = useRef(null);
 
   const FIREBASE = "https://ficha-editavel-3det-default-rtdb.firebaseio.com";
+
+  // ── CAMPANHA ──────────────────────────────────────────────────
+  const gerarCodigoCamp = () => 'CAMP-'+Math.random().toString(36).substring(2,6).toUpperCase();
+
+  const criarCampanha = async (nome) => {
+    if(!nome.trim()) return;
+    setCampanhaLoading(true);
+    try {
+      const code = gerarCodigoCamp();
+      const data = {code,nome:nome.trim(),mestre:char.nome||'Mestre',criadoEm:Date.now(),fichas:{}};
+      await fetch(`${FIREBASE}/campanhas/${code}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+      navigator.clipboard.writeText(code).catch(()=>{});
+      setCampanhaData(data);
+      setCampanhaCode(code);
+      localStorage.setItem('3det_campanha',JSON.stringify(data));
+      iniciarPollingCampanha(code);
+      alert('✅ Campanha criada!\n\nCódigo: '+code+'\n\nJá copiado! Compartilhe com seus jogadores.');
+    } catch(e){alert('❌ Erro ao criar campanha.');}
+    setCampanhaLoading(false);
+  };
+
+  const entrarCampanha = async (code) => {
+    if(!code.trim()){alert('Digite o código da campanha.');return;}
+    setCampanhaLoading(true);
+    try {
+      const res = await fetch(`${FIREBASE}/campanhas/${code.trim().toUpperCase()}.json`);
+      const data = await res.json();
+      if(!data||!data.code){alert('❌ Campanha não encontrada.');setCampanhaLoading(false);return;}
+      setCampanhaData(data);
+      setCampanhaCode(data.code);
+      localStorage.setItem('3det_campanha',JSON.stringify(data));
+      iniciarPollingCampanha(data.code);
+    } catch(e){alert('❌ Erro ao entrar na campanha.');}
+    setCampanhaLoading(false);
+  };
+
+  const registrarFichaNaCampanha = async () => {
+    if(!campanhaCode){alert('Entre em uma campanha primeiro.');return;}
+    if(!char.nome){alert('Sua ficha precisa ter um nome.');return;}
+    setCampanhaLoading(true);
+    try {
+      const fichaId = 'jogador-'+(char.id||Date.now());
+      const fichaResumida = {
+        id:fichaId,nome:char.nome,arquetipo:char.arquetipo,
+        atributos:char.atributos,recursos:char.recursos,
+        kits:(char.kits||[]).map(k=>k.nome),
+        vantagens:char.vantagens.slice(0,20),
+        desvantagens:char.desvantagens.slice(0,20),
+        pericias:char.pericias.slice(0,20),
+        tecnicas:char.tecnicas.slice(0,20),
+        inventario:char.inventario,
+        anotacoes:char.anotacoes,historia:char.historia,
+        foto:null, // não salva foto para economizar espaço
+        atualizadoEm:Date.now()
+      };
+      await fetch(`${FIREBASE}/campanhas/${campanhaCode}/fichas/${fichaId}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(fichaResumida)});
+      alert('✅ Ficha de "'+char.nome+'" registrada na campanha!');
+      buscarFichasCampanha(campanhaCode);
+    } catch(e){alert('❌ Erro ao registrar ficha.');}
+    setCampanhaLoading(false);
+  };
+
+  const buscarFichasCampanha = async (code) => {
+    try {
+      const res = await fetch(`${FIREBASE}/campanhas/${code}/fichas.json`);
+      const data = await res.json();
+      setCampanhaFichas(data||{});
+    } catch(e){}
+  };
+
+  const iniciarPollingCampanha = (code) => {
+    if(campPollingRef.current) clearInterval(campPollingRef.current);
+    buscarFichasCampanha(code);
+    campPollingRef.current = setInterval(()=>buscarFichasCampanha(code), 8000);
+  };
+
+  const sairCampanha = () => {
+    if(campPollingRef.current) clearInterval(campPollingRef.current);
+    setCampanhaData(null);setCampanhaCode('');setCampanhaFichas({});
+    setCampanhaFichaAberta(null);
+    localStorage.removeItem('3det_campanha');
+  };
+
+  const removerFichaDaCampanha = async (fichaId) => {
+    if(!window.confirm('Remover esta ficha da campanha?')) return;
+    try {
+      await fetch(`${FIREBASE}/campanhas/${campanhaCode}/fichas/${fichaId}.json`,{method:'DELETE'});
+      buscarFichasCampanha(campanhaCode);
+    } catch(e){}
+  };
+
+  useEffect(()=>{
+    const saved = localStorage.getItem('3det_campanha');
+    if(saved) try{
+      const d=JSON.parse(saved);
+      setCampanhaData(d);setCampanhaCode(d.code);
+      iniciarPollingCampanha(d.code);
+    }catch(e){}
+    return ()=>{if(campPollingRef.current)clearInterval(campPollingRef.current);};
+  },[]);
 
   const syncToCloud = async () => {
     try {
@@ -1049,6 +1159,27 @@ const App = () => {
     const total = res.reduce((a,b)=>a+b,0)+habil;
     const entry = {peerId:lobbyId,nome:char.nome||'Jogador',total,res,habil,time:Date.now()};
     const novas = [...iniciativas.filter(i=>i.peerId!==lobbyId),entry].sort((a,b)=>b.total-a.total);
+    setIniciativas(novas);
+    const msg = {type:'INICIATIVA',payload:novas};
+    if(lobbyMode==='host') connsRef.current.forEach(c=>c.send(msg));
+    else if(lobbyMode==='client'&&clientRef.current) clientRef.current.send(msg);
+  };
+
+  const rolarIniciativaNpc = (npcNome, npcHabil) => {
+    const h = parseInt(npcHabil)||0;
+    const dados = Math.max(1,Math.min(3,1+h));
+    const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
+    const total = res.reduce((a,b)=>a+b,0)+h;
+    const id = 'npc-'+npcNome+'-'+Date.now();
+    const entry = {peerId:id,nome:'[NPC] '+npcNome,total,res,habil:h,time:Date.now(),isNpc:true};
+    const novas = [...iniciativas,entry].sort((a,b)=>b.total-a.total);
+    setIniciativas(novas);
+    const msg = {type:'INICIATIVA',payload:novas};
+    connsRef.current.forEach(c=>c.send(msg));
+  };
+
+  const removerEntradaIniciativa = (peerId) => {
+    const novas = iniciativas.filter(i=>i.peerId!==peerId);
     setIniciativas(novas);
     const msg = {type:'INICIATIVA',payload:novas};
     if(lobbyMode==='host') connsRef.current.forEach(c=>c.send(msg));
@@ -1166,7 +1297,8 @@ const App = () => {
         <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
           <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>☁️ SYNC</button>
           <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>📥 BAIXAR</button>
-          <button onClick={()=>setLobby(!lobby)} style={{background:connected?'rgba(0,230,118,0.15)':'rgba(245,158,11,0.15)',border:`1px solid ${connected?'rgba(0,230,118,0.4)':'rgba(245,158,11,0.4)'}`,color:connected?'#00e676':'#f59e0b',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>👥 {connected?'NA SALA':'VER SALA'}</button>
+          <button onClick={()=>setCampanha(!campanha)} style={{background:campanhaCode?'rgba(0,229,255,0.15)':'rgba(255,214,0,0.15)',border:'1px solid '+(campanhaCode?'rgba(0,229,255,0.4)':'rgba(255,214,0,0.4)'),color:campanhaCode?'#00e5ff':'#ffd600',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>⚔ {campanhaCode?'CAMPANHA':'CAMPANHA'}</button>
+          <button onClick={()=>setLobby(!lobby)} style={{background:connected?'rgba(0,230,118,0.15)':'rgba(245,158,11,0.15)',border:'1px solid '+(connected?'rgba(0,230,118,0.4)':'rgba(245,158,11,0.4)'),color:connected?'#00e676':'#f59e0b',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',textTransform:'uppercase'}}>👥 {connected?'NA SALA':'VER SALA'}</button>
           <Btn onClick={save} style={{padding:'6px 10px',fontSize:10}}>💾 SALVAR</Btn>
         </div>
       </div>
@@ -1175,6 +1307,231 @@ const App = () => {
       <button className="no-print pulse" onClick={()=>setDice(true)} style={{position:'fixed',bottom:24,right:24,zIndex:150,width:56,height:56,borderRadius:'50%',background:'var(--cp)',border:'2px solid var(--ca)',color:'var(--ca)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}} title="Rolar Dados">🎲</button>
 
       {dice && <DiceModal onClose={()=>setDice(false)} attrs={char.atributos} onRoll={broadcastRoll} />}
+
+      {/* CAMPANHA PANEL */}
+      {campanha && (
+        <div style={{position:'fixed',top:0,left:0,bottom:0,width:'min(520px,100vw)',background:'var(--cp)',borderRight:'1px solid rgba(0,229,255,0.3)',boxShadow:'0 0 40px rgba(0,229,255,0.15)',zIndex:202,display:'flex',flexDirection:'column'}}>
+          {/* Header */}
+          <div style={{padding:'14px 16px',borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.4)'}}>
+            <div>
+              <div style={{fontFamily:'Orbitron',color:'#ffd600',fontSize:13,letterSpacing:2}}>⚔ PAINEL DA CAMPANHA</div>
+              {campanhaData && <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Share Tech Mono',marginTop:2}}>{campanhaData.nome} — {campanhaCode}</div>}
+            </div>
+            <button onClick={()=>setCampanha(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:22,cursor:'pointer'}}>×</button>
+          </div>
+
+          <div style={{flex:1,overflowY:'auto',padding:14,display:'flex',flexDirection:'column',gap:12}}>
+
+            {/* SEM CAMPANHA */}
+            {!campanhaData ? (
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                <p style={{color:'rgba(0,229,255,0.5)',fontSize:11,lineHeight:1.5}}>
+                  Crie uma campanha para centralizar as fichas de todos os jogadores da sua mesa. Compartilhe o código e eles poderão se registrar!
+                </p>
+
+                {/* Criar */}
+                <div style={{background:'rgba(255,214,0,0.05)',border:'1px solid rgba(255,214,0,0.2)',borderRadius:8,padding:12}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:10,color:'#ffd600',marginBottom:8,textTransform:'uppercase'}}>👑 Criar Nova Campanha (Mestre)</div>
+                  <input id="camp-nome-input" placeholder="Nome da campanha..." style={{width:'100%',fontSize:13,padding:'7px 10px',marginBottom:8}} />
+                  <button onClick={()=>{const v=document.getElementById('camp-nome-input').value;criarCampanha(v);}}
+                    disabled={campanhaLoading}
+                    style={{width:'100%',padding:10,background:'rgba(255,214,0,0.1)',border:'1px solid #ffd600',color:'#ffd600',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:11,textTransform:'uppercase',letterSpacing:1}}>
+                    {campanhaLoading?'Criando...':'✦ Criar Campanha'}
+                  </button>
+                </div>
+
+                <div style={{textAlign:'center',color:'rgba(0,229,255,0.25)',fontSize:10,fontFamily:'Share Tech Mono'}}>— ou —</div>
+
+                {/* Entrar */}
+                <div style={{background:'rgba(0,229,255,0.04)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:8,padding:12}}>
+                  <div style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff',marginBottom:8,textTransform:'uppercase'}}>🗡 Entrar em uma Campanha (Jogador)</div>
+                  <input value={campanhaJoinCode} onChange={e=>setCampanhaJoinCode(e.target.value.toUpperCase())}
+                    placeholder="Código da campanha (ex: CAMP-A3F2)..."
+                    style={{width:'100%',fontSize:12,padding:'7px 10px',marginBottom:8,fontFamily:'Share Tech Mono'}}
+                    onKeyDown={e=>{if(e.key==='Enter')entrarCampanha(campanhaJoinCode);}}
+                  />
+                  <button onClick={()=>entrarCampanha(campanhaJoinCode)} disabled={campanhaLoading}
+                    style={{width:'100%',padding:10,background:'rgba(0,229,255,0.08)',border:'1px solid #00e5ff',color:'#00e5ff',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:11,textTransform:'uppercase',letterSpacing:1}}>
+                    {campanhaLoading?'Buscando...':'⚡ Entrar'}
+                  </button>
+                </div>
+              </div>
+
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+
+                {/* Info da campanha */}
+                <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,214,0,0.25)',borderRadius:8,padding:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                    <div>
+                      <div style={{fontFamily:'Orbitron',fontSize:12,color:'#ffd600'}}>{campanhaData.nome}</div>
+                      <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Share Tech Mono',marginTop:2}}>Mestre: {campanhaData.mestre||'—'}</div>
+                    </div>
+                    <button onClick={()=>{navigator.clipboard.writeText(campanhaCode).catch(()=>{});alert('Código copiado: '+campanhaCode);}}
+                      style={{background:'rgba(255,214,0,0.1)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>
+                      📋 {campanhaCode}
+                    </button>
+                  </div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    <button onClick={registrarFichaNaCampanha} disabled={campanhaLoading}
+                      style={{flex:1,padding:'6px 8px',background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.3)',color:'#00e5ff',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>
+                      {campanhaLoading?'..':'📤 Registrar Minha Ficha'}
+                    </button>
+                    <button onClick={()=>buscarFichasCampanha(campanhaCode)}
+                      style={{padding:'6px 8px',background:'rgba(0,229,255,0.05)',border:'1px solid rgba(0,229,255,0.15)',color:'rgba(0,229,255,0.5)',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:9}}>
+                      🔄
+                    </button>
+                    <button onClick={sairCampanha}
+                      style={{padding:'6px 8px',background:'rgba(255,23,68,0.06)',border:'1px solid rgba(255,23,68,0.2)',color:'#ff5252',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>
+                      Sair
+                    </button>
+                  </div>
+                </div>
+
+                {/* FICHAS DOS JOGADORES */}
+                <div>
+                  <div style={{fontFamily:'Orbitron',fontSize:10,color:'rgba(0,229,255,0.5)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>
+                    👥 Fichas Registradas ({Object.keys(campanhaFichas).length})
+                  </div>
+
+                  {Object.keys(campanhaFichas).length===0 ? (
+                    <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>
+                      Nenhuma ficha registrada ainda.<br/>Os jogadores devem clicar em "Registrar Minha Ficha".
+                    </p>
+                  ) : Object.entries(campanhaFichas).map(([fichaId,f])=>(
+                    <div key={fichaId} style={{marginBottom:8}}>
+                      {/* Card resumo */}
+                      <div style={{background:'rgba(0,0,0,0.5)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:8,overflow:'hidden'}}>
+                        <div style={{padding:'8px 12px',display:'flex',alignItems:'center',gap:10,cursor:'pointer',borderBottom:campanhaFichaAberta===fichaId?'1px solid rgba(0,229,255,0.15)':'none'}}
+                          onClick={()=>setCampanhaFichaAberta(campanhaFichaAberta===fichaId?null:fichaId)}>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontFamily:'Orbitron',fontSize:12,color:'#e8f4f8',fontWeight:700}}>{f.nome||'Sem nome'}</div>
+                            <div style={{fontSize:10,color:'rgba(0,229,255,0.45)',marginTop:1}}>
+                              {f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}
+                            </div>
+                          </div>
+                          {/* Recursos mini */}
+                          <div style={{display:'flex',gap:6,fontSize:10,fontFamily:'Share Tech Mono',flexShrink:0}}>
+                            <span style={{color:'#ff5252',background:'rgba(255,23,68,0.1)',padding:'1px 5px',borderRadius:3}}>♥{f.recursos?.pv??'?'}</span>
+                            <span style={{color:'#00e5ff',background:'rgba(0,229,255,0.08)',padding:'1px 5px',borderRadius:3}}>⚡{f.recursos?.pm??'?'}</span>
+                            <span style={{color:'#ffd600',background:'rgba(255,214,0,0.08)',padding:'1px 5px',borderRadius:3}}>★{f.recursos?.pa??'?'}</span>
+                          </div>
+                          <span style={{color:'rgba(0,229,255,0.3)',fontSize:12,marginLeft:4}}>{campanhaFichaAberta===fichaId?'▲':'▼'}</span>
+                        </div>
+
+                        {/* Ficha expandida */}
+                        {campanhaFichaAberta===fichaId && (
+                          <div style={{padding:12,fontSize:11,display:'flex',flexDirection:'column',gap:10}}>
+
+                            {/* Atributos */}
+                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+                              {[['Poder',f.atributos?.poder,'#ff5252'],['Habilidade',f.atributos?.habilidade,'#00e5ff'],['Resistência',f.atributos?.resistencia,'#00e676']].map(([n,v,c])=>(
+                                <div key={n} style={{background:'rgba(0,0,0,0.4)',border:'1px solid '+c+'33',borderRadius:5,padding:'5px 8px',textAlign:'center'}}>
+                                  <div style={{fontFamily:'Orbitron',fontSize:8,color:c,marginBottom:2,textTransform:'uppercase'}}>{n.slice(0,3)}</div>
+                                  <div style={{fontFamily:'Orbitron',fontSize:18,fontWeight:900,color:c}}>{v??0}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Barras PV/PM */}
+                            {[
+                              {l:'PV',cur:f.recursos?.pv,max:(f.atributos?.resistencia||0)*5||1,c:'#ff5252'},
+                              {l:'PM',cur:f.recursos?.pm,max:(f.atributos?.habilidade||0)*5||1,c:'#00e5ff'},
+                            ].map(r=>(
+                              <div key={r.l}>
+                                <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
+                                  <span style={{fontFamily:'Orbitron',fontSize:9,color:r.c}}>{r.l}</span>
+                                  <span style={{fontSize:9,color:'rgba(0,229,255,0.4)',fontFamily:'Share Tech Mono'}}>{r.cur??'?'} / {r.max}</span>
+                                </div>
+                                <div style={{height:5,background:'rgba(0,0,0,0.6)',borderRadius:3,overflow:'hidden'}}>
+                                  <div style={{height:'100%',width:(r.max>0?Math.min(100,((r.cur||0)/r.max)*100):0)+'%',background:r.c,transition:'width 0.3s'}} />
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Perícias */}
+                            {f.pericias&&f.pericias.length>0 && (
+                              <div>
+                                <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:4,textTransform:'uppercase'}}>Perícias</div>
+                                <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                                  {f.pericias.map((p,i)=>(
+                                    <span key={i} style={{fontSize:9,background:'rgba(0,229,255,0.06)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:3,padding:'1px 6px',color:'rgba(0,229,255,0.6)'}}>{p.nome}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Vantagens */}
+                            {f.vantagens&&f.vantagens.length>0 && (
+                              <div>
+                                <div style={{fontFamily:'Orbitron',fontSize:9,color:'#00e676',marginBottom:4,textTransform:'uppercase'}}>Vantagens</div>
+                                <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                                  {f.vantagens.map((v,i)=>(
+                                    <div key={i} style={{fontSize:10,padding:'2px 6px',background:'rgba(0,230,118,0.04)',border:'1px solid rgba(0,230,118,0.1)',borderRadius:3}}>
+                                      <span style={{color:'#00e676',fontWeight:700}}>{v.nome}</span>
+                                      {v.detalhe&&<span style={{color:'rgba(0,229,255,0.4)',fontSize:9}}> — {v.detalhe}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Desvantagens */}
+                            {f.desvantagens&&f.desvantagens.length>0 && (
+                              <div>
+                                <div style={{fontFamily:'Orbitron',fontSize:9,color:'#ff5252',marginBottom:4,textTransform:'uppercase'}}>Desvantagens</div>
+                                <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                                  {f.desvantagens.map((d,i)=>(
+                                    <div key={i} style={{fontSize:10,padding:'2px 6px',background:'rgba(255,23,68,0.04)',border:'1px solid rgba(255,23,68,0.1)',borderRadius:3,color:'rgba(255,82,82,0.7)'}}>
+                                      {d.nome}{d.detalhe&&<span style={{fontSize:9,color:'rgba(255,82,82,0.4)'}}> — {d.detalhe}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Técnicas */}
+                            {f.tecnicas&&f.tecnicas.length>0 && (
+                              <div>
+                                <div style={{fontFamily:'Orbitron',fontSize:9,color:'#a855f7',marginBottom:4,textTransform:'uppercase'}}>Técnicas</div>
+                                <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                                  {f.tecnicas.map((t,i)=>(
+                                    <div key={i} style={{fontSize:10,padding:'4px 6px',background:'rgba(168,85,247,0.05)',border:'1px solid rgba(168,85,247,0.12)',borderRadius:3}}>
+                                      <div style={{color:'#a855f7',fontWeight:700}}>{t.nome}</div>
+                                      {t.custo&&<div style={{fontSize:9,color:'rgba(168,85,247,0.5)'}}>{t.custo}</div>}
+                                      {t.descricao&&<div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1}}>{t.descricao}</div>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Anotações */}
+                            {f.anotacoes && (
+                              <div>
+                                <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:4,textTransform:'uppercase'}}>Anotações</div>
+                                <div style={{fontSize:10,color:'rgba(0,229,255,0.5)',background:'rgba(0,0,0,0.3)',borderRadius:4,padding:'6px 8px',lineHeight:1.5}}>{f.anotacoes}</div>
+                              </div>
+                            )}
+
+                            {/* Botão remover — só mestre */}
+                            {campanhaData.mestre===char.nome && (
+                              <button onClick={()=>removerFichaDaCampanha(fichaId)}
+                                style={{width:'100%',padding:'5px 0',background:'rgba(255,23,68,0.06)',border:'1px solid rgba(255,23,68,0.2)',color:'#ff5252',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase',marginTop:4}}>
+                                × Remover desta campanha
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* LOBBY SIDEBAR */}
       {lobby && (
@@ -1300,19 +1657,45 @@ const App = () => {
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <div style={{fontFamily:'Orbitron',fontSize:9,color:'#ffd600',textTransform:'uppercase',letterSpacing:1}}>⚔ Iniciativa</div>
                     <div style={{display:'flex',gap:4}}>
-                      <button onClick={rolarIniciativa} style={{background:'rgba(255,214,0,0.1)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>ROLAR</button>
-                      {lobbyMode==='host' && <button onClick={()=>{setIniciativas([]);const msg={type:'INICIATIVA',payload:[]};connsRef.current.forEach(c=>c.send(msg));}} style={{background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.3)',color:'#ff5252',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>LIMPAR</button>}
+                      <button onClick={rolarIniciativa} style={{background:'rgba(255,214,0,0.1)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>🎲 MEU TURNO</button>
+                      {lobbyMode==='host' && <button onClick={()=>{setIniciativas([]);const msg={type:'INICIATIVA',payload:[]};connsRef.current.forEach(c=>c.send(msg));}} style={{background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.3)',color:'#ff5252',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron'}}>✕ LIMPAR</button>}
                     </div>
                   </div>
+
+                  {/* PAINEL NPC — só mestre vê */}
+                  {lobbyMode==='host' && (
+                    <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:4,padding:6,marginBottom:8}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:8,color:'#a855f7',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>+ Adicionar NPC</div>
+                      <div style={{display:'flex',gap:4,marginBottom:4}}>
+                        <input value={npcNome} onChange={e=>setNpcNome(e.target.value)} placeholder="Nome do NPC..."
+                          style={{flex:1,fontSize:11,padding:'3px 6px'}}
+                          onKeyDown={e=>{if(e.key==='Enter'&&npcNome.trim()){rolarIniciativaNpc(npcNome.trim(),npcHabil);setNpcNome('');}}}
+                        />
+                        <input type="number" value={npcHabil} onChange={e=>setNpcHabil(e.target.value)} min={0} max={5}
+                          style={{width:36,textAlign:'center',fontSize:11,padding:'3px 2px'}} title="Habilidade do NPC"
+                        />
+                      </div>
+                      <button onClick={()=>{if(npcNome.trim()){rolarIniciativaNpc(npcNome.trim(),npcHabil);setNpcNome('');}}}
+                        style={{width:'100%',background:'rgba(168,85,247,0.12)',border:'1px solid rgba(168,85,247,0.3)',color:'#a855f7',borderRadius:4,padding:'3px 0',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>
+                        🎲 Rolar Iniciativa do NPC
+                      </button>
+                    </div>
+                  )}
+
                   {iniciativas.length===0
                     ? <p style={{color:'rgba(255,214,0,0.25)',fontSize:10,textAlign:'center',fontStyle:'italic',padding:'4px 0'}}>Nenhuma iniciativa rolada.</p>
                     : iniciativas.map((ini,idx)=>(
-                      <div key={ini.peerId+ini.time} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4,padding:'5px 8px',background:idx===0?'rgba(255,214,0,0.08)':'rgba(0,0,0,0.3)',border:'1px solid '+(idx===0?'rgba(255,214,0,0.3)':'rgba(0,229,255,0.1)'),borderRadius:4}}>
-                        <span style={{fontFamily:'Orbitron',fontSize:11,fontWeight:900,color:idx===0?'#ffd600':'#00e5ff',minWidth:20,textAlign:'center'}}>{ini.total}</span>
+                      <div key={ini.peerId+ini.time} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4,padding:'5px 8px',background:idx===0?'rgba(255,214,0,0.08)':ini.isNpc?'rgba(168,85,247,0.06)':'rgba(0,0,0,0.3)',border:'1px solid '+(idx===0?'rgba(255,214,0,0.3)':ini.isNpc?'rgba(168,85,247,0.25)':'rgba(0,229,255,0.1)'),borderRadius:4}}>
+                        <span style={{fontFamily:'Orbitron',fontSize:11,fontWeight:900,color:idx===0?'#ffd600':ini.isNpc?'#a855f7':'#00e5ff',minWidth:20,textAlign:'center'}}>{ini.total}</span>
                         <div style={{flex:1}}>
-                          <div style={{fontFamily:'Orbitron',fontSize:9,color:idx===0?'#ffd600':'#e8f4f8'}}>{idx===0?'👑 ':''}{ini.nome}</div>
+                          <div style={{fontFamily:'Orbitron',fontSize:9,color:idx===0?'#ffd600':ini.isNpc?'#a855f7':'#e8f4f8'}}>{idx===0?'👑 ':''}{ini.nome}</div>
                           <div style={{fontSize:8,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>[{ini.res.join(',')}] +H{ini.habil}</div>
                         </div>
+                        {lobbyMode==='host' && (
+                          <button onClick={()=>removerEntradaIniciativa(ini.peerId)}
+                            style={{background:'none',border:'none',color:'rgba(255,23,68,0.5)',cursor:'pointer',fontSize:12,padding:'0 2px',lineHeight:1}}
+                            title="Remover">×</button>
+                        )}
                       </div>
                     ))
                   }
