@@ -761,7 +761,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                       <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1}}>{f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}</div>
                     </div>
                     {/* ── Recursos: cyberpunk, cards largos com barra ── */}
-                    <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0,width:160}} onClick={e=>e.stopPropagation()}>
+                    <div style={{display:'flex',flexDirection:'row',gap:4,flexShrink:0}} onClick={e=>e.stopPropagation()}>
                       {[
                         {campo:'pv', label:'PV', icon:'♥', color:'#ff5252', border:'rgba(255,23,68,0.5)',  bg:'rgba(255,23,68,0.1)',  base:(f.atributos?.resistencia||0)*5||1},
                         {campo:'pm', label:'PM', icon:'⚡', color:'#00e5ff', border:'rgba(0,229,255,0.5)', bg:'rgba(0,229,255,0.08)', base:(f.atributos?.habilidade||0)*5||1},
@@ -770,44 +770,43 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                         const val = recursosLocal[f.id]?.[campo] ?? f.recursos?.[campo] ?? 0;
                         const pct = base > 0 ? Math.min(100,(val/base)*100) : 0;
                         return (
-                          <div key={campo} style={{background:bg, border:'1px solid '+border, borderRadius:8, overflow:'hidden', boxShadow:'0 0 8px '+border}}>
-                            {/* Linha: − | ícone label  valor/base | + */}
-                            <div style={{display:'flex',alignItems:'center',height:44}}>
+                          <div key={campo} style={{background:bg, border:'1px solid '+border, borderRadius:8, overflow:'hidden', boxShadow:'0 0 8px '+border, width:88}}>
+                            {/* Topo: ícone + label */}
+                            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px 4px 4px'}}>
+                              <span style={{fontSize:14,color:color,textShadow:'0 0 8px '+color}}>{icon}</span>
+                              <span style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:color,letterSpacing:1,textTransform:'uppercase',textShadow:'0 0 6px '+color}}>{label}</span>
+                            </div>
+                            {/* Valor + base */}
+                            <div style={{textAlign:'center',padding:'0 4px 2px'}}>
+                              <input
+                                type="number"
+                                value={val}
+                                onChange={e=>setRecursoExato(f.id,campo,e.target.value)}
+                                style={{
+                                  width:'100%',textAlign:'center',fontSize:24,fontWeight:900,
+                                  fontFamily:'Orbitron',color:color,background:'transparent',
+                                  border:'none',outline:'none',padding:0,
+                                  textShadow:'0 0 10px '+color
+                                }}
+                              />
+                              <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',fontFamily:'Share Tech Mono',marginTop:-2}}>/{base}</div>
+                            </div>
+                            {/* Botões − + */}
+                            <div style={{display:'flex'}}>
                               <button onClick={()=>ajustarRecurso(f.id,campo,-1)} style={{
-                                width:32,height:'100%',background:'rgba(0,0,0,0.4)',border:'none',
-                                borderRight:'1px solid '+border,color:color,cursor:'pointer',
-                                fontSize:20,fontWeight:900,display:'flex',alignItems:'center',
-                                justifyContent:'center',flexShrink:0,transition:'background 0.15s'
+                                flex:1,height:28,background:'rgba(0,0,0,0.4)',border:'none',
+                                borderTop:'1px solid '+border,borderRight:'1px solid '+border,
+                                color:color,cursor:'pointer',fontSize:18,fontWeight:900,
+                                display:'flex',alignItems:'center',justifyContent:'center',transition:'background 0.15s'
                               }}
                                 onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
                                 onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.4)'}
                               >−</button>
-                              {/* Centro */}
-                              <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 8px',gap:4}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4}}>
-                                  <span style={{fontSize:14,color:color,textShadow:'0 0 8px '+color}}>{icon}</span>
-                                  <span style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:color,letterSpacing:1,textTransform:'uppercase',textShadow:'0 0 6px '+color}}>{label}</span>
-                                </div>
-                                <div style={{display:'flex',alignItems:'baseline',gap:3}}>
-                                  <input
-                                    type="number"
-                                    value={val}
-                                    onChange={e=>setRecursoExato(f.id,campo,e.target.value)}
-                                    style={{
-                                      width:36,textAlign:'center',fontSize:22,fontWeight:900,
-                                      fontFamily:'Orbitron',color:color,background:'transparent',
-                                      border:'none',outline:'none',padding:0,
-                                      textShadow:'0 0 10px '+color
-                                    }}
-                                  />
-                                  <span style={{fontSize:11,color:'rgba(255,255,255,0.3)',fontFamily:'Share Tech Mono'}}>/{base}</span>
-                                </div>
-                              </div>
                               <button onClick={()=>ajustarRecurso(f.id,campo,+1)} style={{
-                                width:32,height:'100%',background:'rgba(0,0,0,0.4)',border:'none',
-                                borderLeft:'1px solid '+border,color:color,cursor:'pointer',
-                                fontSize:20,fontWeight:900,display:'flex',alignItems:'center',
-                                justifyContent:'center',flexShrink:0,transition:'background 0.15s'
+                                flex:1,height:28,background:'rgba(0,0,0,0.4)',border:'none',
+                                borderTop:'1px solid '+border,
+                                color:color,cursor:'pointer',fontSize:18,fontWeight:900,
+                                display:'flex',alignItems:'center',justifyContent:'center',transition:'background 0.15s'
                               }}
                                 onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
                                 onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.4)'}
