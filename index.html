@@ -1270,13 +1270,17 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   // estado local dos recursos para feedback imediato antes de salvar no Firebase
   const [recursosLocal, setRecursosLocal] = useState({}); // { [fichaId]: { pv, pm, pa } }
 
-  // ── Ficha ativa do jogador: prioriza dados registrados no Firebase ──
-  // Garante que atributos, nome e perícias estão sempre corretos mesmo se char local estiver vazio
+  // ── Ficha ativa: sempre usa char local se tiver atributos, Firebase como fallback ──
   const fichaAtiva = useMemo(() => {
     const pid = myPlayerId.current;
     const remota = fichas[pid];
-    if (remota && (remota.atributos?.poder || remota.atributos?.habilidade || remota.atributos?.resistencia)) {
-      return { ...char, ...remota, atributos: remota.atributos, pericias: remota.pericias || char.pericias };
+    // Prefere char local se tiver nome e atributos
+    if (char.nome && (char.atributos?.poder || char.atributos?.habilidade || char.atributos?.resistencia)) {
+      return char;
+    }
+    // Fallback: dados do Firebase
+    if (remota && remota.nome) {
+      return { ...EMPTY, ...remota };
     }
     return char;
   }, [fichas, char]);
@@ -1408,14 +1412,27 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     setShowSheetSelector(false);
   };
 
-  // ── publicarRolagem usa nome da ficha registrada no Firebase ──
+  // ── publicarRolagem com info completa e foto ──
   const publicarRolagem = async (rollObj, nomeJogador) => {
     if(!campCode) return;
     const nomeReal = fichaAtiva.nome || nomeJogador || char.nome || 'Desconhecido';
+    const foto = fichaAtiva.foto || char.foto || null;
+    // Monta string explícita: "2D6+3 (Habilidade) [4,2]+3 = 9"
+    const dados = rollObj.dice + 'D6';
+    const attrNome = rollObj.attr ? rollObj.attr.charAt(0).toUpperCase()+rollObj.attr.slice(1) : '';
+    const perNome = rollObj.pericia ? ' + '+rollObj.pericia : '';
+    const formula = dados + '+' + rollObj.av + (rollObj.mod && rollObj.mod!==0 ? (rollObj.mod>0?'+':'')+rollObj.mod : '');
+    const diceStr = '['+rollObj.res.join(',')+']';
+    const criStr = rollObj.crits > 0 ? ' +'+rollObj.crits+'×'+rollObj.av+'(crít)' : '';
+    const modStr = rollObj.mod && rollObj.mod!==0 ? (rollObj.mod>0?' +':' ')+rollObj.mod+'(mod)' : '';
+    const explicit = formula+' ('+attrNome+perNome+') '+diceStr+'+'+rollObj.av+criStr+modStr+' = '+(rollObj.fail?'FALHA CRÍTICA':rollObj.total);
     try {
       await fbPush(`campanhas/${campCode}/rolls`, {
         player: nomeReal,
-        roll: rollObj, ts: Date.now(),
+        foto,
+        roll: rollObj,
+        explicit,
+        ts: Date.now(),
         time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
       });
       buscarTudo(campCode);
@@ -1429,9 +1446,10 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
     const total = res.reduce((a,b)=>a+b,0)+h;
     const nomeJogador = fichaAtiva.nome || char.nome || 'Jogador';
+    const foto = fichaAtiva.foto || char.foto || null;
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${myPlayerId.current}`, {
-        id:myPlayerId.current, nome:nomeJogador, total, res, habil:h, temLuta, ts:Date.now(), isNpc:false
+        id:myPlayerId.current, nome:nomeJogador, foto, total, res, habil:h, temLuta, ts:Date.now(), isNpc:false
       });
       buscarTudo(campCode);
     } catch(e){}
@@ -1803,24 +1821,40 @@ const CampaignPanel = ({char, sheets, onClose}) => {
             {rolls.length===0
               ? <p style={{color:'rgba(0,229,255,0.2)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:12}}>Nenhuma rolagem ainda.</p>
               : rolls.map((r,idx)=>(
-                <div key={r._fbKey||idx} className="fadeIn" style={{background:'rgba(0,0,0,0.45)',border:'1px solid rgba(0,229,255,0.13)',borderRadius:6,padding:'8px 10px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                    <span style={{fontFamily:'Orbitron',fontSize:9,color:'#00e5ff',fontWeight:700}}>{r.player}</span>
+                <div key={r._fbKey||idx} className="fadeIn" style={{background:'rgba(0,0,0,0.45)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:8,padding:'8px 10px'}}>
+                  {/* Header: foto + nome + hora */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                    {r.foto
+                      ? <img src={r.foto} style={{width:28,height:28,borderRadius:4,objectFit:'cover',border:'1px solid rgba(0,229,255,0.2)',flexShrink:0}} alt="" />
+                      : <div style={{width:28,height:28,borderRadius:4,background:'rgba(0,229,255,0.06)',border:'1px solid rgba(0,229,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>👤</div>
+                    }
+                    <span style={{fontFamily:'Orbitron',fontSize:10,color:'#00e5ff',fontWeight:700,flex:1}}>{r.player}</span>
                     <span style={{fontSize:8,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono'}}>{r.time}</span>
                   </div>
+                  {/* Resultado */}
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
-                    <span style={{fontFamily:'Orbitron',fontSize:22,fontWeight:900,color:r.roll?.fail?'#ff1744':'#00e5ff'}}>
-                      {r.roll?.fail?'FALHA':r.roll?.total}
-                    </span>
-                    <div>
-                      <div style={{fontSize:8,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textTransform:'uppercase'}}>{r.roll?.attr} ({r.roll?.dice}D)</div>
-                      <div style={{display:'flex',gap:2,marginTop:2}}>
-                        {r.roll?.res?.map((v,i)=>(
-                          <span key={i} style={{width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,borderRadius:2,
-                            background:v>=(r.roll?.crit||6)?'rgba(255,214,0,0.2)':'rgba(0,229,255,0.08)',
-                            color:v>=(r.roll?.crit||6)?'#ffd600':'#00e5ff',
-                            border:'1px solid rgba(0,229,255,0.15)'}}>{v}</span>
-                        ))}
+                    <div style={{fontFamily:'Orbitron',fontSize:26,fontWeight:900,color:r.roll?.fail?'#ff1744':'#00e5ff',textShadow:'0 0 12px '+(r.roll?.fail?'rgba(255,23,68,0.5)':'rgba(0,229,255,0.4)'),minWidth:40,textAlign:'center'}}>
+                      {r.roll?.fail?'💥':r.roll?.total}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      {/* String explícita */}
+                      <div style={{fontSize:10,color:'rgba(0,229,255,0.8)',fontFamily:'Share Tech Mono',lineHeight:1.5,wordBreak:'break-all'}}>
+                        {r.explicit || (r.roll?.dice+'D6+'+r.roll?.av+' ['+r.roll?.res?.join(',')+'] = '+(r.roll?.fail?'FALHA':r.roll?.total))}
+                      </div>
+                      {/* Dados individuais */}
+                      <div style={{display:'flex',gap:3,marginTop:4,flexWrap:'wrap'}}>
+                        {r.roll?.res?.map((v,i)=>{
+                          const isCrit = v>=(r.roll?.crit||6);
+                          return (
+                            <span key={i} style={{
+                              width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',
+                              fontSize:10,fontWeight:900,borderRadius:3,
+                              background:isCrit?'rgba(255,214,0,0.2)':r.roll?.fail?'rgba(255,23,68,0.15)':'rgba(0,229,255,0.08)',
+                              color:isCrit?'#ffd600':r.roll?.fail?'#ff5252':'#00e5ff',
+                              border:'1px solid '+(isCrit?'rgba(255,214,0,0.4)':r.roll?.fail?'rgba(255,23,68,0.3)':'rgba(0,229,255,0.2)')
+                            }}>{v}</span>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1880,12 +1914,22 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                   border:'1px solid '+(idx===0?'rgba(255,214,0,0.35)':ini.isNpc?'rgba(168,85,247,0.25)':'rgba(0,229,255,0.12)'),
                   borderRadius:6
                 }}>
-                  <div style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:idx===0?'#ffd600':ini.isNpc?'#a855f7':'#00e5ff',minWidth:28,textAlign:'center'}}>{ini.total}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontFamily:'Orbitron',fontSize:9,color:idx===0?'#ffd600':ini.isNpc?'#a855f7':'#e8f4f8'}}>
+                  {/* Foto ou emoji NPC */}
+                  {ini.foto
+                    ? <img src={ini.foto} style={{width:28,height:28,borderRadius:4,objectFit:'cover',border:'1px solid rgba(0,229,255,0.2)',flexShrink:0}} alt="" />
+                    : <div style={{width:28,height:28,borderRadius:4,background:ini.isNpc?'rgba(168,85,247,0.1)':'rgba(0,229,255,0.06)',border:'1px solid rgba(0,229,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,flexShrink:0}}>{ini.isNpc?'👾':'👤'}</div>
+                  }
+                  {/* Total */}
+                  <div style={{fontFamily:'Orbitron',fontSize:18,fontWeight:900,color:idx===0?'#ffd600':ini.isNpc?'#a855f7':'#00e5ff',minWidth:28,textAlign:'center'}}>{ini.total}</div>
+                  {/* Info */}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontFamily:'Orbitron',fontSize:9,color:idx===0?'#ffd600':ini.isNpc?'#a855f7':'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                       {idx===0?'👑 ':''}{ini.nome}
                     </div>
-                    <div style={{fontSize:8,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>[{ini.res?.join(',')}] +H{ini.habil}</div>
+                    <div style={{fontSize:8,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>
+                      {ini.res?.length+'D6+H'+ini.habil+' ['+ini.res?.join(',')+'] +'+ini.habil+' = '+ini.total}
+                      {ini.temLuta?' · Luta':''}
+                    </div>
                   </div>
                   {(ehMestre||ini.id===myPlayerId.current) && (
                     <button onClick={()=>removerIniciativa(ini.id)} style={{background:'none',border:'none',color:'rgba(255,23,68,0.5)',cursor:'pointer',fontSize:14,padding:'0 2px',lineHeight:1}}>×</button>
@@ -2096,9 +2140,16 @@ const App = () => {
     if(f){const r=new FileReader();r.onload=ev=>{try{
       const l=JSON.parse(ev.target.result);
       if(!l.inventario)l.inventario={itens:[],dinheiro:''};
-      if(!l.kits)l.kits=[];if(!l.id)l.id=Date.now();
-      setChar({...EMPTY,...l,...recalcBonus(l)});alert('Ficha carregada!');
-    }catch(err){alert('Erro ao ler arquivo.');}e.target.value=null;};r.readAsText(f);}
+      if(!l.kits)l.kits=[];
+      // Se o id veio do Firebase (j-xxx), gera um novo id local
+      if(!l.id || String(l.id).startsWith('j-')) l.id=Date.now();
+      // Garante que pericias/vantagens/desvantagens/tecnicas são arrays de objetos
+      if(l.pericias && l.pericias.length>0 && typeof l.pericias[0]==='string'){
+        l.pericias = l.pericias.map(n=>({id:Date.now()+Math.random(),nome:n,detalhe:'',descricao:PERICIAS_DESC[n]||'',custo:'1'}));
+      }
+      setChar({...EMPTY,...l,...recalcBonus(l)});
+      alert('Ficha "'+l.nome+'" carregada!');
+    }catch(err){alert('Erro ao ler arquivo: '+err.message);}e.target.value=null;};r.readAsText(f);}
   };
 
   // ── Inventário simplificado ──
