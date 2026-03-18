@@ -358,9 +358,10 @@ const ListSection = ({title,color,items,suggestions,onAdd,onUpdate,onRemove}) =>
 };
 
 // ── Dice Modal ───────────────────────────────────────────────────────────────
-const DiceModal = ({onClose,attrs,onRoll}) => {
-  const [attr,setAttr] = useState('poder');
-  const [skill,setSkill] = useState(false);
+const DiceModal = ({onClose,attrs,pericias,onRoll}) => {
+  const [attr,setAttr] = useState('habilidade');
+  // perícia selecionada — detecta Luta automaticamente
+  const [periciaSel,setPericiaSel] = useState('');
   const [gain,setGain] = useState(0);
   const [loss,setLoss] = useState(0);
   const [crit,setCrit] = useState(6);
@@ -368,7 +369,12 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
   const [roll,setRoll] = useState(null);
   const [rolling,setRolling] = useState(false);
   const [hist,setHist] = useState([]);
-  const dice = Math.max(1,Math.min(3,1+(skill?1:0)+gain-loss));
+
+  // tem a perícia Luta? → 2D; senão → 1D; ganhos/perdas ajustam
+  const temLuta = pericias && pericias.some(p=>p.nome==='Luta');
+  const baseSkill = periciaSel ? 1 : 0; // qualquer perícia selecionada dá +1D
+  const dice = Math.max(1, Math.min(3, 1 + baseSkill + gain - loss));
+
   const doRoll = () => {
     if(rolling) return;
     setRolling(true);
@@ -378,12 +384,15 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
       const crits = res.filter(r=>r>=crit).length;
       const fail = res.every(r=>r===1);
       const total = res.reduce((a,b)=>a+b,0)+av+(crits*av)+mod;
-      const nr = {id:Date.now(),attr,dice,res,total,av,crits,fail,mod,crit};
+      const nr = {id:Date.now(),attr,dice,pericia:periciaSel,res,total,av,crits,fail,mod,crit};
       setRoll(nr); setHist(p=>[nr,...p].slice(0,8)); setRolling(false);
       if(onRoll) onRoll(nr);
     },500);
   };
   const colors = {poder:'#ff1744',habilidade:'#00e5ff',resistencia:'#00e676'};
+  // perícias disponíveis do personagem
+  const listaPericias = pericias ? pericias.map(p=>p.nome) : [];
+
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.92)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
       <div className="panel" style={{width:'100%',maxWidth:480,maxHeight:'90vh',overflowY:'auto',padding:20}}>
@@ -391,7 +400,9 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
           <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:14}}>🎲 TESTE 3DeT</span>
           <button onClick={onClose} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:16}}>
+
+        {/* Atributos */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
           {['poder','habilidade','resistencia'].map(a=>(
             <button key={a} onClick={()=>setAttr(a)} style={{
               background:attr===a?colors[a]+'22':'rgba(0,0,0,0.4)',
@@ -401,22 +412,71 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
               fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase',letterSpacing:0.5
             }}>
               <div style={{fontSize:11,marginBottom:2}}>{a.slice(0,3).toUpperCase()}</div>
-              <div style={{fontSize:16,fontWeight:900}}>{attrs[a]}</div>
+              <div style={{fontSize:16,fontWeight:900}}>{attrs[a]||0}</div>
             </button>
           ))}
         </div>
+
+        {/* Perícia — seletor ou toggle Luta */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>
+            Perícia <span style={{color:'rgba(0,229,255,0.25)',fontSize:8,fontFamily:'Share Tech Mono'}}>(+1D se tiver)</span>
+          </div>
+          {listaPericias.length > 0 ? (
+            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+              {/* Botão "Nenhuma" */}
+              <button onClick={()=>setPericiaSel('')} style={{
+                padding:'4px 10px',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,
+                border:'1px solid rgba(0,229,255,0.2)',
+                background:periciaSel===''?'rgba(0,229,255,0.15)':'rgba(0,0,0,0.4)',
+                color:periciaSel===''?'#00e5ff':'rgba(0,229,255,0.35)',
+                textTransform:'uppercase'
+              }}>Nenhuma</button>
+              {listaPericias.map(p=>(
+                <button key={p} onClick={()=>setPericiaSel(periciaSel===p?'':p)} style={{
+                  padding:'4px 10px',borderRadius:5,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,
+                  border:'1px solid '+(periciaSel===p?'#00e5ff':'rgba(0,229,255,0.2)'),
+                  background:periciaSel===p?'rgba(0,229,255,0.15)':'rgba(0,0,0,0.4)',
+                  color:periciaSel===p?'#00e5ff':'rgba(0,229,255,0.4)',
+                  textTransform:'uppercase'
+                }}>{p}</button>
+              ))}
+            </div>
+          ) : (
+            /* Sem ficha carregada: toggle manual */
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={()=>setPericiaSel(periciaSel?'':'Luta')} style={{
+                flex:1,padding:8,borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:9,
+                border:'1px solid '+(periciaSel?'#00e5ff':'rgba(0,229,255,0.2)'),
+                background:periciaSel?'rgba(0,229,255,0.12)':'rgba(0,0,0,0.4)',
+                color:periciaSel?'#00e5ff':'rgba(0,229,255,0.4)',
+                textTransform:'uppercase'
+              }}>{periciaSel ? '✓ COM PERÍCIA' : 'SEM PERÍCIA'}</button>
+            </div>
+          )}
+        </div>
+
+        {/* Dados + info */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-          <button onClick={()=>setSkill(!skill)} style={{
-            background:skill?'rgba(0,229,255,0.12)':'rgba(0,0,0,0.4)',
-            border:`1px solid ${skill?'#00e5ff':'rgba(0,229,255,0.2)'}`,
-            color:skill?'#00e5ff':'rgba(0,229,255,0.4)',
-            borderRadius:6,padding:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:9
-          }}>{skill?'COM PERÍCIA':'SEM PERÍCIA'}</button>
-          <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:8,textAlign:'center'}}>
+          <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:'8px 12px',textAlign:'center'}}>
             <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:4}}>DADOS</div>
-            <span style={{fontFamily:'Orbitron',fontSize:18,color:'#00e5ff',fontWeight:900}}>{dice}D</span>
+            <span style={{fontFamily:'Orbitron',fontSize:24,color:'#00e5ff',fontWeight:900}}>{dice}D6</span>
+            <div style={{fontSize:8,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono',marginTop:2}}>
+              {periciaSel ? `+1D (${periciaSel})` : '1D base'}
+            </div>
+          </div>
+          <div style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:'8px 12px',textAlign:'center'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:4}}>FÓRMULA</div>
+            <span style={{fontFamily:'Orbitron',fontSize:14,color:'#00e5ff',fontWeight:900}}>
+              {dice}D6 + {attrs[attr]||0}
+            </span>
+            <div style={{fontSize:8,color:'rgba(0,229,255,0.3)',fontFamily:'Share Tech Mono',marginTop:2}}>
+              {attr.slice(0,3).toUpperCase()} = {attrs[attr]||0}
+            </div>
           </div>
         </div>
+
+        {/* Ganhos / Perdas / Mod */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
           {[['Ganhos',gain,setGain,'#00e676'],['Perdas',loss,setLoss,'#ff1744'],['Mod',mod,setMod,'#00e5ff']].map(([label,val,setter,c])=>(
             <div key={label} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,padding:8,textAlign:'center'}}>
@@ -429,15 +489,18 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
             </div>
           ))}
         </div>
+
         <label style={{display:'flex',alignItems:'center',gap:6,marginBottom:12,fontSize:11,color:'rgba(0,229,255,0.5)'}}>
           <input type="checkbox" checked={crit===5} onChange={()=>setCrit(crit===6?5:6)} />
           Crítico também com 5 (Maestria)
         </label>
+
         <button onClick={doRoll} disabled={rolling} style={{
           width:'100%',padding:14,background:'rgba(0,229,255,0.1)',border:'1px solid #00e5ff',
           color:'#00e5ff',fontFamily:'Orbitron',fontSize:12,letterSpacing:2,cursor:'pointer',
           borderRadius:6,marginBottom:12,textTransform:'uppercase'
-        }}>{rolling?'ROLANDO...':`ROLAR ${dice}D + ${attrs[attr]||0}`}</button>
+        }}>{rolling?'ROLANDO...':`ROLAR ${dice}D6 + ${attrs[attr]||0}`}</button>
+
         <div style={{background:'rgba(0,0,0,0.6)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,minHeight:100,padding:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
           {rolling && <div style={{width:32,height:32,border:'3px solid rgba(0,229,255,0.2)',borderTop:'3px solid #00e5ff',borderRadius:'50%',animation:'roll 0.6s linear infinite'}} />}
           {!rolling && roll && (
@@ -455,21 +518,31 @@ const DiceModal = ({onClose,attrs,onRoll}) => {
                   }}>{v}</div>;
                 })}
               </div>
-              {!roll.fail && <div style={{background:'rgba(0,229,255,0.1)',border:'1px solid rgba(0,229,255,0.3)',borderRadius:20,padding:'6px 20px',display:'inline-flex',alignItems:'center',gap:8}}>
-                <span style={{fontSize:10,color:'rgba(0,229,255,0.5)',fontFamily:'Orbitron'}}>RESULTADO</span>
-                <span style={{fontSize:26,fontWeight:900,color:'#00e5ff',fontFamily:'Orbitron'}}>{roll.total}</span>
-              </div>}
+              {!roll.fail && (
+                <div>
+                  <div style={{background:'rgba(0,229,255,0.1)',border:'1px solid rgba(0,229,255,0.3)',borderRadius:20,padding:'6px 20px',display:'inline-flex',alignItems:'center',gap:8,marginBottom:4}}>
+                    <span style={{fontSize:10,color:'rgba(0,229,255,0.5)',fontFamily:'Orbitron'}}>RESULTADO</span>
+                    <span style={{fontSize:26,fontWeight:900,color:'#00e5ff',fontFamily:'Orbitron'}}>{roll.total}</span>
+                  </div>
+                  <div style={{fontSize:9,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>
+                    [{roll.res.join('+')}] + {roll.av}{roll.pericia?' ('+roll.pericia+')':''}
+                    {roll.crits>0&&<span style={{color:'#ffd600'}}> +{roll.crits}×{roll.av} crítico</span>}
+                    {roll.mod!==0&&<span> {roll.mod>0?'+':''}{roll.mod} mod</span>}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {!rolling && !roll && <p style={{color:'rgba(0,229,255,0.25)',fontSize:11}}>Configure e role os dados...</p>}
         </div>
+
         {hist.length>0 && (
           <div style={{marginTop:12}}>
             <div style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.4)',marginBottom:6,textTransform:'uppercase'}}>Histórico</div>
             <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:100,overflowY:'auto'}}>
               {hist.map(h=>(
                 <div key={h.id} style={{display:'flex',justifyContent:'space-between',fontSize:10,padding:'3px 6px',background:'rgba(0,0,0,0.3)',borderRadius:4}}>
-                  <span style={{color:'rgba(0,229,255,0.5)',fontFamily:'Orbitron'}}>{h.attr.slice(0,3).toUpperCase()} ({h.dice}D)</span>
+                  <span style={{color:'rgba(0,229,255,0.5)',fontFamily:'Orbitron'}}>{h.dice}D {h.attr.slice(0,3).toUpperCase()}{h.pericia?' +'+h.pericia.slice(0,3):''}</span>
                   <span style={{color:'rgba(0,229,255,0.4)'}}>[{h.res.join(',')}]</span>
                   <span style={{color:h.fail?'#ff1744':'#00e5ff',fontWeight:700}}>{h.fail?'FALHA':'= '+h.total}</span>
                 </div>
@@ -497,6 +570,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const [fichaAberta, setFichaAberta] = useState(null);
   const [npcNome, setNpcNome] = useState('');
   const [npcHabil, setNpcHabil] = useState(0);
+  const [npcTemLuta, setNpcTemLuta] = useState(false);
   const [diceOpen, setDiceOpen] = useState(false);
   const [tab, setTab] = useState('fichas');
   const pollingRef = useRef(null);
@@ -646,12 +720,13 @@ const CampaignPanel = ({char, sheets, onClose}) => {
 
   const rolarIniciativa = async () => {
     const h = char.atributos.habilidade||0;
-    const dados = Math.max(1,Math.min(3,1+h));
+    const temLuta = (char.pericias||[]).some(p=>p.nome==='Luta');
+    const dados = Math.max(1, Math.min(3, 1 + (temLuta?1:0)));
     const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
     const total = res.reduce((a,b)=>a+b,0)+h;
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${myPlayerId.current}`, {
-        id:myPlayerId.current, nome:char.nome||'Jogador', total, res, habil:h, ts:Date.now(), isNpc:false
+        id:myPlayerId.current, nome:char.nome||'Jogador', total, res, habil:h, temLuta, ts:Date.now(), isNpc:false
       });
       buscarTudo(campCode);
     } catch(e){}
@@ -661,13 +736,13 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const rolarIniciativaNpc = async () => {
     if(!npcNome.trim()) return;
     const h = parseInt(npcHabil)||0;
-    const dados = Math.max(1,Math.min(3,1+h));
+    const dados = Math.max(1, Math.min(3, 1 + (npcTemLuta?1:0)));
     const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
     const total = res.reduce((a,b)=>a+b,0)+h;
     const npcId = 'npc-'+uid();
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${npcId}`, {
-        id:npcId, nome:'[NPC] '+npcNome.trim(), total, res, habil:h, ts:Date.now(), isNpc:true
+        id:npcId, nome:'[NPC] '+npcNome.trim(), total, res, habil:h, temLuta:npcTemLuta, ts:Date.now(), isNpc:true
       });
       setNpcNome(''); buscarTudo(campCode);
     } catch(e){}
@@ -960,7 +1035,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
               <DiceModal
                 onClose={()=>setDiceOpen(false)}
                 attrs={char.atributos}
-                // ── MUDANÇA: passa char.nome para garantir nome correto ──
+                pericias={char.pericias}
                 onRoll={(r)=>{publicarRolagem(r, char.nome);setDiceOpen(false);}}
               />
             )}
@@ -1015,6 +1090,16 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                       style={{width:36,textAlign:'center',fontSize:14,fontWeight:700,padding:'4px'}} />
                   </div>
                 </div>
+                {/* Toggle Luta */}
+                <button onClick={()=>setNpcTemLuta(!npcTemLuta)} style={{
+                  width:'100%',marginBottom:5,padding:'4px 0',
+                  background:npcTemLuta?'rgba(255,23,68,0.15)':'rgba(0,0,0,0.3)',
+                  border:'1px solid '+(npcTemLuta?'rgba(255,23,68,0.5)':'rgba(168,85,247,0.2)'),
+                  color:npcTemLuta?'#ff5252':'rgba(168,85,247,0.5)',
+                  borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'
+                }}>
+                  {npcTemLuta ? '⚔ TEM LUTA (+1D)' : '⚔ Sem Luta (1D)'}
+                </button>
                 <div style={{display:'flex',gap:5}}>
                   <button onClick={rolarIniciativaNpc} style={{flex:1,background:'rgba(168,85,247,0.1)',border:'1px solid rgba(168,85,247,0.3)',color:'#a855f7',borderRadius:4,padding:'5px 0',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>
                     🎲 Rolar NPC
@@ -1278,7 +1363,7 @@ const App = () => {
 
       {/* DICE FAB */}
       <button className="no-print pulse" onClick={()=>setDice(true)} style={{position:'fixed',bottom:24,right:24,zIndex:150,width:52,height:52,borderRadius:'50%',background:'var(--cp)',border:'2px solid var(--ca)',color:'var(--ca)',fontSize:20,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>🎲</button>
-      {dice && <DiceModal onClose={()=>setDice(false)} attrs={char.atributos} onRoll={()=>{}} />}
+      {dice && <DiceModal onClose={()=>setDice(false)} attrs={char.atributos} pericias={char.pericias} onRoll={()=>{}} />}
 
       {/* CAMPAIGN PANEL */}
       {campPanel && (
