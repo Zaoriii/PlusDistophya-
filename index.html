@@ -1338,14 +1338,18 @@ const App = () => {
     const name = kitIn.trim();
     const kit = KITS[name];
     if(!kit) return;
-    const newV = [...char.vantagens,...(kit.poderes||[]).map((p,i)=>({
-      id:Date.now()+i+Math.random(),nome:p.nome,detalhe:'(Kit: '+name+')',descricao:p.desc||'',custo:'0'
-    }))];
-    let newD = [...char.desvantagens];
-    if(kit.desv&&!newD.some(d=>d.nome===kit.desv.nome)){
-      newD.push({id:Date.now()+Math.random(),nome:kit.desv.nome,detalhe:'(Kit: '+name+')',descricao:kit.desv.desc||'',custo:kit.desv.custo||'-1'});
-    }
-    setChar(c=>({...c,kits:[...(c.kits||[]),{id:Date.now(),nome:name}],vantagens:newV,desvantagens:newD}));
+    setChar(c => {
+      // Verifica se kit já foi adicionado
+      if((c.kits||[]).some(k=>k.nome===name)) return c;
+      const newV = [...c.vantagens,...(kit.poderes||[]).map((p,i)=>({
+        id:Date.now()+i+Math.random(),nome:p.nome,detalhe:'(Kit: '+name+')',descricao:p.desc||'',custo:'0'
+      }))];
+      let newD = [...c.desvantagens];
+      if(kit.desv&&!newD.some(d=>d.nome===kit.desv.nome)){
+        newD.push({id:Date.now()+Math.random(),nome:kit.desv.nome,detalhe:'(Kit: '+name+')',descricao:kit.desv.desc||'',custo:kit.desv.custo||'-1'});
+      }
+      return {...c, kits:[...(c.kits||[]),{id:Date.now(),nome:name}], vantagens:newV, desvantagens:newD};
+    });
     setKitIn('');
   };
 
