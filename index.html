@@ -1609,9 +1609,11 @@ const CampaignPanel = ({char, sheets, onClose}) => {
               ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:16}}>Nenhuma ficha registrada ainda.</p>
               : fichasArr.map(f=>{
                 // ── Bug fix: calcular base corretamente com bônus ──
-                const basePV = Math.max(1, ((f.atributos?.resistencia||0)*5) + (f.bonusPV||0));
-                const basePM = Math.max(1, ((f.atributos?.habilidade||0)*5) + (f.bonusPM||0));
-                const basePA = Math.max(1, (f.atributos?.poder||0) + (f.bonusPA||0));
+                // ── Base: usa recursos registrados como fonte de verdade ──
+                // R=0 com +Vida: Math.max(1, 0*5) + bonusPV = 1 + 10 = 11
+                const basePV = Math.max(1, (f.atributos?.resistencia||0)*5) + (f.bonusPV||0);
+                const basePM = Math.max(1, (f.atributos?.habilidade||0)*5) + (f.bonusPM||0);
+                const basePA = Math.max(1, (f.atributos?.poder||0)) + (f.bonusPA||0);
 
                 return (
                 <div key={f.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.18)',borderRadius:8,overflow:'hidden'}}>
@@ -1740,18 +1742,16 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                       )}
                       {/* Botões mestre */}
                       <div style={{display:'flex',gap:6,marginTop:4,flexWrap:'wrap'}}>
-                        {/* Mestre: baixar JSON */}
-                        {ehMestre && (
-                          <button onClick={()=>{
-                            const blob = new Blob([JSON.stringify(f,null,2)],{type:'application/json'});
-                            const a = document.createElement('a');
-                            a.href = URL.createObjectURL(blob);
-                            a.download = (f.nome||'ficha')+'_3det.json';
-                            a.click();
-                          }} style={{flex:1,padding:'6px 0',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
-                            💾 Baixar JSON
-                          </button>
-                        )}
+                        {/* Todos podem baixar qualquer ficha */}
+                        <button onClick={()=>{
+                          const blob = new Blob([JSON.stringify(f,null,2)],{type:'application/json'});
+                          const a = document.createElement('a');
+                          a.href = URL.createObjectURL(blob);
+                          a.download = (f.nome||'ficha')+'_3det.json';
+                          a.click();
+                        }} style={{flex:1,padding:'6px 0',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
+                          💾 Baixar JSON
+                        </button>
                         {/* Jogador: remover a própria ficha */}
                         {f.id===myPlayerId.current && (
                           <button onClick={()=>{if(window.confirm('Remover sua ficha da campanha?'))removerFicha(f.id);}}
