@@ -499,6 +499,264 @@ const Bar = ({label,current,max,color,icon,onChange}) => {
   );
 };
 
+// ── Modal de Adicionar Vantagem/Desvantagem ───────────────────────────────────
+const AddVantModal = ({type, onClose, onConfirm}) => {
+  const isDesv = type === 'desvantagens';
+  const lista = isDesv ? LISTA_DESV : LISTA_VANT;
+  const dados = isDesv ? DESVANTAGENS : VANTAGENS;
+  const cor = isDesv ? '#ff5252' : '#00e676';
+  const corBg = isDesv ? 'rgba(255,23,68,' : 'rgba(0,230,118,';
+
+  const [busca, setBusca] = useState('');
+  const [sel, setSel] = useState(null);       // nome selecionado
+  const [detalhe, setDetalhe] = useState('');
+  const [custo, setCusto] = useState('');
+  const [desc, setDesc] = useState('');
+
+  const filtrados = lista.filter(n => n.toLowerCase().includes(busca.toLowerCase()));
+
+  const escolher = (nome) => {
+    setSel(nome);
+    const info = dados[nome];
+    if (info) {
+      setDesc(info.d || '');
+      const c = (info.c||'').match(/-?\d+/);
+      setCusto(c ? c[0] : '');
+    }
+    setDetalhe('');
+  };
+
+  const subOpts = sel ? OPCOES[sel] : null;
+  const subDesc = sel && detalhe && SUBOPCOES[sel] ? SUBOPCOES[sel][detalhe] : null;
+
+  useEffect(() => {
+    if (subDesc) setDesc(subDesc);
+  }, [subDesc]);
+
+  const confirmar = () => {
+    if (!sel) return;
+    onConfirm({ id: Date.now()+Math.random(), nome: sel, detalhe, custo, descricao: desc });
+    onClose();
+  };
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.92)',zIndex:400,display:'flex',alignItems:'center',justifyContent:'center',padding:12}}>
+      <div className="panel" style={{width:'100%',maxWidth:480,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        {/* Header */}
+        <div style={{padding:'12px 16px',borderBottom:'1px solid '+corBg+'0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+          <span style={{fontFamily:'Orbitron',fontSize:12,color:cor,textTransform:'uppercase',letterSpacing:1}}>
+            {sel ? '✓ '+sel : (isDesv ? '➕ Adicionar Desvantagem' : '➕ Adicionar Vantagem')}
+          </span>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+        </div>
+
+        {!sel ? (
+          /* ── LISTA DE ESCOLHA ── */
+          <div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
+            <div style={{padding:'8px 12px',borderBottom:'1px solid rgba(0,229,255,0.1)',flexShrink:0}}>
+              <input
+                autoFocus
+                value={busca} onChange={e=>setBusca(e.target.value)}
+                placeholder="Buscar..."
+                style={{width:'100%',fontSize:14,padding:'6px 10px'}}
+              />
+            </div>
+            <div style={{overflowY:'auto',flex:1,padding:8,display:'flex',flexDirection:'column',gap:4}}>
+              {filtrados.map(nome => {
+                const info = dados[nome];
+                return (
+                  <button key={nome} onClick={()=>escolher(nome)} style={{
+                    background:'rgba(0,0,0,0.4)',border:'1px solid '+corBg+'0.15)',borderRadius:6,
+                    padding:'8px 12px',textAlign:'left',cursor:'pointer',
+                    transition:'border-color 0.15s, background 0.15s'
+                  }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=cor;e.currentTarget.style.background=corBg+'0.08)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=corBg+'0.15)';e.currentTarget.style.background='rgba(0,0,0,0.4)';}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
+                      <span style={{fontFamily:'Orbitron',fontSize:11,color:cor,fontWeight:700}}>{nome}</span>
+                      <span style={{fontSize:10,color:'rgba(0,229,255,0.4)',fontFamily:'Share Tech Mono'}}>{info?.c}</span>
+                    </div>
+                    <div style={{fontSize:10,color:'rgba(0,229,255,0.5)',lineHeight:1.4,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{info?.d}</div>
+                  </button>
+                );
+              })}
+              {filtrados.length===0 && <p style={{color:'rgba(0,229,255,0.25)',textAlign:'center',fontSize:12,padding:16}}>Nenhum resultado</p>}
+            </div>
+          </div>
+        ) : (
+          /* ── FORMULÁRIO DE CONFIRMAÇÃO ── */
+          <div style={{overflowY:'auto',flex:1,padding:16,display:'flex',flexDirection:'column',gap:12}}>
+            {/* Custo */}
+            <div>
+              <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Custo (pts)</label>
+              <input value={custo} onChange={e=>setCusto(e.target.value)} placeholder="ex: 1 ou -1"
+                style={{width:'100%',fontSize:16,padding:'6px 10px',fontWeight:700,color:cor}} />
+            </div>
+            {/* Detalhe/Opção */}
+            {subOpts ? (
+              <div>
+                <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Opção / Detalhe</label>
+                <select value={detalhe} onChange={e=>setDetalhe(e.target.value)}
+                  style={{width:'100%',fontSize:14,padding:'6px 10px'}}>
+                  <option value="">— escolha uma opção —</option>
+                  {subOpts.map(o=><option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Detalhe (opcional)</label>
+                <input value={detalhe} onChange={e=>setDetalhe(e.target.value)} placeholder="ex: Luta, Fobia de aranhas..."
+                  style={{width:'100%',fontSize:14,padding:'6px 10px'}} />
+              </div>
+            )}
+            {/* Descrição */}
+            <div>
+              <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Descrição</label>
+              <textarea value={desc} onChange={e=>setDesc(e.target.value)} rows={5}
+                style={{width:'100%',fontSize:11,padding:'6px 10px',lineHeight:1.5,resize:'vertical'}} />
+            </div>
+            {/* Botões */}
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={()=>setSel(null)} style={{flex:1,padding:'10px',background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',color:'rgba(0,229,255,0.5)',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,textTransform:'uppercase'}}>← Voltar</button>
+              <button onClick={confirmar} style={{flex:2,padding:'10px',background:corBg+'0.15)',border:'1px solid '+cor,color:cor,borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:11,textTransform:'uppercase',fontWeight:700}}>✓ Confirmar</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Modal de Visualizar/Editar item ──────────────────────────────────────────
+const EditItemModal = ({item, type, onClose, onUpdate, onRemove}) => {
+  const isDesv = type === 'desvantagens';
+  const cor = isDesv ? '#ff5252' : '#00e676';
+  const corBg = isDesv ? 'rgba(255,23,68,' : 'rgba(0,230,118,';
+  const subOpts = OPCOES[item.nome];
+
+  const handleDetalhe = (v) => {
+    onUpdate(item.id, 'detalhe', v);
+    if (SUBOPCOES[item.nome]?.[v]) {
+      onUpdate(item.id, 'descricao', SUBOPCOES[item.nome][v]);
+    }
+  };
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.92)',zIndex:400,display:'flex',alignItems:'center',justifyContent:'center',padding:12}}>
+      <div className="panel" style={{width:'100%',maxWidth:460,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={{padding:'12px 16px',borderBottom:'1px solid '+corBg+'0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+          <span style={{fontFamily:'Orbitron',fontSize:12,color:cor,fontWeight:700}}>{item.nome}</span>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <button onClick={()=>{if(window.confirm('Remover "'+item.nome+'"?')){onRemove(item.id);onClose();}}}
+              style={{background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.4)',color:'#ff5252',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>
+              🗑 Remover
+            </button>
+            <button onClick={onClose} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+          </div>
+        </div>
+        <div style={{overflowY:'auto',flex:1,padding:16,display:'flex',flexDirection:'column',gap:12}}>
+          {/* Custo */}
+          <div style={{display:'flex',gap:10,alignItems:'center'}}>
+            <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',textTransform:'uppercase',flexShrink:0}}>Custo</label>
+            <input value={item.custo||''} onChange={e=>onUpdate(item.id,'custo',e.target.value)}
+              style={{width:80,fontSize:16,padding:'4px 8px',fontWeight:700,color:cor,textAlign:'center'}} />
+          </div>
+          {/* Detalhe */}
+          <div>
+            <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Opção / Detalhe</label>
+            {subOpts ? (
+              <select value={item.detalhe||''} onChange={e=>handleDetalhe(e.target.value)}
+                style={{width:'100%',fontSize:13,padding:'6px 10px'}}>
+                <option value="">— escolha uma opção —</option>
+                {subOpts.map(o=><option key={o} value={o}>{o}</option>)}
+              </select>
+            ) : (
+              <input value={item.detalhe||''} onChange={e=>onUpdate(item.id,'detalhe',e.target.value)}
+                placeholder="ex: Luta, Fobia de aranhas..." style={{width:'100%',fontSize:13,padding:'6px 10px'}} />
+            )}
+          </div>
+          {/* Descrição */}
+          <div>
+            <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Descrição</label>
+            <textarea value={item.descricao||''} onChange={e=>onUpdate(item.id,'descricao',e.target.value)}
+              rows={6} style={{width:'100%',fontSize:11,padding:'6px 10px',lineHeight:1.5,resize:'vertical'}} />
+          </div>
+          <button onClick={onClose} style={{padding:'10px',background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.3)',color:'#00e5ff',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,textTransform:'uppercase'}}>✓ Fechar</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── VantSection — lista compacta com chips clicáveis ─────────────────────────
+const VantSection = ({type, title, color, items, onAdd, onUpdate, onRemove}) => {
+  const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const isDesv = type === 'desvantagens';
+  const borderColor = color==='red'?'rgba(255,23,68,0.3)':color==='green'?'rgba(0,230,118,0.3)':'rgba(0,229,255,0.3)';
+  const titleColor = color==='red'?'#ff5252':color==='green'?'#00e676':'#00e5ff';
+  const chipBg = color==='red'?'rgba(255,23,68,0.1)':color==='green'?'rgba(0,230,118,0.1)':'rgba(0,229,255,0.1)';
+  const total = items.reduce((a,i)=>a+(parseInt(i.custo)||0),0);
+
+  const handleConfirm = (newItem) => {
+    onAdd(newItem);
+  };
+
+  return (
+    <>
+      <div className="panel" style={{padding:14,borderColor}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,borderBottom:'1px solid rgba(0,229,255,0.12)',paddingBottom:8}}>
+          <span style={{fontFamily:'Orbitron',fontSize:11,color:titleColor,textTransform:'uppercase',letterSpacing:1}}>
+            {title} <span style={{color:'rgba(0,229,255,0.35)',fontSize:9}}>({total>0?'+'+total:total}pts)</span>
+          </span>
+          <Btn onClick={()=>setAddOpen(true)} style={{padding:'2px 10px',fontSize:11}}>+ ADD</Btn>
+        </div>
+        {/* Chips */}
+        <div style={{display:'flex',flexWrap:'wrap',gap:6,minHeight:32}}>
+          {items.map(item=>(
+            <button key={item.id} onClick={()=>setEditItem(item)}
+              style={{
+                background:chipBg, border:'1px solid '+borderColor,
+                borderRadius:20, padding:'4px 12px', cursor:'pointer',
+                fontFamily:'Orbitron', fontSize:10, color:titleColor,
+                textTransform:'uppercase', letterSpacing:0.5,
+                display:'flex', alignItems:'center', gap:5,
+                transition:'all 0.15s',
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.background=color==='red'?'rgba(255,23,68,0.2)':color==='green'?'rgba(0,230,118,0.2)':'rgba(0,229,255,0.2)';}}
+              onMouseLeave={e=>{e.currentTarget.style.background=chipBg;}}>
+              <span>{item.nome}</span>
+              {item.detalhe && <span style={{fontSize:8,opacity:0.6,fontStyle:'italic',textTransform:'none'}}>({item.detalhe})</span>}
+              {item.custo && <span style={{fontSize:9,opacity:0.7,fontFamily:'Share Tech Mono'}}>{parseInt(item.custo)>0?'+':''}{item.custo}</span>}
+            </button>
+          ))}
+          {items.length===0 && <span style={{color:'rgba(0,229,255,0.2)',fontSize:11,fontStyle:'italic',padding:'4px 0'}}>Nenhuma. Clique em + ADD</span>}
+        </div>
+      </div>
+
+      {/* Modal Adicionar */}
+      {addOpen && (
+        <AddVantModal
+          type={type}
+          onClose={()=>setAddOpen(false)}
+          onConfirm={handleConfirm}
+        />
+      )}
+
+      {/* Modal Editar */}
+      {editItem && (
+        <EditItemModal
+          item={items.find(i=>i.id===editItem.id)||editItem}
+          type={type}
+          onClose={()=>setEditItem(null)}
+          onUpdate={(id,f,v)=>{onUpdate(id,f,v);}}
+          onRemove={(id)=>{onRemove(id);setEditItem(null);}}
+        />
+      )}
+    </>
+  );
+};
+
 const ListSection = ({title,color,items,suggestions,onAdd,onUpdate,onRemove}) => {
   const listId = 'dl-'+title.replace(/\s/g,'-');
   const total = items.reduce((a,i)=>a+(parseInt(i.custo)||0),0);
@@ -1475,6 +1733,12 @@ const App = () => {
   };
 
   const addItem = list => setChar(c=>({...c,[list]:[...(c[list]||[]),{id:Date.now(),nome:'',detalhe:'',descricao:'',custo:list==='pericias'?'1':''}]}));
+  // Adiciona item já construído (usado pelos modais de vantagens/desvantagens)
+  const addItemDirect = (list, item) => setChar(c=>{
+    const nl = [...(c[list]||[]), item];
+    const bonus = list==='vantagens' ? calcBonus(nl) : {};
+    return {...c, [list]:nl, ...bonus};
+  });
 
   // Recalcula bônus de +Ação/+Mana/+Vida a partir da lista de vantagens
   const calcBonus = (vantagens) => {
@@ -1868,20 +2132,14 @@ const App = () => {
         {/* LISTAS — mobile: acordeão; desktop: 3 colunas */}
         {isMobile ? (
           <div style={{display:'flex',flexDirection:'column',gap:0,marginBottom:12}}>
-            {[
-              {id:'pericias', title:'Perícias', color:'blue', borderColor:'rgba(0,229,255,0.3)', titleColor:'#00e5ff', items:char.pericias, suggestions:PERICIAS},
-              {id:'vantagens', title:'Vantagens', color:'green', borderColor:'rgba(0,230,118,0.3)', titleColor:'#00e676', items:char.vantagens, suggestions:LISTA_VANT},
-              {id:'desvantagens', title:'Desvantagens', color:'red', borderColor:'rgba(255,23,68,0.3)', titleColor:'#ff5252', items:char.desvantagens, suggestions:LISTA_DESV},
-            ].map(({id,title,color,borderColor,titleColor,items,suggestions})=>{
+            {/* Perícias — mantém acordeão com ListSection */}
+            {[{id:'pericias', title:'Perícias', color:'blue', borderColor:'rgba(0,229,255,0.3)', titleColor:'#00e5ff', items:char.pericias, suggestions:PERICIAS}]
+            .map(({id,title,color,borderColor,titleColor,items,suggestions})=>{
               const open = listTab===id;
               const total = items.reduce((a,i)=>a+(parseInt(i.custo)||0),0);
               return (
                 <div key={id} style={{border:'1px solid '+borderColor,borderRadius:open?8:6,marginBottom:6,overflow:'hidden',background:'var(--cp)'}}>
-                  {/* Cabeçalho clicável */}
-                  <button onClick={()=>setListTab(open?'':id)} style={{
-                    width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',
-                    padding:'12px 14px',background:'transparent',border:'none',cursor:'pointer'
-                  }}>
+                  <button onClick={()=>setListTab(open?'':id)} style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 14px',background:'transparent',border:'none',cursor:'pointer'}}>
                     <span style={{fontFamily:'Orbitron',fontSize:11,color:titleColor,textTransform:'uppercase',letterSpacing:1,display:'flex',alignItems:'center',gap:8}}>
                       {title}
                       {items.length>0 && <span style={{fontSize:9,background:titleColor+'22',color:titleColor,borderRadius:10,padding:'1px 7px'}}>{items.length}</span>}
@@ -1889,7 +2147,6 @@ const App = () => {
                     </span>
                     <span style={{color:titleColor,fontSize:14,transition:'transform 0.2s',display:'inline-block',transform:open?'rotate(180deg)':'rotate(0deg)'}}>▼</span>
                   </button>
-                  {/* Conteúdo expandido */}
                   {open && (
                     <div style={{borderTop:'1px solid '+borderColor,padding:'0 0 8px'}}>
                       <ListSection title={title} color={color} items={items} suggestions={suggestions}
@@ -1902,12 +2159,16 @@ const App = () => {
                 </div>
               );
             })}
+            {/* Vantagens e Desvantagens — VantSection com chips e modais */}
+            <VantSection type="vantagens" title="Vantagens" color="green" items={char.vantagens} onAdd={item=>addItemDirect('vantagens',item)} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
+            <div style={{marginBottom:6}} />
+            <VantSection type="desvantagens" title="Desvantagens" color="red" items={char.desvantagens} onAdd={item=>addItemDirect('desvantagens',item)} onUpdate={(id,f,v)=>updItem('desvantagens',id,f,v)} onRemove={id=>remItem('desvantagens',id)} />
           </div>
         ) : (
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:20}}>
             <ListSection title="Perícias" color="blue" items={char.pericias} suggestions={PERICIAS} onAdd={()=>addItem('pericias')} onUpdate={(id,f,v)=>updItem('pericias',id,f,v)} onRemove={id=>remItem('pericias',id)} />
-            <ListSection title="Vantagens" color="green" items={char.vantagens} suggestions={LISTA_VANT} onAdd={()=>addItem('vantagens')} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
-            <ListSection title="Desvantagens" color="red" items={char.desvantagens} suggestions={LISTA_DESV} onAdd={()=>addItem('desvantagens')} onUpdate={(id,f,v)=>updItem('desvantagens',id,f,v)} onRemove={id=>remItem('desvantagens',id)} />
+            <VantSection type="vantagens" title="Vantagens" color="green" items={char.vantagens} onAdd={item=>addItemDirect('vantagens',item)} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
+            <VantSection type="desvantagens" title="Desvantagens" color="red" items={char.desvantagens} onAdd={item=>addItemDirect('desvantagens',item)} onUpdate={(id,f,v)=>updItem('desvantagens',id,f,v)} onRemove={id=>remItem('desvantagens',id)} />
           </div>
         )}
 
