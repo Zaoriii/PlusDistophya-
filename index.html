@@ -1270,18 +1270,15 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   // estado local dos recursos para feedback imediato antes de salvar no Firebase
   const [recursosLocal, setRecursosLocal] = useState({}); // { [fichaId]: { pv, pm, pa } }
 
-  // ── Ficha ativa: sempre usa char local se tiver atributos, Firebase como fallback ──
+  // ── Ficha ativa: Firebase (ficha registrada) tem prioridade sobre char local vazio ──
   const fichaAtiva = useMemo(() => {
     const pid = myPlayerId.current;
     const remota = fichas[pid];
-    // Prefere char local se tiver nome e atributos
-    if (char.nome && (char.atributos?.poder || char.atributos?.habilidade || char.atributos?.resistencia)) {
-      return char;
-    }
-    // Fallback: dados do Firebase
-    if (remota && remota.nome) {
-      return { ...EMPTY, ...remota };
-    }
+    const charTemDados = char.nome && char.nome.trim() !== '';
+    // Se char local tem nome → usa char local (jogador tem ficha aberta)
+    if (charTemDados) return char;
+    // Se não tem char local mas tem ficha no Firebase → usa Firebase
+    if (remota && remota.nome) return { ...EMPTY, ...remota };
     return char;
   }, [fichas, char]);
 
@@ -2136,20 +2133,67 @@ const App = () => {
     document.body.appendChild(a);a.click();a.remove();
   };
   const importJ = e => {
-    const f=e.target.files[0];
-    if(f){const r=new FileReader();r.onload=ev=>{try{
-      const l=JSON.parse(ev.target.result);
-      if(!l.inventario)l.inventario={itens:[],dinheiro:''};
-      if(!l.kits)l.kits=[];
-      // Se o id veio do Firebase (j-xxx), gera um novo id local
-      if(!l.id || String(l.id).startsWith('j-')) l.id=Date.now();
-      // Garante que pericias/vantagens/desvantagens/tecnicas são arrays de objetos
-      if(l.pericias && l.pericias.length>0 && typeof l.pericias[0]==='string'){
-        l.pericias = l.pericias.map(n=>({id:Date.now()+Math.random(),nome:n,detalhe:'',descricao:PERICIAS_DESC[n]||'',custo:'1'}));
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const l = JSON.parse(ev.target.result);
+
+        // Normaliza id — Firebase usa "j-xxx", localmente usamos número
+        if (!l.id || String(l.id).startsWith('j-')) l.id = Date.now();
+
+        // Garante inventário
+        if (!l.inventario || typeof l.inventario !== 'object') l.inventario = {itens:[],dinheiro:''};
+        if (!Array.isArray(l.inventario.itens)) l.inventario.itens = [];
+
+        // Normaliza arrays de itens — cada um precisa ter id, nome, detalhe, descricao, custo
+        const normItem = (item, idx, custo='1') => {
+          if (typeof item === 'string') return {id:Date.now()+idx+Math.random(),nome:item,detalhe:'',descricao:'',custo};
+          return {id:item.id||Date.now()+idx+Math.random(),nome:item.nome||'',detalhe:item.detalhe||'',descricao:item.descricao||'',custo:item.custo||custo};
+        };
+        l.pericias = Array.isArray(l.pericias) ? l.pericias.map((p,i)=>normItem(p,i,'1')) : [];
+        l.vantagens = Array.isArray(l.vantagens) ? l.vantagens.map((v,i)=>normItem(v,i,'1')) : [];
+        l.desvantagens = Array.isArray(l.desvantagens) ? l.desvantagens.map((d,i)=>normItem(d,i,'-1')) : [];
+
+        // Técnicas têm estrutura diferente (custo em vez de custo pts)
+        l.tecnicas = Array.isArray(l.tecnicas) ? l.tecnicas.map((t,i)=>({
+          id:t.id||Date.now()+i+Math.random(),
+          nome:t.nome||'',
+          custo:t.custo||'',
+          descricao:t.descricao||''
+        })) : [];
+
+        // Kits
+        if (!Array.isArray(l.kits)) l.kits = [];
+        l.kits = l.kits.map((k,i) => {
+          if (typeof k === 'string') return {id:Date.now()+i+Math.random(),nome:k};
+          return {id:k.id||Date.now()+i+Math.random(),nome:k.nome||''};
+        });
+
+        // Atributos e recursos
+        if (!l.atributos || typeof l.atributos !== 'object') l.atributos = {poder:0,habilidade:0,resistencia:0};
+        if (!l.recursos || typeof l.recursos !== 'object') l.recursos = {pa:0,pm:5,pv:5};
+
+        const novaFicha = {...EMPTY, ...l, ...recalcBonus(l)};
+        setChar(novaFicha);
+
+        // Salva na biblioteca automaticamente
+        setSheets(prev => {
+          const sem = prev.filter(s => s.id !== novaFicha.id);
+          const arr = [...sem, novaFicha];
+          localStorage.setItem('3det_v2', JSON.stringify(arr));
+          return arr;
+        });
+
+        alert('✅ Ficha "' + (l.nome||'sem nome') + '" importada com sucesso!');
+      } catch(err) {
+        alert('❌ Erro ao importar: ' + err.message);
+        console.error(err);
       }
-      setChar({...EMPTY,...l,...recalcBonus(l)});
-      alert('Ficha "'+l.nome+'" carregada!');
-    }catch(err){alert('Erro ao ler arquivo: '+err.message);}e.target.value=null;};r.readAsText(f);}
+      e.target.value = null;
+    };
+    reader.readAsText(file);
   };
 
   // ── Inventário simplificado ──
