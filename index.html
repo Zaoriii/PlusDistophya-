@@ -648,6 +648,17 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   // estado local dos recursos para feedback imediato antes de salvar no Firebase
   const [recursosLocal, setRecursosLocal] = useState({}); // { [fichaId]: { pv, pm, pa } }
 
+  // ── Ficha ativa do jogador: prioriza dados registrados no Firebase ──
+  // Garante que atributos, nome e perícias estão sempre corretos mesmo se char local estiver vazio
+  const fichaAtiva = useMemo(() => {
+    const pid = myPlayerId.current;
+    const remota = fichas[pid];
+    if (remota && (remota.atributos?.poder || remota.atributos?.habilidade || remota.atributos?.resistencia)) {
+      return { ...char, ...remota, atributos: remota.atributos, pericias: remota.pericias || char.pericias };
+    }
+    return char;
+  }, [fichas, char]);
+
   useEffect(() => {
     try {
       const s = localStorage.getItem('3det_camp');
@@ -771,13 +782,13 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     setShowSheetSelector(false);
   };
 
-  // ── MUDANÇA: publicarRolagem usa o nome real do personagem ──
+  // ── publicarRolagem usa nome da ficha registrada no Firebase ──
   const publicarRolagem = async (rollObj, nomeJogador) => {
     if(!campCode) return;
+    const nomeReal = fichaAtiva.nome || nomeJogador || char.nome || 'Desconhecido';
     try {
       await fbPush(`campanhas/${campCode}/rolls`, {
-        // Garante que o nome é sempre o do personagem ativo, nunca "Jogador"
-        player: nomeJogador && nomeJogador.trim() ? nomeJogador.trim() : (char.nome || 'Desconhecido'),
+        player: nomeReal,
         roll: rollObj, ts: Date.now(),
         time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
       });
@@ -786,14 +797,15 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   };
 
   const rolarIniciativa = async () => {
-    const h = char.atributos.habilidade||0;
-    const temLuta = (char.pericias||[]).some(p=>p.nome==='Luta');
+    const h = fichaAtiva.atributos?.habilidade||0;
+    const temLuta = (fichaAtiva.pericias||[]).some(p=>p.nome==='Luta');
     const dados = Math.max(1, Math.min(3, 1 + (temLuta?1:0)));
     const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
     const total = res.reduce((a,b)=>a+b,0)+h;
+    const nomeJogador = fichaAtiva.nome || char.nome || 'Jogador';
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${myPlayerId.current}`, {
-        id:myPlayerId.current, nome:char.nome||'Jogador', total, res, habil:h, temLuta, ts:Date.now(), isNpc:false
+        id:myPlayerId.current, nome:nomeJogador, total, res, habil:h, temLuta, ts:Date.now(), isNpc:false
       });
       buscarTudo(campCode);
     } catch(e){}
@@ -1093,17 +1105,28 @@ const CampaignPanel = ({char, sheets, onClose}) => {
         {/* ── TAB ROLAGENS ── */}
         {tab==='rolagens' && (
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            <button onClick={()=>setDiceOpen(true)} style={{
-              width:'100%',padding:'10px',background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.35)',
-              color:'#00e5ff',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,
-              textTransform:'uppercase',letterSpacing:1,marginBottom:4
-            }}>🎲 Abrir Dados — Resultado vai para a sala</button>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={()=>setDiceOpen(true)} style={{
+                flex:1,padding:'10px',background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.35)',
+                color:'#00e5ff',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,
+                textTransform:'uppercase',letterSpacing:1
+              }}>🎲 Abrir Dados</button>
+              {rolls.length>0 && (
+                <button onClick={async()=>{
+                  try{await fbDelete(`campanhas/${campCode}/rolls`);setRolls([]);}catch(e){}
+                }} style={{
+                  padding:'10px 12px',background:'rgba(255,23,68,0.06)',border:'1px solid rgba(255,23,68,0.3)',
+                  color:'#ff5252',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:9,
+                  textTransform:'uppercase'
+                }}>✕ Limpar</button>
+              )}
+            </div>
             {diceOpen && (
               <DiceModal
                 onClose={()=>setDiceOpen(false)}
-                attrs={char.atributos}
-                pericias={char.pericias}
-                onRoll={(r)=>{publicarRolagem(r, char.nome);setDiceOpen(false);}}
+                attrs={fichaAtiva.atributos}
+                pericias={fichaAtiva.pericias}
+                onRoll={(r)=>{publicarRolagem(r, fichaAtiva.nome);setDiceOpen(false);}}
               />
             )}
             {rolls.length===0
@@ -1143,7 +1166,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
               width:'100%',padding:'10px',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.35)',
               color:'#ffd600',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,
               textTransform:'uppercase',letterSpacing:1
-            }}>🎲 Rolar Minha Iniciativa ({char.nome||'Meu Personagem'})</button>
+            }}>🎲 Rolar Minha Iniciativa ({fichaAtiva.nome||char.nome||'Meu Personagem'})</button>
 
             {/* NPC — todos podem adicionar ── */}
             <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:6,padding:8}}>
