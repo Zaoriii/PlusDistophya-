@@ -238,13 +238,12 @@ const MSG_REGRAS = `🔒 Banco de dados bloqueado (erro 401).\n\nPara usar a cam
 
 const EMPTY = {
   id:null,nome:'',arquetipo:'',arquetipoCusto:0,experiencia:0,
-  // ── MUDANÇA: Marco → Pontos (máximo livre) ──
   pontosMax: 10,
   escala:'Ningen',foto:null,
   atributos:{poder:0,habilidade:0,resistencia:0},
   recursos:{pa:0,pm:5,pv:5},
+  bonusPA:0, bonusPM:0, bonusPV:0,
   pericias:[],vantagens:[],desvantagens:[],kits:[],tecnicas:[],
-  // ── MUDANÇA: Inventário simplificado ──
   inventario:{ itens:[], dinheiro:'' },
   anotacoes:'',historia:''
 };
@@ -1105,13 +1104,25 @@ const App = () => {
     } catch(e){alert('❌ Erro: '+e.message);}
   };
 
+  // Helper: recalcula bonusPA/PM/PV a partir das vantagens de qualquer ficha
+  const recalcBonus = (fichaData) => {
+    const vants = fichaData.vantagens || [];
+    let bPA=0, bPM=0, bPV=0;
+    vants.forEach(v => {
+      if(v.nome==='+Ação') bPA+=2;
+      if(v.nome==='+Mana') bPM+=10;
+      if(v.nome==='+Vida') bPV+=10;
+    });
+    return {bonusPA:bPA, bonusPM:bPM, bonusPV:bPV};
+  };
+
   const importFromCloud = async () => {
     const code = prompt('Código da ficha (ex: 8F2A1):');
     if(!code) return;
     try {
       const data = await fbGet(`fichas/${code.trim().toUpperCase()}`);
       if(data&&data.id){
-        const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:data.inventario||{itens:[],dinheiro:''}};
+        const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:data.inventario||{itens:[],dinheiro:''},...recalcBonus(data)};
         setSheets(p=>{const f=p.filter(x=>x.id!==s.id);return [...f,s];});
         alert('☁️ Ficha importada!');
       } else alert('❌ Nenhuma ficha encontrada.');
@@ -1162,6 +1173,18 @@ const App = () => {
   };
 
   const addItem = list => setChar(c=>({...c,[list]:[...(c[list]||[]),{id:Date.now(),nome:'',detalhe:'',descricao:'',custo:list==='pericias'?'1':''}]}));
+
+  // Recalcula bônus de +Ação/+Mana/+Vida a partir da lista de vantagens
+  const calcBonus = (vantagens) => {
+    let bPA=0, bPM=0, bPV=0;
+    vantagens.forEach(v=>{
+      if(v.nome==='+Ação') bPA+=2;
+      if(v.nome==='+Mana') bPM+=10;
+      if(v.nome==='+Vida') bPV+=10;
+    });
+    return {bonusPA:bPA, bonusPM:bPM, bonusPV:bPV};
+  };
+
   const updItem = (list,id,f,v) => setChar(c=>{
     const nl = c[list].map(item=>{
       if(item.id!==id) return item;
@@ -1191,13 +1214,19 @@ const App = () => {
       }
       return u;
     });
-    return {...c,[list]:nl};
+    const bonus = list==='vantagens' ? calcBonus(nl) : {};
+    return {...c,[list]:nl,...bonus};
   });
-  const remItem = (list,id) => setChar(c=>({...c,[list]:c[list].filter(i=>i.id!==id)}));
 
-  const maxPA = char.atributos.poder||1;
-  const maxPM = char.atributos.habilidade===0?1:char.atributos.habilidade*5;
-  const maxPV = char.atributos.resistencia===0?1:char.atributos.resistencia*5;
+  const remItem = (list,id) => setChar(c=>{
+    const nl = c[list].filter(i=>i.id!==id);
+    const bonus = list==='vantagens' ? calcBonus(nl) : {};
+    return {...c,[list]:nl,...bonus};
+  });
+
+  const maxPA = (char.atributos.poder||1) + (char.bonusPA||0);
+  const maxPM = (char.atributos.habilidade===0?1:char.atributos.habilidade*5) + (char.bonusPM||0);
+  const maxPV = (char.atributos.resistencia===0?1:char.atributos.resistencia*5) + (char.bonusPV||0);
 
   const exportJ = () => {
     const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(char));
@@ -1210,7 +1239,7 @@ const App = () => {
       const l=JSON.parse(ev.target.result);
       if(!l.inventario)l.inventario={itens:[],dinheiro:''};
       if(!l.kits)l.kits=[];if(!l.id)l.id=Date.now();
-      setChar({...EMPTY,...l});alert('Ficha carregada!');
+      setChar({...EMPTY,...l,...recalcBonus(l)});alert('Ficha carregada!');
     }catch(err){alert('Erro ao ler arquivo.');}e.target.value=null;};r.readAsText(f);}
   };
 
@@ -1288,7 +1317,10 @@ const App = () => {
               {sheets.length===0
                 ? <p style={{color:'rgba(0,229,255,0.3)',textAlign:'center',fontSize:12,marginTop:20}}>Nenhuma ficha salva.</p>
                 : sheets.map(sh=>(
-                  <div key={sh.id} onClick={()=>{setChar({...EMPTY,...sh,kits:sh.kits||[],inventario:sh.inventario||{itens:[],dinheiro:''}});setSidebar(false);}}
+                  <div key={sh.id} onClick={()=>{
+                    setChar({...EMPTY,...sh,kits:sh.kits||[],inventario:sh.inventario||{itens:[],dinheiro:''},...recalcBonus(sh)});
+                    setSidebar(false);
+                  }}
                     style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:6,padding:10,cursor:'pointer',display:'flex',alignItems:'center',gap:10,position:'relative'}}>
                     {sh.foto && <img src={sh.foto} style={{width:36,height:36,borderRadius:4,objectFit:'cover'}} alt="" />}
                     <div style={{flex:1,minWidth:0}}>
