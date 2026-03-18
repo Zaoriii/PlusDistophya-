@@ -688,6 +688,115 @@ const EditItemModal = ({item, type, onClose, onUpdate, onRemove}) => {
   );
 };
 
+// ── PericiaSection — chips com modal de seleção ───────────────────────────────
+const PericiaSection = ({items, onAdd, onUpdate, onRemove}) => {
+  const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [busca, setBusca] = useState('');
+
+  const total = items.reduce((a,i)=>a+(parseInt(i.custo)||0),0);
+
+  const escolher = (nome) => {
+    const desc = PERICIAS_DESC[nome] || '';
+    onAdd({id:Date.now()+Math.random(), nome, detalhe:'', descricao:desc, custo:'1'});
+    setAddOpen(false);
+    setBusca('');
+  };
+
+  const filtradas = PERICIAS.filter(p => p.toLowerCase().includes(busca.toLowerCase()) && !items.some(i=>i.nome===p));
+
+  return (
+    <>
+      <div className="panel" style={{padding:14,borderColor:'rgba(0,229,255,0.3)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,borderBottom:'1px solid rgba(0,229,255,0.12)',paddingBottom:8}}>
+          <span style={{fontFamily:'Orbitron',fontSize:11,color:'#00e5ff',textTransform:'uppercase',letterSpacing:1}}>
+            Perícias <span style={{color:'rgba(0,229,255,0.35)',fontSize:9}}>({total>0?'+'+total:total}pts)</span>
+          </span>
+          <Btn onClick={()=>setAddOpen(true)} style={{padding:'2px 10px',fontSize:11}}>+ ADD</Btn>
+        </div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6,minHeight:32}}>
+          {items.map(item=>(
+            <button key={item.id} onClick={()=>setEditItem(item)}
+              style={{background:'rgba(0,229,255,0.1)',border:'1px solid rgba(0,229,255,0.3)',borderRadius:20,padding:'4px 12px',cursor:'pointer',fontFamily:'Orbitron',fontSize:10,color:'#00e5ff',textTransform:'uppercase',letterSpacing:0.5,transition:'all 0.15s'}}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(0,229,255,0.2)'}
+              onMouseLeave={e=>e.currentTarget.style.background='rgba(0,229,255,0.1)'}>
+              {item.nome}
+            </button>
+          ))}
+          {items.length===0 && <span style={{color:'rgba(0,229,255,0.2)',fontSize:11,fontStyle:'italic',padding:'4px 0'}}>Nenhuma. Clique em + ADD</span>}
+        </div>
+      </div>
+
+      {/* Modal adicionar perícia */}
+      {addOpen && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.92)',zIndex:400,display:'flex',alignItems:'center',justifyContent:'center',padding:12}}>
+          <div className="panel" style={{width:'100%',maxWidth:420,maxHeight:'85vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+              <span style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',textTransform:'uppercase'}}>➕ Adicionar Perícia</span>
+              <button onClick={()=>{setAddOpen(false);setBusca('');}} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+            </div>
+            <div style={{padding:'8px 12px',borderBottom:'1px solid rgba(0,229,255,0.1)',flexShrink:0}}>
+              <input autoFocus value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar perícia..."
+                style={{width:'100%',fontSize:14,padding:'6px 10px'}} />
+            </div>
+            <div style={{overflowY:'auto',flex:1,padding:8,display:'flex',flexDirection:'column',gap:4}}>
+              {filtradas.length===0
+                ? <p style={{color:'rgba(0,229,255,0.25)',textAlign:'center',fontSize:12,padding:16}}>
+                    {items.length===PERICIAS.length ? 'Todas as perícias já foram adicionadas!' : 'Nenhum resultado'}
+                  </p>
+                : filtradas.map(nome=>{
+                  const desc = PERICIAS_DESC[nome]||'';
+                  return (
+                    <button key={nome} onClick={()=>escolher(nome)} style={{
+                      background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.15)',borderRadius:6,
+                      padding:'8px 12px',textAlign:'left',cursor:'pointer',transition:'all 0.15s'
+                    }}
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor='#00e5ff';e.currentTarget.style.background='rgba(0,229,255,0.08)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(0,229,255,0.15)';e.currentTarget.style.background='rgba(0,0,0,0.4)';}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:11,color:'#00e5ff',fontWeight:700,marginBottom:2}}>{nome}</div>
+                      <div style={{fontSize:10,color:'rgba(0,229,255,0.5)',lineHeight:1.4,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{desc}</div>
+                    </button>
+                  );
+                })
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal editar/ver perícia */}
+      {editItem && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.92)',zIndex:400,display:'flex',alignItems:'center',justifyContent:'center',padding:12}}>
+          <div className="panel" style={{width:'100%',maxWidth:420,maxHeight:'85vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+              <span style={{fontFamily:'Orbitron',fontSize:12,color:'#00e5ff',fontWeight:700}}>{editItem.nome}</span>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <button onClick={()=>{if(window.confirm('Remover "'+editItem.nome+'"?')){onRemove(editItem.id);setEditItem(null);}}}
+                  style={{background:'rgba(255,23,68,0.1)',border:'1px solid rgba(255,23,68,0.4)',color:'#ff5252',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontFamily:'Orbitron',fontSize:9,textTransform:'uppercase'}}>
+                  🗑 Remover
+                </button>
+                <button onClick={()=>setEditItem(null)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
+              </div>
+            </div>
+            <div style={{overflowY:'auto',flex:1,padding:16,display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{fontSize:12,color:'rgba(0,229,255,0.7)',lineHeight:1.6,background:'rgba(0,229,255,0.04)',border:'1px solid rgba(0,229,255,0.12)',borderRadius:6,padding:'10px 12px'}}>
+                {PERICIAS_DESC[editItem.nome] || editItem.descricao || 'Sem descrição.'}
+              </div>
+              <div>
+                <label style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(0,229,255,0.5)',display:'block',marginBottom:4,textTransform:'uppercase'}}>Anotações / Especializações</label>
+                <textarea value={editItem.detalhe||''} onChange={e=>onUpdate(editItem.id,'detalhe',e.target.value)}
+                  placeholder="Ex: Especializado em criaturas do mar..." rows={3}
+                  style={{width:'100%',fontSize:12,padding:'6px 10px',resize:'vertical',lineHeight:1.5}} />
+              </div>
+              <button onClick={()=>setEditItem(null)} style={{padding:'10px',background:'rgba(0,229,255,0.08)',border:'1px solid rgba(0,229,255,0.3)',color:'#00e5ff',borderRadius:6,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,textTransform:'uppercase'}}>✓ Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 // ── VantSection — lista compacta com chips clicáveis ─────────────────────────
 const VantSection = ({type, title, color, items, onAdd, onUpdate, onRemove}) => {
   const [addOpen, setAddOpen] = useState(false);
@@ -1360,79 +1469,69 @@ const CampaignPanel = ({char, sheets, onClose}) => {
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {fichasArr.length===0
               ? <p style={{color:'rgba(0,229,255,0.25)',fontSize:11,textAlign:'center',fontStyle:'italic',padding:16}}>Nenhuma ficha registrada ainda.</p>
-              : fichasArr.map(f=>(
+              : fichasArr.map(f=>{
+                // ── Bug fix: calcular base corretamente com bônus ──
+                const basePV = Math.max(1, ((f.atributos?.resistencia||0)*5) + (f.bonusPV||0));
+                const basePM = Math.max(1, ((f.atributos?.habilidade||0)*5) + (f.bonusPM||0));
+                const basePA = Math.max(1, (f.atributos?.poder||0) + (f.bonusPA||0));
+
+                return (
                 <div key={f.id} style={{background:'rgba(0,0,0,0.4)',border:'1px solid rgba(0,229,255,0.18)',borderRadius:8,overflow:'hidden'}}>
-                  <div style={{padding:'8px 12px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}
+                  {/* ── Header do card ── */}
+                  <div style={{padding:'8px 10px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}
                     onClick={()=>setFichaAberta(fichaAberta===f.id?null:f.id)}>
+                    {/* Foto */}
+                    {f.foto
+                      ? <img src={f.foto} style={{width:42,height:42,borderRadius:6,objectFit:'cover',border:'1px solid rgba(0,229,255,0.25)',flexShrink:0}} alt="" />
+                      : <div style={{width:42,height:42,borderRadius:6,background:'rgba(0,229,255,0.06)',border:'1px dashed rgba(0,229,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:18}}>👤</div>
+                    }
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontFamily:'Orbitron',fontSize:11,color:'#e8f4f8',fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.nome||'Sem nome'}</div>
-                      <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1}}>{f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}</div>
+                      <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.arquetipo||'—'}{f.kits&&f.kits.length>0?' · '+f.kits.join(', '):''}</div>
                     </div>
-                    {/* ── Recursos: cyberpunk, cards largos com barra ── */}
-                    <div style={{display:'flex',flexDirection:'row',gap:4,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-                      {[
-                        {campo:'pv', label:'PV', icon:'♥', color:'#ff5252', border:'rgba(255,23,68,0.5)',  bg:'rgba(255,23,68,0.1)',  base:(f.atributos?.resistencia||0)*5||1},
-                        {campo:'pm', label:'PM', icon:'⚡', color:'#00e5ff', border:'rgba(0,229,255,0.5)', bg:'rgba(0,229,255,0.08)', base:(f.atributos?.habilidade||0)*5||1},
-                        {campo:'pa', label:'PA', icon:'★',  color:'#ffd600', border:'rgba(255,214,0,0.5)', bg:'rgba(255,214,0,0.08)', base:f.atributos?.poder||1},
-                      ].map(({campo,label,icon,color,border,bg,base})=>{
-                        const val = recursosLocal[f.id]?.[campo] ?? f.recursos?.[campo] ?? 0;
-                        const pct = base > 0 ? Math.min(100,(val/base)*100) : 0;
-                        return (
-                          <div key={campo} style={{background:bg, border:'1px solid '+border, borderRadius:8, overflow:'hidden', boxShadow:'0 0 8px '+border, width:88}}>
-                            {/* Topo: ícone + label */}
-                            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px 4px 4px'}}>
-                              <span style={{fontSize:14,color:color,textShadow:'0 0 8px '+color}}>{icon}</span>
-                              <span style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:color,letterSpacing:1,textTransform:'uppercase',textShadow:'0 0 6px '+color}}>{label}</span>
-                            </div>
-                            {/* Valor + base */}
-                            <div style={{textAlign:'center',padding:'0 4px 2px'}}>
-                              <input
-                                type="number"
-                                value={val}
-                                onChange={e=>setRecursoExato(f.id,campo,e.target.value)}
-                                style={{
-                                  width:'100%',textAlign:'center',fontSize:24,fontWeight:900,
-                                  fontFamily:'Orbitron',color:color,background:'transparent',
-                                  border:'none',outline:'none',padding:0,
-                                  textShadow:'0 0 10px '+color
-                                }}
-                              />
-                              <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',fontFamily:'Share Tech Mono',marginTop:-2}}>/{base}</div>
-                            </div>
-                            {/* Botões − + */}
-                            <div style={{display:'flex'}}>
-                              <button onClick={()=>ajustarRecurso(f.id,campo,-1)} style={{
-                                flex:1,height:28,background:'rgba(0,0,0,0.4)',border:'none',
-                                borderTop:'1px solid '+border,borderRight:'1px solid '+border,
-                                color:color,cursor:'pointer',fontSize:18,fontWeight:900,
-                                display:'flex',alignItems:'center',justifyContent:'center',transition:'background 0.15s'
-                              }}
-                                onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
-                                onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.4)'}
-                              >−</button>
-                              <button onClick={()=>ajustarRecurso(f.id,campo,+1)} style={{
-                                flex:1,height:28,background:'rgba(0,0,0,0.4)',border:'none',
-                                borderTop:'1px solid '+border,
-                                color:color,cursor:'pointer',fontSize:18,fontWeight:900,
-                                display:'flex',alignItems:'center',justifyContent:'center',transition:'background 0.15s'
-                              }}
-                                onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
-                                onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.4)'}
-                              >+</button>
-                            </div>
-                            {/* Barra de progresso neon */}
-                            <div style={{height:4,background:'rgba(0,0,0,0.6)'}}>
-                              <div style={{height:'100%',width:pct+'%',background:color,boxShadow:'0 0 6px '+color,transition:'width 0.25s ease'}}/>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <span style={{color:'rgba(0,229,255,0.3)',fontSize:10,alignSelf:'center'}}>{fichaAberta===f.id?'▲':'▼'}</span>
+                    <span style={{color:'rgba(0,229,255,0.3)',fontSize:10,flexShrink:0}}>{fichaAberta===f.id?'▲':'▼'}</span>
                   </div>
 
+                  {/* ── Recursos ── */}
+                  <div style={{padding:'0 10px 8px',display:'flex',flexDirection:'row',gap:4}} onClick={e=>e.stopPropagation()}>
+                    {[
+                      {campo:'pv', label:'PV', icon:'♥', color:'#ff5252', border:'rgba(255,23,68,0.5)', bg:'rgba(255,23,68,0.1)', base:basePV},
+                      {campo:'pm', label:'PM', icon:'⚡', color:'#00e5ff', border:'rgba(0,229,255,0.5)', bg:'rgba(0,229,255,0.08)', base:basePM},
+                      {campo:'pa', label:'PA', icon:'★',  color:'#ffd600', border:'rgba(255,214,0,0.5)', bg:'rgba(255,214,0,0.08)', base:basePA},
+                    ].map(({campo,label,icon,color,border,bg,base})=>{
+                      const val = recursosLocal[f.id]?.[campo] ?? f.recursos?.[campo] ?? 0;
+                      const pct = base > 0 ? Math.min(100,(val/base)*100) : 0;
+                      return (
+                        <div key={campo} style={{background:bg,border:'1px solid '+border,borderRadius:8,overflow:'hidden',boxShadow:'0 0 8px '+border,flex:1}}>
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'6px 4px 2px'}}>
+                            <span style={{fontSize:12,color:color,textShadow:'0 0 8px '+color}}>{icon}</span>
+                            <span style={{fontFamily:'Orbitron',fontSize:9,fontWeight:700,color:color,letterSpacing:1,textShadow:'0 0 6px '+color}}>{label}</span>
+                          </div>
+                          <div style={{textAlign:'center',padding:'0 4px 2px'}}>
+                            <input type="number" value={val} onChange={e=>setRecursoExato(f.id,campo,e.target.value)}
+                              style={{width:'100%',textAlign:'center',fontSize:20,fontWeight:900,fontFamily:'Orbitron',color:color,background:'transparent',border:'none',outline:'none',padding:0,textShadow:'0 0 10px '+color}}/>
+                            <div style={{fontSize:9,color:'rgba(255,255,255,0.3)',fontFamily:'Share Tech Mono',marginTop:-2}}>/{base}</div>
+                          </div>
+                          <div style={{display:'flex'}}>
+                            <button onClick={()=>ajustarRecurso(f.id,campo,-1)} style={{flex:1,height:24,background:'rgba(0,0,0,0.4)',border:'none',borderTop:'1px solid '+border,borderRight:'1px solid '+border,color:color,cursor:'pointer',fontSize:16,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center'}}
+                              onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
+                              onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.4)'}>−</button>
+                            <button onClick={()=>ajustarRecurso(f.id,campo,+1)} style={{flex:1,height:24,background:'rgba(0,0,0,0.4)',border:'none',borderTop:'1px solid '+border,color:color,cursor:'pointer',fontSize:16,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center'}}
+                              onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.7)'}
+                              onMouseLeave={e=>e.currentTarget.style.background='rgba(0,0,0,0.4)'}>+</button>
+                          </div>
+                          <div style={{height:4,background:'rgba(0,0,0,0.6)'}}>
+                            <div style={{height:'100%',width:pct+'%',background:color,boxShadow:'0 0 6px '+color,transition:'width 0.25s ease'}}/>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* ── Detalhes expandidos ── */}
                   {fichaAberta===f.id && (
-                    <div style={{padding:'0 12px 12px',borderTop:'1px solid rgba(0,229,255,0.1)',fontSize:11,display:'flex',flexDirection:'column',gap:8,paddingTop:10}}>
+                    <div style={{borderTop:'1px solid rgba(0,229,255,0.1)',padding:'10px 12px',display:'flex',flexDirection:'column',gap:8}}>
+                      {/* Atributos */}
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5}}>
                         {[['POD',f.atributos?.poder,'#ff5252'],['HAB',f.atributos?.habilidade,'#00e5ff'],['RES',f.atributos?.resistencia,'#00e676']].map(([n,v,c])=>(
                           <div key={n} style={{background:'rgba(0,0,0,0.4)',border:'1px solid '+c+'33',borderRadius:5,padding:'4px 6px',textAlign:'center'}}>
@@ -1441,6 +1540,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                           </div>
                         ))}
                       </div>
+                      {/* Perícias */}
                       {f.pericias?.length>0 && (
                         <div>
                           <div style={{fontFamily:'Orbitron',fontSize:8,color:'rgba(0,229,255,0.4)',marginBottom:3,textTransform:'uppercase'}}>Perícias</div>
@@ -1449,35 +1549,80 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                           </div>
                         </div>
                       )}
+                      {/* Vantagens */}
                       {f.vantagens?.length>0 && (
                         <div>
                           <div style={{fontFamily:'Orbitron',fontSize:8,color:'#00e676',marginBottom:3,textTransform:'uppercase'}}>Vantagens</div>
-                          <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                          <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
                             {f.vantagens.map((v,i)=>(
-                              <div key={i} style={{fontSize:9,padding:'2px 5px',background:'rgba(0,230,118,0.04)',border:'1px solid rgba(0,230,118,0.1)',borderRadius:3}}>
-                                <span style={{color:'#00e676',fontWeight:700}}>{v.nome}</span>
-                                {v.detalhe&&<span style={{color:'rgba(0,229,255,0.35)',fontSize:8}}> — {v.detalhe}</span>}
-                              </div>
+                              <span key={i} style={{fontSize:9,background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.15)',borderRadius:3,padding:'1px 5px',color:'#00e676'}}>
+                                {v.nome}{v.detalhe?` (${v.detalhe})`:''}
+                              </span>
                             ))}
                           </div>
                         </div>
                       )}
+                      {/* Desvantagens */}
+                      {f.desvantagens?.length>0 && (
+                        <div>
+                          <div style={{fontFamily:'Orbitron',fontSize:8,color:'#ff5252',marginBottom:3,textTransform:'uppercase'}}>Desvantagens</div>
+                          <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+                            {f.desvantagens.map((d,i)=>(
+                              <span key={i} style={{fontSize:9,background:'rgba(255,23,68,0.06)',border:'1px solid rgba(255,23,68,0.15)',borderRadius:3,padding:'1px 5px',color:'#ff5252'}}>
+                                {d.nome}{d.detalhe?` (${d.detalhe})`:''}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Kits */}
+                      {f.kits?.length>0 && (
+                        <div>
+                          <div style={{fontFamily:'Orbitron',fontSize:8,color:'#ffd600',marginBottom:3,textTransform:'uppercase'}}>Kits</div>
+                          <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+                            {f.kits.map((k,i)=><span key={i} style={{fontSize:9,background:'rgba(255,214,0,0.06)',border:'1px solid rgba(255,214,0,0.2)',borderRadius:3,padding:'1px 5px',color:'#ffd600'}}>{k}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {/* Técnicas */}
+                      {f.tecnicas?.length>0 && (
+                        <div>
+                          <div style={{fontFamily:'Orbitron',fontSize:8,color:'#a855f7',marginBottom:3,textTransform:'uppercase'}}>Técnicas</div>
+                          <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+                            {f.tecnicas.map((t,i)=><span key={i} style={{fontSize:9,background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.15)',borderRadius:3,padding:'1px 5px',color:'#a855f7'}}>{t.nome}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {/* Anotações */}
                       {f.anotacoes && (
                         <div>
                           <div style={{fontFamily:'Orbitron',fontSize:8,color:'rgba(0,229,255,0.4)',marginBottom:3,textTransform:'uppercase'}}>Anotações</div>
                           <div style={{fontSize:9,color:'rgba(0,229,255,0.5)',background:'rgba(0,0,0,0.3)',borderRadius:4,padding:'5px 7px',lineHeight:1.5}}>{f.anotacoes}</div>
                         </div>
                       )}
-                      {ehMestre && f.id!==myPlayerId.current && (
-                        <button onClick={()=>removerFicha(f.id)} style={{padding:'4px 0',background:'rgba(255,23,68,0.05)',border:'1px solid rgba(255,23,68,0.18)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
-                          × Remover da campanha
-                        </button>
-                      )}
+                      {/* Botões mestre */}
+                      <div style={{display:'flex',gap:6,marginTop:4}}>
+                        {ehMestre && (
+                          <button onClick={()=>{
+                            const blob = new Blob([JSON.stringify(f,null,2)],{type:'application/json'});
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = (f.nome||'ficha')+'_3det.json';
+                            a.click();
+                          }} style={{flex:1,padding:'5px 0',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
+                            💾 Baixar Ficha
+                          </button>
+                        )}
+                        {ehMestre && f.id!==myPlayerId.current && (
+                          <button onClick={()=>removerFicha(f.id)} style={{flex:1,padding:'5px 0',background:'rgba(255,23,68,0.05)',border:'1px solid rgba(255,23,68,0.18)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
+                            × Remover
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
-              ))
-            }
+              );})}
           </div>
         )}
 
@@ -2131,42 +2276,14 @@ const App = () => {
 
         {/* LISTAS — mobile: acordeão; desktop: 3 colunas */}
         {isMobile ? (
-          <div style={{display:'flex',flexDirection:'column',gap:0,marginBottom:12}}>
-            {/* Perícias — mantém acordeão com ListSection */}
-            {[{id:'pericias', title:'Perícias', color:'blue', borderColor:'rgba(0,229,255,0.3)', titleColor:'#00e5ff', items:char.pericias, suggestions:PERICIAS}]
-            .map(({id,title,color,borderColor,titleColor,items,suggestions})=>{
-              const open = listTab===id;
-              const total = items.reduce((a,i)=>a+(parseInt(i.custo)||0),0);
-              return (
-                <div key={id} style={{border:'1px solid '+borderColor,borderRadius:open?8:6,marginBottom:6,overflow:'hidden',background:'var(--cp)'}}>
-                  <button onClick={()=>setListTab(open?'':id)} style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 14px',background:'transparent',border:'none',cursor:'pointer'}}>
-                    <span style={{fontFamily:'Orbitron',fontSize:11,color:titleColor,textTransform:'uppercase',letterSpacing:1,display:'flex',alignItems:'center',gap:8}}>
-                      {title}
-                      {items.length>0 && <span style={{fontSize:9,background:titleColor+'22',color:titleColor,borderRadius:10,padding:'1px 7px'}}>{items.length}</span>}
-                      {total!==0 && <span style={{fontSize:9,color:'rgba(0,229,255,0.4)'}}>({total>0?'+':''}{total}pt)</span>}
-                    </span>
-                    <span style={{color:titleColor,fontSize:14,transition:'transform 0.2s',display:'inline-block',transform:open?'rotate(180deg)':'rotate(0deg)'}}>▼</span>
-                  </button>
-                  {open && (
-                    <div style={{borderTop:'1px solid '+borderColor,padding:'0 0 8px'}}>
-                      <ListSection title={title} color={color} items={items} suggestions={suggestions}
-                        onAdd={()=>addItem(id)}
-                        onUpdate={(itemId,f,v)=>updItem(id,itemId,f,v)}
-                        onRemove={itemId=>remItem(id,itemId)}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {/* Vantagens e Desvantagens — VantSection com chips e modais */}
+          <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:12}}>
+            <PericiaSection items={char.pericias} onAdd={item=>addItemDirect('pericias',item)} onUpdate={(id,f,v)=>updItem('pericias',id,f,v)} onRemove={id=>remItem('pericias',id)} />
             <VantSection type="vantagens" title="Vantagens" color="green" items={char.vantagens} onAdd={item=>addItemDirect('vantagens',item)} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
-            <div style={{marginBottom:6}} />
             <VantSection type="desvantagens" title="Desvantagens" color="red" items={char.desvantagens} onAdd={item=>addItemDirect('desvantagens',item)} onUpdate={(id,f,v)=>updItem('desvantagens',id,f,v)} onRemove={id=>remItem('desvantagens',id)} />
           </div>
         ) : (
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:20}}>
-            <ListSection title="Perícias" color="blue" items={char.pericias} suggestions={PERICIAS} onAdd={()=>addItem('pericias')} onUpdate={(id,f,v)=>updItem('pericias',id,f,v)} onRemove={id=>remItem('pericias',id)} />
+            <PericiaSection items={char.pericias} onAdd={item=>addItemDirect('pericias',item)} onUpdate={(id,f,v)=>updItem('pericias',id,f,v)} onRemove={id=>remItem('pericias',id)} />
             <VantSection type="vantagens" title="Vantagens" color="green" items={char.vantagens} onAdd={item=>addItemDirect('vantagens',item)} onUpdate={(id,f,v)=>updItem('vantagens',id,f,v)} onRemove={id=>remItem('vantagens',id)} />
             <VantSection type="desvantagens" title="Desvantagens" color="red" items={char.desvantagens} onAdd={item=>addItemDirect('desvantagens',item)} onUpdate={(id,f,v)=>updItem('desvantagens',id,f,v)} onRemove={id=>remItem('desvantagens',id)} />
           </div>
