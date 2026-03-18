@@ -275,6 +275,16 @@ window.VANTAGENS = {
 "Voo":{c:"1",d:"Você pode voar. Em combate, levantar voo do chão usa um movimento e 2PM. Voando, você ignora terrenos difíceis e apenas personagens que também voem podem usar movimentos para alcançá-lo. Não precisa gastar mais PM para se manter no ar."}
 };
 window.LISTA_VANT = Object.keys(window.VANTAGENS).sort();
+// ══════════════════════════════════════════════════════════════════════════════
+// ⚠️  DESVANTAGENS — NÃO EDITAR PARCIALMENTE — TOTAL: 32 DESVANTAGENS
+// Ambiente, Amnésia, Antipático, Assombrado, Atrapalhado, Aura, Bateria,
+// Código, Dependência, Diferente, Elo Vital, Fracote, Frágil, Fraqueza,
+// Fúria, Inapto, Inculto, Indeciso, Infame, Lento, Maldição, Monstruoso,
+// Munição, Pacifista, Pobreza, Ponto Fraco, Protegido, Restrição,
+// Sem Vida, Tapado, Transtorno, Utensílio
+// Qualquer edição deve substituir o bloco INTEIRO usando Python/script,
+// nunca str_replace parcial que possa perder entradas.
+// ══════════════════════════════════════════════════════════════════════════════
 window.DESVANTAGENS = {
 "Ambiente":{c:"-1",d:"Você é mais acostumado a certo ambiente (água, clima muito quente, shopping, fliperama, etc.) que não existe em abundância no local da campanha. No início de cada cena, role 1D. Com resultado 1, nada relacionado ao seu ambiente existe ali e você tem Perda em todos os testes. O mestre pode dispensar a rolagem em situações especiais."},
 "Amnésia":{c:"-2",d:"Você não sabe quem é. O mestre faz sua ficha em segredo. Você pode tentar fazer coisas, e o mestre diz se conseguiu ou não — sem jamais revelar se você tem a perícia ou vantagem. O mestre pode rolar seus testes secretamente, apenas anunciando os resultados. Suas vantagens só funcionam em situações de risco real, e as desvantagens aparecem no pior momento possível."},
@@ -320,6 +330,21 @@ window.SUBOPCOES = {"Ajudante":{"Curandeiro":"Cura 2D PV ou permite repetir test
 "Restrição":{"Incomum (-1pt)":"A restrição acontece raramente. Quando acontece, você gasta o dobro de PM para usar suas vantagens. Exemplos: estar molhado, ter fome, lua cheia, inimigo de certo arquétipo.","Comum (-2pt)":"A restrição acontece com muita frequência. Quando acontece, você gasta o dobro de PM para usar suas vantagens. Exemplos: ser noite/dia, estar em lugar fechado/aberto, ter alguém olhando."},
 "Utensílio":{"-1pt (sem críticos na perícia)":"Escolha uma perícia que você tem. Você precisa do Utensílio para usá-la adequadamente. Quando não está com ele, você não consegue acertos críticos nessa perícia.","-2pt (sem PM e PA)":"Sem o Utensílio, você não pode usar vantagens ou técnicas que gastam PM, nem usar PA (exceto para recuperar o Utensílio). Falha crítica usando o item = cai, precisa de um movimento para recuperá-lo."}};
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ⚠️  TÉCNICAS & TRUQUES — NÃO EDITAR PARCIALMENTE — TOTAL: 26 ENTRADAS
+// TRUQUES (12): Ás Indomável, Barreira Mística, Cancioneiro Popular,
+//   Dobrar Elemento, Golpes, Grimório Debilitante, Grimório Irritante,
+//   Monasticismo Marcial, Ninjutsu, Pequenos Desejos, Praga,
+//   Raio Místico, Super-Movimento
+// TÉCNICAS COMUNS (14): Absorver Mana, Área de Batalha, Bola de Fogo,
+//   Combo, Consertar, Desprezo, Disparo de Energia, Encantar,
+//   Gambiarra, Golpe Púrpura, Grito da Selva, Inspirar,
+//   Invocar Elemental, Megalon, Mikron, Pisão do Titã,
+//   Poeira Glacial, Queimar o Cosmo, Raio da Fúria,
+//   Rajada de Golpes, Relâmpago, Role os Dados,
+//   Sabedoria dos Ermos, Setas Infalíveis de Petrovna
+// Qualquer edição deve substituir o bloco INTEIRO, nunca parcialmente.
+// ══════════════════════════════════════════════════════════════════════════════
 window.TECNICAS_DATA = {
 "Ás Indomável":{tipo:"Truque",req:"Esporte ou Máquinas",alcance:"Pessoal",custo:"0–2 PM",duracao:"Instantânea",desc:"Você é um prodígio da pilotagem. Quando comanda um veículo, pode usar manobras especiais: Até o limite! (usa PV do veículo no lugar de PM), Drifting (ação + 2PM → Ganho na próxima rodada), Nunca me diga as chances! (2PM → anula Perda em um teste), Vai corredor vai! (1PM → movimento extra como Aceleração)."},
 "Barreira Mística":{tipo:"Truque",req:"Magia, Mística",alcance:"Pessoal",custo:"1–2 PM",duracao:"Um turno",desc:"Conjura uma barreira mágica como reação. Pode usar Mística no lugar de Luta na defesa. Com +1PM: efeito extra Debilitante, Drenante, Elétrica, Espinhosa, Luminosa, Macia ou Solidária (para aliado)."},
@@ -2097,7 +2122,8 @@ const App = () => {
   const addItemDirect = (list, item) => setChar(c=>{
     const nl = [...(c[list]||[]), item];
     const bonus = list==='vantagens' ? calcBonus(nl) : {};
-    return {...c, [list]:nl, ...bonus};
+    const recursos = list==='vantagens' ? sincRecursos(c, bonus) : null;
+    return {...c, [list]:nl, ...bonus, ...(recursos ? {recursos} : {})};
   });
 
   // Recalcula bônus de +Ação/+Mana/+Vida a partir da lista de vantagens
@@ -2109,6 +2135,17 @@ const App = () => {
       if(v.nome==='+Vida') bPV+=10;
     });
     return {bonusPA:bPA, bonusPM:bPM, bonusPV:bPV};
+  };
+
+  // Recalcula recursos atual = máximo após mudança de bônus ou atributo
+  const sincRecursos = (c, bonus) => {
+    const bPV = bonus.bonusPV ?? c.bonusPV ?? 0;
+    const bPM = bonus.bonusPM ?? c.bonusPM ?? 0;
+    const bPA = bonus.bonusPA ?? c.bonusPA ?? 0;
+    const novoPV = Math.max(1, (c.atributos?.resistencia||0)*5) + bPV;
+    const novoPM = Math.max(1, (c.atributos?.habilidade||0)*5) + bPM;
+    const novoPA = Math.max(1, (c.atributos?.poder||0)) + bPA;
+    return {pv: novoPV, pm: novoPM, pa: novoPA};
   };
 
   const updItem = (list,id,f,v) => setChar(c=>{
@@ -2141,13 +2178,15 @@ const App = () => {
       return u;
     });
     const bonus = list==='vantagens' ? calcBonus(nl) : {};
-    return {...c,[list]:nl,...bonus};
+    const recursos = list==='vantagens' ? sincRecursos(c, bonus) : null;
+    return {...c,[list]:nl,...bonus,...(recursos ? {recursos} : {})};
   });
 
   const remItem = (list,id) => setChar(c=>{
     const nl = c[list].filter(i=>i.id!==id);
     const bonus = list==='vantagens' ? calcBonus(nl) : {};
-    return {...c,[list]:nl,...bonus};
+    const recursos = list==='vantagens' ? sincRecursos(c, bonus) : null;
+    return {...c,[list]:nl,...bonus,...(recursos ? {recursos} : {})};
   });
 
   const maxPA = (char.atributos.poder||1) + (char.bonusPA||0);
@@ -2521,7 +2560,20 @@ const App = () => {
             {[['poder','#ff1744'],['habilidade','#00e5ff'],['resistencia','#00e676']].map(([a,c])=>(
               <div key={a} style={{background:'rgba(0,0,0,0.4)',borderLeft:'3px solid '+c,borderRadius:6,padding:'10px 12px',marginBottom:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{fontFamily:'Orbitron',fontSize:11,color:c,textTransform:'uppercase'}}>{a.slice(0,1).toUpperCase()+a.slice(1)}</span>
-                <Stepper value={char.atributos[a]} onChange={v=>setChar(c=>({...c,atributos:{...c.atributos,[a]:Math.max(0,v)}}))} />
+                <Stepper value={char.atributos[a]} onChange={v=>setChar(c=>{
+                  const novoAtrib = {...c.atributos,[a]:Math.max(0,v)};
+                  const novoPV = Math.max(1,novoAtrib.resistencia*5) + (c.bonusPV||0);
+                  const novoPM = Math.max(1,novoAtrib.habilidade*5) + (c.bonusPM||0);
+                  const novoPA = Math.max(1,novoAtrib.poder) + (c.bonusPA||0);
+                  return {...c,
+                    atributos: novoAtrib,
+                    recursos: {
+                      pv: novoPV,
+                      pm: novoPM,
+                      pa: novoPA
+                    }
+                  };
+                })} />
               </div>
             ))}
           </div>
