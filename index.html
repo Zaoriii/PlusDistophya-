@@ -2063,12 +2063,43 @@ const App = () => {
     if(!code) return;
     try {
       const data = await fbGet(`fichas/${code.trim().toUpperCase()}`);
-      if(data&&data.id){
-        const s={...EMPTY,...data,pericias:data.pericias||[],vantagens:data.vantagens||[],desvantagens:data.desvantagens||[],kits:data.kits||[],tecnicas:data.tecnicas||[],inventario:data.inventario||{itens:[],dinheiro:''},...recalcBonus(data)};
-        setSheets(p=>{const f=p.filter(x=>x.id!==s.id);return [...f,s];});
-        alert('☁️ Ficha importada!');
-      } else alert('❌ Nenhuma ficha encontrada.');
-    } catch(e){alert('❌ Erro: '+e.message);}
+      if(!data || !data.nome) { alert('❌ Nenhuma ficha encontrada.'); return; }
+
+      // Usa o mesmo normalizador robusto do importJ
+      const l = {...data};
+      if(!l.inventario || typeof l.inventario !== 'object') l.inventario = {itens:[],dinheiro:''};
+      if(!Array.isArray(l.inventario.itens)) l.inventario.itens = [];
+      if(!l.id || String(l.id).startsWith('j-')) l.id = Date.now();
+
+      const normItem = (item, idx, custo='1') => {
+        if(typeof item === 'string') return {id:Date.now()+idx+Math.random(),nome:item,detalhe:'',descricao:'',custo};
+        return {id:item.id||Date.now()+idx+Math.random(),nome:item.nome||'',detalhe:item.detalhe||'',descricao:item.descricao||'',custo:item.custo||custo};
+      };
+      l.pericias = Array.isArray(l.pericias) ? l.pericias.map((p,i)=>normItem(p,i,'1')) : [];
+      l.vantagens = Array.isArray(l.vantagens) ? l.vantagens.map((v,i)=>normItem(v,i,'1')) : [];
+      l.desvantagens = Array.isArray(l.desvantagens) ? l.desvantagens.map((d,i)=>normItem(d,i,'-1')) : [];
+      l.tecnicas = Array.isArray(l.tecnicas) ? l.tecnicas.map((t,i)=>({
+        id:t.id||Date.now()+i+Math.random(), nome:t.nome||'', custo:t.custo||'', descricao:t.descricao||''
+      })) : [];
+      l.kits = Array.isArray(l.kits) ? l.kits.map((k,i)=>{
+        if(typeof k === 'string') return {id:Date.now()+i+Math.random(),nome:k};
+        return {id:k.id||Date.now()+i+Math.random(),nome:k.nome||''};
+      }) : [];
+      if(!l.atributos || typeof l.atributos !== 'object') l.atributos = {poder:0,habilidade:0,resistencia:0};
+      if(!l.recursos || typeof l.recursos !== 'object') l.recursos = {pa:1,pm:1,pv:1};
+
+      const novaFicha = {...EMPTY, ...l, ...recalcBonus(l)};
+
+      // Salva na biblioteca e carrega na ficha ativa
+      setSheets(p => {
+        const sem = p.filter(x => x.id !== novaFicha.id);
+        const arr = [...sem, novaFicha];
+        localStorage.setItem('3det_v2', JSON.stringify(arr));
+        return arr;
+      });
+      setChar(novaFicha);
+      alert('☁️ Ficha "' + novaFicha.nome + '" importada e carregada!');
+    } catch(e) { alert('❌ Erro: ' + e.message); }
   };
 
   const save = () => {
