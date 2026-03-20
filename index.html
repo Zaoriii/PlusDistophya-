@@ -982,23 +982,33 @@ const VantSection = ({type, title, color, items, onAdd, onUpdate, onRemove}) => 
         </div>
         {/* Chips */}
         <div style={{display:'flex',flexWrap:'wrap',gap:6,minHeight:32}}>
-          {items.map(item=>(
-            <button key={item.id} onClick={()=>setEditItem(item)}
-              style={{
-                background:chipBg, border:'1px solid '+borderColor,
-                borderRadius:20, padding:'4px 12px', cursor:'pointer',
-                fontFamily:'Orbitron', fontSize:10, color:titleColor,
-                textTransform:'uppercase', letterSpacing:0.5,
-                display:'flex', alignItems:'center', gap:5,
-                transition:'all 0.15s',
-              }}
-              onMouseEnter={e=>{e.currentTarget.style.background=color==='red'?'rgba(255,23,68,0.2)':color==='green'?'rgba(0,230,118,0.2)':'rgba(0,229,255,0.2)';}}
-              onMouseLeave={e=>{e.currentTarget.style.background=chipBg;}}>
-              <span>{item.nome}</span>
-              {item.detalhe && <span style={{fontSize:8,opacity:0.6,fontStyle:'italic',textTransform:'none'}}>({item.detalhe})</span>}
-              {item.custo && <span style={{fontSize:9,opacity:0.7,fontFamily:'Share Tech Mono'}}>{parseInt(item.custo)>0?'+':''}{item.custo}</span>}
-            </button>
-          ))}
+          {items.map(item=>{
+            const isKit  = item.detalhe && item.detalhe.includes('(Kit:');
+            const isArq  = item.detalhe && item.detalhe.includes('(Arquétipo:');
+            const cChip  = isKit ? '#ffd600' : isArq ? '#a855f7' : titleColor;
+            const bgChip = isKit ? 'rgba(255,214,0,0.1)' : isArq ? 'rgba(168,85,247,0.1)' : chipBg;
+            const bdChip = isKit ? 'rgba(255,214,0,0.4)' : isArq ? 'rgba(168,85,247,0.4)' : borderColor;
+            const bgHover= isKit ? 'rgba(255,214,0,0.2)' : isArq ? 'rgba(168,85,247,0.2)' : (color==='red'?'rgba(255,23,68,0.2)':color==='green'?'rgba(0,230,118,0.2)':'rgba(0,229,255,0.2)');
+            return (
+              <button key={item.id} onClick={()=>setEditItem(item)}
+                style={{
+                  background:bgChip, border:'1px solid '+bdChip,
+                  borderRadius:20, padding:'4px 12px', cursor:'pointer',
+                  fontFamily:'Orbitron', fontSize:10, color:cChip,
+                  textTransform:'uppercase', letterSpacing:0.5,
+                  display:'flex', alignItems:'center', gap:5,
+                  transition:'all 0.15s',
+                }}
+                onMouseEnter={e=>{e.currentTarget.style.background=bgHover;}}
+                onMouseLeave={e=>{e.currentTarget.style.background=bgChip;}}>
+                {isKit  && <span style={{fontSize:8,opacity:0.7}}>⚔</span>}
+                {isArq  && <span style={{fontSize:8,opacity:0.7}}>★</span>}
+                <span>{item.nome}</span>
+                {item.detalhe && !isKit && !isArq && <span style={{fontSize:8,opacity:0.6,fontStyle:'italic',textTransform:'none'}}>({item.detalhe})</span>}
+                {item.custo && <span style={{fontSize:9,opacity:0.7,fontFamily:'Share Tech Mono'}}>{parseInt(item.custo)>0?'+':''}{item.custo}</span>}
+              </button>
+            );
+          })}
           {items.length===0 && <span style={{color:'rgba(0,229,255,0.2)',fontSize:11,fontStyle:'italic',padding:'4px 0'}}>Nenhuma. Clique em + ADD</span>}
         </div>
       </div>
