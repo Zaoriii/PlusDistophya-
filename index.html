@@ -2280,20 +2280,22 @@ const App = () => {
           <div className="flicker orb" style={{color:'#00e5ff',textShadow:'0 0 10px var(--cg)',fontSize:isMobile?'clamp(9px,4vw,14px)':'clamp(10px,3vw,18px)',fontWeight:900,letterSpacing:isMobile?2:4,textTransform:'uppercase'}}>PLUS DISTOPHYA</div>
           {!isMobile && <div className="mono" style={{color:'rgba(0,229,255,0.4)',fontSize:8,letterSpacing:3}}>◆ FICHA 3DeT VICTORY ◆</div>}
         </div>
-        <div style={{display:'flex',gap:4,justifyContent:'flex-end',flexShrink:0}}>
-          {!isMobile && <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>☁️ SYNC</button>}
-          {!isMobile && <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>📥</button>}
-          {isMobile && <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:6,padding:'6px 8px',cursor:'pointer',fontSize:14}}>☁️</button>}
+        <div style={{display:'flex',gap:6,justifyContent:'flex-end',flexShrink:0,alignItems:'center'}}>
+          {!isMobile && <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:8,padding:'8px 14px',cursor:'pointer',fontSize:11,fontFamily:'Orbitron',textTransform:'uppercase',letterSpacing:1,display:'flex',alignItems:'center',gap:5}}>☁️ SYNC</button>}
+          {!isMobile && <button onClick={importFromCloud} style={{background:'rgba(236,72,153,0.15)',border:'1px solid rgba(236,72,153,0.4)',color:'#ec4899',borderRadius:8,padding:'8px 14px',cursor:'pointer',fontSize:11,fontFamily:'Orbitron',textTransform:'uppercase',letterSpacing:1}}>📥 IMPORT</button>}
+          {isMobile && <button onClick={syncToCloud} style={{background:'rgba(168,85,247,0.15)',border:'1px solid rgba(168,85,247,0.4)',color:'#a855f7',borderRadius:8,padding:'8px 10px',cursor:'pointer',fontSize:16}}>☁️</button>}
           <button onClick={()=>setCampPanel(!campPanel)} style={{
             background:emCampanha?'rgba(0,229,255,0.12)':'rgba(255,214,0,0.12)',
             border:'1px solid '+(emCampanha?'rgba(0,229,255,0.4)':'rgba(255,214,0,0.4)'),
             color:emCampanha?'#00e5ff':'#ffd600',
-            borderRadius:6,padding:'5px 8px',cursor:'pointer',fontSize:isMobile?14:9,fontFamily:isMobile?'inherit':'Orbitron',textTransform:'uppercase',position:'relative'
+            borderRadius:8,padding:'8px 14px',cursor:'pointer',
+            fontSize:isMobile?16:11,fontFamily:'Orbitron',textTransform:'uppercase',
+            letterSpacing:1,position:'relative',display:'flex',alignItems:'center',gap:5
           }}>
             {isMobile ? '⚔' : '⚔ MESA'}
-            {emCampanha && <span style={{position:'absolute',top:-3,right:-3,width:7,height:7,background:'#00e676',borderRadius:'50%',border:'1px solid var(--cb)'}}/>}
+            {emCampanha && <span style={{position:'absolute',top:-3,right:-3,width:8,height:8,background:'#00e676',borderRadius:'50%',border:'2px solid var(--cb)'}}/>}
           </button>
-          <Btn onClick={save} style={{padding:'5px 8px',fontSize:isMobile?13:9}}>{isMobile?'💾':'💾 SALVAR'}</Btn>
+          <Btn onClick={save} style={{padding:'8px 14px',fontSize:isMobile?16:11,letterSpacing:1}}>{isMobile?'💾':'💾 SALVAR'}</Btn>
         </div>
       </div>
 
