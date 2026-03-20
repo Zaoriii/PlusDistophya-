@@ -2050,9 +2050,8 @@ const App = () => {
     try {
       let sid = char.syncId;
       if(!sid){ sid=Math.random().toString(36).substring(2,7).toUpperCase(); }
-      // Salva ficha sem foto (base64 pode ser muito grande para o Firebase free tier)
-      const payload = {...char, syncId:sid, foto: char.foto ? '[tem foto]' : null};
-      await fbSet(`fichas/${sid}`, payload);
+      // Salva ficha completa incluindo foto
+      await fbSet(`fichas/${sid}`, {...char, syncId:sid});
       setChar(c=>({...c, syncId:sid}));
       navigator.clipboard.writeText(sid).catch(()=>{});
       alert('☁️ Ficha salva!\nCódigo: '+sid+'\n(Já copiado!)');
@@ -2113,12 +2112,18 @@ const App = () => {
 
       const novaFicha = {...EMPTY, ...l, ...recalcBonus(l)};
 
-      // Salva na biblioteca SEM foto (base64 pode estourar o localStorage)
-      const fichaParaBiblioteca = {...novaFicha, foto: novaFicha.foto ? '[foto]' : null};
+      // Salva na biblioteca (sem foto se necessário para não estourar localStorage)
+      const fichaParaBiblioteca = {...novaFicha};
       setSheets(p => {
         const sem = p.filter(x => x.id !== novaFicha.id);
         const arr = [...sem, fichaParaBiblioteca];
-        try { localStorage.setItem('3det_v2', JSON.stringify(arr)); } catch(e) { /* ignora se foto muito grande */ }
+        try {
+          localStorage.setItem('3det_v2', JSON.stringify(arr));
+        } catch(e) {
+          // foto base64 muito grande — salva sem foto
+          const arrSemFoto = arr.map(f=>({...f, foto:null}));
+          try { localStorage.setItem('3det_v2', JSON.stringify(arrSemFoto)); } catch(e2){}
+        }
         return arr;
       });
 
