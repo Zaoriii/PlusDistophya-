@@ -2441,7 +2441,27 @@ const App = () => {
                   </div>
               }
             </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onloadend=()=>setChar(c=>({...c,foto:r.result}));r.readAsDataURL(f);}}} />
+            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
+              const f=e.target.files[0];
+              if(!f) return;
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                // Comprime a foto para max 300x300 e qualidade 0.7
+                const img = new Image();
+                img.onload = () => {
+                  const MAX = 300;
+                  const scale = Math.min(MAX/img.width, MAX/img.height, 1);
+                  const canvas = document.createElement('canvas');
+                  canvas.width  = Math.round(img.width  * scale);
+                  canvas.height = Math.round(img.height * scale);
+                  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                  const compressed = canvas.toDataURL('image/jpeg', 0.72);
+                  setChar(c=>({...c, foto: compressed}));
+                };
+                img.src = reader.result;
+              };
+              reader.readAsDataURL(f);
+            }} />
 
             <div style={{flex:1,minWidth:isMobile?0:260,display:'flex',flexDirection:'column',gap:10}}>
               <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:isMobile?8:12}}>
