@@ -2372,7 +2372,44 @@ const App = () => {
       {campPanel && (
         <>
           <div onClick={()=>setCampPanel(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.6)',zIndex:200}} />
-          <div style={{position:'fixed',top:0,left:0,bottom:0,width:'min(500px,100vw)',background:'var(--cp)',borderRight:'1px solid rgba(0,229,255,0.3)',boxShadow:'0 0 40px rgba(0,229,255,0.12)',zIndex:201,display:'flex',flexDirection:'column'}}>
+          <div id="camp-panel" style={{position:'fixed',top:0,left:0,bottom:0,width:'min(500px,100vw)',background:'var(--cp)',borderRight:'1px solid rgba(0,229,255,0.3)',boxShadow:'0 0 40px rgba(0,229,255,0.12)',zIndex:201,display:'flex',flexDirection:'column',userSelect:'none'}}>
+            {/* Handle de resize — arrastar para direita expande o painel */}
+            <div
+              style={{position:'absolute',top:0,right:-4,bottom:0,width:8,cursor:'ew-resize',zIndex:10,display:'flex',alignItems:'center',justifyContent:'center'}}
+              onMouseDown={e=>{
+                e.preventDefault();
+                const panel = document.getElementById('camp-panel');
+                const startX = e.clientX;
+                const startW = panel.offsetWidth;
+                const onMove = ev => {
+                  const newW = Math.min(Math.max(320, startW + (ev.clientX - startX)), window.innerWidth - 40);
+                  panel.style.width = newW + 'px';
+                };
+                const onUp = () => {
+                  window.removeEventListener('mousemove', onMove);
+                  window.removeEventListener('mouseup', onUp);
+                };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
+              }}
+              onTouchStart={e=>{
+                const panel = document.getElementById('camp-panel');
+                const startX = e.touches[0].clientX;
+                const startW = panel.offsetWidth;
+                const onMove = ev => {
+                  const newW = Math.min(Math.max(320, startW + (ev.touches[0].clientX - startX)), window.innerWidth - 20);
+                  panel.style.width = newW + 'px';
+                };
+                const onEnd = () => {
+                  window.removeEventListener('touchmove', onMove);
+                  window.removeEventListener('touchend', onEnd);
+                };
+                window.addEventListener('touchmove', onMove);
+                window.addEventListener('touchend', onEnd);
+              }}
+            >
+              <div style={{width:3,height:48,borderRadius:2,background:'rgba(0,229,255,0.35)',boxShadow:'0 0 6px rgba(0,229,255,0.3)'}} />
+            </div>
             <div style={{padding:'14px 16px',borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(0,0,0,0.4)',flexShrink:0}}>
               <div>
                 <div style={{fontFamily:'Orbitron',color:'#ffd600',fontSize:13,letterSpacing:2}}>⚔ MESA DE CAMPANHA</div>
