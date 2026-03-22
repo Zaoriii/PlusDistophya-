@@ -2215,15 +2215,22 @@ const App = () => {
     return {bonusPA:bPA, bonusPM:bPM, bonusPV:bPV};
   };
 
-  // Recalcula recursos atual = máximo após mudança de bônus ou atributo
+  // Recalcula recursos: ao ganhar bônus sobe o atual junto; ao perder bônus apenas corta se necessário
   const sincRecursos = (c, bonus) => {
     const bPV = bonus.bonusPV ?? c.bonusPV ?? 0;
     const bPM = bonus.bonusPM ?? c.bonusPM ?? 0;
     const bPA = bonus.bonusPA ?? c.bonusPA ?? 0;
-    const novoPV = Math.max(1, (c.atributos?.resistencia||0)*5) + bPV;
-    const novoPM = Math.max(1, (c.atributos?.habilidade||0)*5) + bPM;
-    const novoPA = Math.max(1, (c.atributos?.poder||0)) + bPA;
-    return {pv: novoPV, pm: novoPM, pa: novoPA};
+    const maxPVnovo = Math.max(1, (c.atributos?.resistencia||0)*5) + bPV;
+    const maxPMnovo = Math.max(1, (c.atributos?.habilidade||0)*5) + bPM;
+    const maxPAnovo = Math.max(1, (c.atributos?.poder||0)) + bPA;
+    // Diferença de bônus: se aumentou, sobe o atual; se diminuiu, corta no novo máximo
+    const deltaPV = bPV - (c.bonusPV||0);
+    const deltaPM = bPM - (c.bonusPM||0);
+    const deltaPA = bPA - (c.bonusPA||0);
+    const pvAtual = deltaPV > 0 ? (c.recursos?.pv||0) + deltaPV : Math.min(c.recursos?.pv||0, maxPVnovo);
+    const pmAtual = deltaPM > 0 ? (c.recursos?.pm||0) + deltaPM : Math.min(c.recursos?.pm||0, maxPMnovo);
+    const paAtual = deltaPA > 0 ? (c.recursos?.pa||0) + deltaPA : Math.min(c.recursos?.pa||0, maxPAnovo);
+    return {pv: pvAtual, pm: pmAtual, pa: paAtual};
   };
 
   const updItem = (list,id,f,v) => setChar(c=>{
@@ -2699,15 +2706,16 @@ const App = () => {
                 <span style={{fontFamily:'Orbitron',fontSize:11,color:c,textTransform:'uppercase'}}>{a.slice(0,1).toUpperCase()+a.slice(1)}</span>
                 <Stepper value={char.atributos[a]} onChange={v=>setChar(c=>{
                   const novoAtrib = {...c.atributos,[a]:Math.max(0,v)};
-                  const novoPV = Math.max(1,novoAtrib.resistencia*5) + (c.bonusPV||0);
-                  const novoPM = Math.max(1,novoAtrib.habilidade*5) + (c.bonusPM||0);
-                  const novoPA = Math.max(1,novoAtrib.poder) + (c.bonusPA||0);
+                  const maxPVnovo = Math.max(1,novoAtrib.resistencia*5) + (c.bonusPV||0);
+                  const maxPMnovo = Math.max(1,novoAtrib.habilidade*5) + (c.bonusPM||0);
+                  const maxPAnovo = Math.max(1,novoAtrib.poder) + (c.bonusPA||0);
+                  // Mantém recursos atuais, apenas corta se ultrapassar o novo máximo
                   return {...c,
                     atributos: novoAtrib,
                     recursos: {
-                      pv: novoPV,
-                      pm: novoPM,
-                      pa: novoPA
+                      pv: Math.min(c.recursos.pv, maxPVnovo),
+                      pm: Math.min(c.recursos.pm, maxPMnovo),
+                      pa: Math.min(c.recursos.pa, maxPAnovo)
                     }
                   };
                 })} />
