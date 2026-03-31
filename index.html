@@ -1637,7 +1637,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const ehMestre = campData && (campData.mestre === char.nome);
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%',minHeight:0}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
       {fbErro && (
         <div style={{background:'rgba(255,23,68,0.12)',border:'1px solid rgba(255,23,68,0.4)',margin:'8px 12px',borderRadius:8,padding:'10px 12px',flexShrink:0}}>
           <div style={{fontFamily:'Orbitron',fontSize:10,color:'#ff5252',marginBottom:4}}>🔒 BANCO BLOQUEADO (401)</div>
@@ -1690,7 +1690,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
       </div>
 
       {/* Conteúdo */}
-      <div style={{flex:1,minHeight:0,overflowY:'scroll',padding:12,scrollbarWidth:'auto'}}>
+      <div style={{flex:1,overflowY:'auto',padding:12}}>
 
         {/* ── TAB FICHAS ── */}
         {tab==='fichas' && (
@@ -1842,19 +1842,11 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                         }} style={{flex:1,padding:'6px 0',background:'rgba(255,214,0,0.08)',border:'1px solid rgba(255,214,0,0.3)',color:'#ffd600',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
                           💾 Baixar JSON
                         </button>
-                        {/* Jogador: remover a própria ficha */}
-                        {f.id===myPlayerId.current && (
-                          <button onClick={()=>{if(window.confirm('Remover sua ficha da campanha?'))removerFicha(f.id);}}
-                            style={{flex:1,padding:'6px 0',background:'rgba(255,23,68,0.05)',border:'1px solid rgba(255,23,68,0.18)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
-                            × Sair da Mesa
-                          </button>
-                        )}
-                        {/* Mestre: remover ficha de outro jogador */}
-                        {ehMestre && f.id!==myPlayerId.current && (
-                          <button onClick={()=>removerFicha(f.id)} style={{flex:1,padding:'6px 0',background:'rgba(255,23,68,0.05)',border:'1px solid rgba(255,23,68,0.18)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
-                            × Remover
-                          </button>
-                        )}
+                        {/* Qualquer jogador pode remover qualquer ficha */}
+                        <button onClick={()=>{if(window.confirm('Remover a ficha de "'+f.nome+'" da campanha?'))removerFicha(f.id);}}
+                          style={{flex:1,padding:'6px 0',background:'rgba(255,23,68,0.05)',border:'1px solid rgba(255,23,68,0.18)',color:'#ff5252',borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>
+                          × Remover da Mesa
+                        </button>
                       </div>
                     </div>
                   )}
@@ -2429,7 +2421,7 @@ const App = () => {
               </div>
               <button onClick={()=>setCampPanel(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:22,cursor:'pointer'}}>×</button>
             </div>
-            <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column'}}>
+            <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
               <CampaignPanel char={char} sheets={sheets} onClose={()=>setCampPanel(false)} />
             </div>
           </div>
