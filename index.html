@@ -82,7 +82,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -96,8 +95,6 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const auth = firebase.auth();
-window.FIREBASE_AUTH = auth;
 db.ref("teste").set({ status: "funcionando", timestamp: Date.now() })
   .then(() => console.log("✅ Firebase conectado!"))
   .catch((error) => console.error("❌ Erro Firebase:", error));
@@ -1693,7 +1690,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
       </div>
 
       {/* Conteúdo */}
-      <div id="camp-scroll" style={{flex:1,overflowY:'auto',padding:12}}>
+      <div style={{flex:1,overflowY:'auto',padding:12}}>
 
         {/* ── TAB FICHAS ── */}
         {tab==='fichas' && (
@@ -2044,63 +2041,14 @@ const App = () => {
   const [campPanel,setCampPanel] = useState(false);
   const [arqPreviewOpen,setArqPreviewOpen] = useState(false);
   const [emCampanha,setEmCampanha] = useState(false);
-  const [listTab,setListTab] = useState('pericias');
-  const [authUser,setAuthUser] = useState(null);
-  const [authLoading,setAuthLoading] = useState(true);
+  const [listTab,setListTab] = useState('pericias'); // mobile: aba ativa das listas
   const isMobile = useIsMobile();
 
-  // ── Auth listener ──
-  useEffect(()=>{
-    const unsub = window.FIREBASE_AUTH.onAuthStateChanged(u=>{
-      setAuthUser(u||null);
-      setAuthLoading(false);
-    });
-    return ()=>unsub();
-  },[]);
-
-  // ── Biblioteca: carrega do Firebase se logado, senão localStorage ──
-  useEffect(()=>{
-    if(authLoading) return;
-    if(authUser){
-      fbGet(`biblioteca/${authUser.uid}`).then(data=>{
-        if(data && typeof data==='object'){
-          const arr = Object.values(data).filter(Boolean);
-          setSheets(arr);
-        }
-      }).catch(()=>{});
-    } else {
-      const s = localStorage.getItem('3det_v2');
-      if(s) try{setSheets(JSON.parse(s))}catch(e){}
-    }
-  },[authUser,authLoading]);
-
   useEffect(()=>{ setEmCampanha(!!localStorage.getItem('3det_camp')); },[campPanel]);
-
-  // ── Helpers para salvar/remover da biblioteca ──
-  const libSave = async (arr) => {
-    if(authUser){
-      const obj = {};
-      arr.forEach(f=>{ obj[String(f.id)] = f; });
-      await fbSet(`biblioteca/${authUser.uid}`, obj).catch(()=>{});
-    } else {
-      try{ localStorage.setItem('3det_v2',JSON.stringify(arr)); }catch(e){}
-    }
-    setSheets(arr);
-  };
-
-  const signInGoogle = async () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    try{ await window.FIREBASE_AUTH.signInWithPopup(provider); }
-    catch(e){ alert('Erro no login: '+e.message); }
-  };
-
-  const signOut = async () => {
-    if(!window.confirm('Sair da conta Google?')) return;
-    await window.FIREBASE_AUTH.signOut();
-    setSheets([]);
+  useEffect(()=>{
     const s = localStorage.getItem('3det_v2');
     if(s) try{setSheets(JSON.parse(s))}catch(e){}
-  };
+  },[]);
 
   const syncToCloud = async () => {
     try {
@@ -2168,10 +2116,20 @@ const App = () => {
 
       const novaFicha = {...EMPTY, ...l, ...recalcBonus(l)};
 
-      // Salva na biblioteca
-      const sem = sheets.filter(x => x.id !== novaFicha.id);
-      const arr = [...sem, novaFicha];
-      await libSave(arr);
+      // Salva na biblioteca (sem foto se necessário para não estourar localStorage)
+      const fichaParaBiblioteca = {...novaFicha};
+      setSheets(p => {
+        const sem = p.filter(x => x.id !== novaFicha.id);
+        const arr = [...sem, fichaParaBiblioteca];
+        try {
+          localStorage.setItem('3det_v2', JSON.stringify(arr));
+        } catch(e) {
+          // foto base64 muito grande — salva sem foto
+          const arrSemFoto = arr.map(f=>({...f, foto:null}));
+          try { localStorage.setItem('3det_v2', JSON.stringify(arrSemFoto)); } catch(e2){}
+        }
+        return arr;
+      });
 
       // Carrega na ficha ativa COM foto
       setChar(novaFicha);
@@ -2182,14 +2140,15 @@ const App = () => {
     }
   };
 
-  const save = async () => {
+  const save = () => {
     const ns = {...char,id:char.id||Date.now(),saved:new Date().toISOString()};
-    const idx = sheets.findIndex(s=>s.id===ns.id);
-    const arr = [...sheets];
-    if(idx>=0) arr[idx]=ns; else arr.push(ns);
-    await libSave(arr);
-    setChar(ns);
-    alert('Ficha salva!');
+    try {
+      const idx = sheets.findIndex(s=>s.id===ns.id);
+      const arr = [...sheets];
+      if(idx>=0) arr[idx]=ns; else arr.push(ns);
+      localStorage.setItem('3det_v2',JSON.stringify(arr));
+      setSheets(arr); setChar(ns); alert('Ficha salva!');
+    } catch(e){alert('Erro ao salvar. Tente remover a foto.');}
   };
 
   // ── MUDANÇA: Pontos = soma total, pontosMax = máximo definido pelo jogador ──
@@ -2356,9 +2315,12 @@ const App = () => {
         setChar(novaFicha);
 
         // Salva na biblioteca automaticamente
-        const semDup = sheets.filter(s => s.id !== novaFicha.id);
-        const arr = [...semDup, novaFicha];
-        await libSave(arr);
+        setSheets(prev => {
+          const sem = prev.filter(s => s.id !== novaFicha.id);
+          const arr = [...sem, novaFicha];
+          localStorage.setItem('3det_v2', JSON.stringify(arr));
+          return arr;
+        });
 
         alert('✅ Ficha "' + (l.nome||'sem nome') + '" importada com sucesso!');
       } catch(err) {
@@ -2415,52 +2377,6 @@ const App = () => {
         <>
           <div onClick={()=>setCampPanel(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.6)',zIndex:200}} />
           <div id="camp-panel" style={{position:'fixed',top:0,left:0,bottom:0,width:'min(500px,100vw)',background:'var(--cp)',borderRight:'1px solid rgba(0,229,255,0.3)',boxShadow:'0 0 40px rgba(0,229,255,0.12)',zIndex:201,display:'flex',flexDirection:'column',userSelect:'none'}}>
-            {/* Handle de scroll — faixa central arrastável para cima/baixo */}
-            <div
-              style={{position:'absolute',top:'50%',right:-14,transform:'translateY(-50%)',width:12,height:80,zIndex:12,display:'flex',alignItems:'center',justifyContent:'center',cursor:'ns-resize',borderRadius:6,background:'rgba(0,229,255,0.12)',border:'1px solid rgba(0,229,255,0.3)',boxShadow:'0 0 8px rgba(0,229,255,0.2)'}}
-              title="Arrastar para rolar"
-              onMouseDown={e=>{
-                e.preventDefault();
-                e.stopPropagation();
-                const scroller = document.getElementById('camp-scroll');
-                if(!scroller) return;
-                const startY = e.clientY;
-                const startTop = scroller.scrollTop;
-                const ratio = scroller.scrollHeight / scroller.clientHeight;
-                const onMove = ev => {
-                  scroller.scrollTop = Math.max(0, startTop + (ev.clientY - startY) * ratio);
-                };
-                const onUp = () => {
-                  window.removeEventListener('mousemove', onMove);
-                  window.removeEventListener('mouseup', onUp);
-                };
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('mouseup', onUp);
-              }}
-              onTouchStart={e=>{
-                e.stopPropagation();
-                const scroller = document.getElementById('camp-scroll');
-                if(!scroller) return;
-                const startY = e.touches[0].clientY;
-                const startTop = scroller.scrollTop;
-                const ratio = scroller.scrollHeight / scroller.clientHeight;
-                const onMove = ev => {
-                  scroller.scrollTop = Math.max(0, startTop + (ev.touches[0].clientY - startY) * ratio);
-                };
-                const onEnd = () => {
-                  window.removeEventListener('touchmove', onMove);
-                  window.removeEventListener('touchend', onEnd);
-                };
-                window.addEventListener('touchmove', onMove);
-                window.addEventListener('touchend', onEnd);
-              }}
-            >
-              <div style={{display:'flex',flexDirection:'column',gap:3,alignItems:'center'}}>
-                <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(0,229,255,0.7)'}} />
-                <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(0,229,255,0.7)'}} />
-                <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(0,229,255,0.7)'}} />
-              </div>
-            </div>
             {/* Handle de resize — arrastar para direita expande o painel */}
             <div
               style={{position:'absolute',top:0,right:-4,bottom:0,width:8,cursor:'ew-resize',zIndex:10,display:'flex',alignItems:'center',justifyContent:'center'}}
@@ -2517,26 +2433,9 @@ const App = () => {
         <div>
           <div onClick={()=>setSidebar(false)} style={{position:'fixed',inset:0,background:'rgba(0,5,15,0.85)',zIndex:200}} />
           <div style={{position:'fixed',top:0,left:0,bottom:0,width:isMobile?'100vw':300,background:'var(--cp)',borderRight:'1px solid var(--ca)',boxShadow:'0 0 30px var(--cg)',zIndex:201,display:'flex',flexDirection:'column'}}>
-            <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',flexDirection:'column',gap:10}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:13}}>BIBLIOTECA</span>
-                <button onClick={()=>setSidebar(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
-              </div>
-              {authLoading
-                ? <div style={{fontSize:10,color:'rgba(0,229,255,0.4)',fontFamily:'Orbitron',textAlign:'center'}}>...</div>
-                : authUser
-                  ? <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(0,229,255,0.06)',border:'1px solid rgba(0,229,255,0.2)',borderRadius:8,padding:'6px 10px'}}>
-                      {authUser.photoURL && <img src={authUser.photoURL} style={{width:24,height:24,borderRadius:'50%',flexShrink:0}} alt="" />}
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:10,fontWeight:700,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{authUser.displayName||authUser.email}</div>
-                        <div style={{fontSize:9,color:'rgba(0,229,255,0.4)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{authUser.email}</div>
-                      </div>
-                      <button onClick={signOut} style={{background:'none',border:'none',color:'rgba(255,23,68,0.7)',cursor:'pointer',fontSize:10,fontFamily:'Orbitron',flexShrink:0}}>SAIR</button>
-                    </div>
-                  : <button onClick={signInGoogle} style={{padding:'8px 10px',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.2)',color:'#e8f4f8',borderRadius:8,cursor:'pointer',fontFamily:'Orbitron',fontSize:10,textTransform:'uppercase',letterSpacing:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-                      <span style={{fontSize:14}}>G</span> Entrar com Google
-                    </button>
-              }
+            <div style={{padding:16,borderBottom:'1px solid rgba(0,229,255,0.2)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontFamily:'Orbitron',color:'#00e5ff',fontSize:13}}>BIBLIOTECA</span>
+              <button onClick={()=>setSidebar(false)} style={{background:'none',border:'none',color:'#ff1744',fontSize:20,cursor:'pointer'}}>×</button>
             </div>
             <div style={{padding:12,borderBottom:'1px solid rgba(0,229,255,0.1)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <Btn onClick={()=>{if(window.confirm('Nova ficha?')){setChar({...EMPTY,id:Date.now()});setSidebar(false);}}} style={{fontSize:10,padding:'6px 8px'}}>+ Nova</Btn>
@@ -2557,7 +2456,7 @@ const App = () => {
                       <div style={{fontWeight:700,fontSize:13,color:'#e8f4f8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sh.nome||'Sem Nome'}</div>
                       <div style={{fontSize:10,color:'rgba(0,229,255,0.4)'}}>{sh.arquetipo||'—'}</div>
                     </div>
-                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Remover?')){const n=sheets.filter(s=>s.id!==sh.id);libSave(n);}}}
+                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Remover?')){const n=sheets.filter(s=>s.id!==sh.id);localStorage.setItem('3det_v2',JSON.stringify(n));setSheets(n);}}}
                       style={{background:'none',border:'none',color:'#ff1744',cursor:'pointer',fontSize:14}}>×</button>
                   </div>
                 ))
@@ -2574,42 +2473,35 @@ const App = () => {
         <div className="panel" style={{padding:isMobile?12:20,marginBottom:isMobile?12:20}}>
           <div style={{display:'flex',gap:isMobile?12:20,flexWrap:'wrap'}}>
             {/* Foto — menor no mobile, ao lado do nome */}
-            <div onClick={()=>!char.fotoUploading&&fileRef.current.click()} style={{width:isMobile?80:130,height:isMobile?80:130,borderRadius:8,background:'rgba(0,0,0,0.6)',border:'2px dashed rgba(0,229,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:char.fotoUploading?'wait':'pointer',flexShrink:0,overflow:'hidden',position:'relative'}}>
-              {char.fotoUploading
-                ? <div style={{textAlign:'center',color:'rgba(0,229,255,0.7)'}}>
-                    <div style={{fontSize:isMobile?16:22,marginBottom:4}} className="rolling">⟳</div>
-                    <div style={{fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>Enviando...</div>
+            <div onClick={()=>fileRef.current.click()} style={{width:isMobile?80:130,height:isMobile?80:130,borderRadius:8,background:'rgba(0,0,0,0.6)',border:'2px dashed rgba(0,229,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,overflow:'hidden'}}>
+              {char.foto
+                ? <img src={char.foto} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="" />
+                : <div style={{textAlign:'center',color:'rgba(0,229,255,0.3)'}}>
+                    <div style={{fontSize:isMobile?20:28,marginBottom:4}}>📷</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>Foto</div>
                   </div>
-                : char.foto
-                  ? <img src={char.foto} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="" />
-                  : <div style={{textAlign:'center',color:'rgba(0,229,255,0.3)'}}>
-                      <div style={{fontSize:isMobile?20:28,marginBottom:4}}>📷</div>
-                      <div style={{fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'}}>Foto</div>
-                    </div>
               }
             </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{
+            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
               const f=e.target.files[0];
               if(!f) return;
-              const uid = (authUser && authUser.uid) || char.syncId || ('anon-'+Date.now());
-              const fd = new FormData();
-              fd.append('file', f);
-              fd.append('upload_preset', 'plusdistophya');
-              fd.append('folder', 'plusdistophya/'+uid);
-              try {
-                setChar(c=>({...c, fotoUploading:true}));
-                const res = await fetch('https://api.cloudinary.com/v1_1/dd2mltlsb/image/upload', {method:'POST',body:fd});
-                const data = await res.json();
-                if(data.secure_url) {
-                  setChar(c=>({...c, foto: data.secure_url, fotoUploading:false}));
-                } else {
-                  setChar(c=>({...c, fotoUploading:false}));
-                  alert('❌ Erro no upload da foto.');
-                }
-              } catch(err) {
-                setChar(c=>({...c, fotoUploading:false}));
-                alert('❌ Erro ao enviar foto: '+err.message);
-              }
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                // Comprime a foto para max 300x300 e qualidade 0.7
+                const img = new Image();
+                img.onload = () => {
+                  const MAX = 300;
+                  const scale = Math.min(MAX/img.width, MAX/img.height, 1);
+                  const canvas = document.createElement('canvas');
+                  canvas.width  = Math.round(img.width  * scale);
+                  canvas.height = Math.round(img.height * scale);
+                  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                  const compressed = canvas.toDataURL('image/jpeg', 0.72);
+                  setChar(c=>({...c, foto: compressed}));
+                };
+                img.src = reader.result;
+              };
+              reader.readAsDataURL(f);
             }} />
 
             <div style={{flex:1,minWidth:isMobile?0:260,display:'flex',flexDirection:'column',gap:10}}>
@@ -2925,4 +2817,4 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 </script>
 </body>
-</html>
+  </html>
