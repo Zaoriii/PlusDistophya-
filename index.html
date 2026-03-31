@@ -1308,6 +1308,7 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const [npcNome, setNpcNome] = useState('');
   const [npcHabil, setNpcHabil] = useState(0);
   const [npcTemLuta, setNpcTemLuta] = useState(false);
+  const [npcTemAgil, setNpcTemAgil] = useState(false);
   const [diceOpen, setDiceOpen] = useState(false);
   const [tab, setTab] = useState('fichas');
   const pollingRef = useRef(null);
@@ -1514,14 +1515,16 @@ const CampaignPanel = ({char, sheets, onClose}) => {
   const rolarIniciativa = async () => {
     const h = fichaAtiva.atributos?.habilidade||0;
     const temLuta = (fichaAtiva.pericias||[]).some(p=>p.nome==='Luta');
+    const temAgil = (fichaAtiva.vantagens||[]).some(v=>v.nome==='Ágil');
     const dados = Math.max(1, Math.min(3, 1 + (temLuta?1:0)));
     const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
-    const total = res.reduce((a,b)=>a+b,0)+h;
+    const bonusAgil = temAgil ? 2 : 0;
+    const total = res.reduce((a,b)=>a+b,0)+h+bonusAgil;
     const nomeJogador = fichaAtiva.nome || char.nome || 'Jogador';
     const foto = fichaAtiva.foto || char.foto || null;
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${myPlayerId.current}`, {
-        id:myPlayerId.current, nome:nomeJogador, foto, total, res, habil:h, temLuta, ts:Date.now(), isNpc:false
+        id:myPlayerId.current, nome:nomeJogador, foto, total, res, habil:h, temLuta, temAgil, bonusAgil, ts:Date.now(), isNpc:false
       });
       buscarTudo(campCode);
     } catch(e){}
@@ -1533,11 +1536,12 @@ const CampaignPanel = ({char, sheets, onClose}) => {
     const h = parseInt(npcHabil)||0;
     const dados = Math.max(1, Math.min(3, 1 + (npcTemLuta?1:0)));
     const res = Array.from({length:dados},()=>Math.floor(Math.random()*6)+1);
-    const total = res.reduce((a,b)=>a+b,0)+h;
+    const bonusAgil = npcTemAgil ? 2 : 0;
+    const total = res.reduce((a,b)=>a+b,0)+h+bonusAgil;
     const npcId = 'npc-'+uid();
     try {
       await fbSet(`campanhas/${campCode}/iniciativas/${npcId}`, {
-        id:npcId, nome:'[NPC] '+npcNome.trim(), total, res, habil:h, temLuta:npcTemLuta, ts:Date.now(), isNpc:true
+        id:npcId, nome:'[NPC] '+npcNome.trim(), total, res, habil:h, temLuta:npcTemLuta, temAgil:npcTemAgil, bonusAgil, ts:Date.now(), isNpc:true
       });
       setNpcNome(''); buscarTudo(campCode);
     } catch(e){}
@@ -1967,6 +1971,16 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                 }}>
                   {npcTemLuta ? '⚔ TEM LUTA (+1D)' : '⚔ Sem Luta (1D)'}
                 </button>
+                {/* Toggle Ágil */}
+                <button onClick={()=>setNpcTemAgil(!npcTemAgil)} style={{
+                  width:'100%',marginBottom:5,padding:'4px 0',
+                  background:npcTemAgil?'rgba(0,229,255,0.15)':'rgba(0,0,0,0.3)',
+                  border:'1px solid '+(npcTemAgil?'rgba(0,229,255,0.5)':'rgba(168,85,247,0.2)'),
+                  color:npcTemAgil?'#00e5ff':'rgba(168,85,247,0.5)',
+                  borderRadius:4,cursor:'pointer',fontFamily:'Orbitron',fontSize:8,textTransform:'uppercase'
+                }}>
+                  {npcTemAgil ? '💨 TEM ÁGIL (+2)' : '💨 Sem Ágil'}
+                </button>
                 <div style={{display:'flex',gap:5}}>
                   <button onClick={rolarIniciativaNpc} style={{flex:1,background:'rgba(168,85,247,0.1)',border:'1px solid rgba(168,85,247,0.3)',color:'#a855f7',borderRadius:4,padding:'5px 0',cursor:'pointer',fontSize:9,fontFamily:'Orbitron',textTransform:'uppercase'}}>
                     🎲 Rolar NPC
@@ -1999,8 +2013,8 @@ const CampaignPanel = ({char, sheets, onClose}) => {
                       {idx===0?'👑 ':''}{ini.nome}
                     </div>
                     <div style={{fontSize:8,color:'rgba(0,229,255,0.35)',fontFamily:'Share Tech Mono'}}>
-                      {ini.res?.length+'D6+H'+ini.habil+' ['+ini.res?.join(',')+'] +'+ini.habil+' = '+ini.total}
-                      {ini.temLuta?' · Luta':''}
+                      {ini.res?.length+'D6+H'+ini.habil+' ['+ini.res?.join(',')+'] +'+ini.habil+(ini.bonusAgil?' +'+ini.bonusAgil+'(Ágil)':'')+' = '+ini.total}
+                      {ini.temLuta?' · Luta':''}{ini.temAgil?' · Ágil':''}
                     </div>
                   </div>
                   {(ehMestre||ini.id===myPlayerId.current) && (
